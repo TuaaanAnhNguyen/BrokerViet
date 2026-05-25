@@ -11,6 +11,35 @@ BrokerViet
 │  ├─ .metadata
 │  ├─ analysis_options.yaml
 │  ├─ android
+│  │  ├─ .gradle
+│  │  │  ├─ 8.14
+│  │  │  │  ├─ checksums
+│  │  │  │  │  ├─ checksums.lock
+│  │  │  │  │  ├─ md5-checksums.bin
+│  │  │  │  │  └─ sha1-checksums.bin
+│  │  │  │  ├─ executionHistory
+│  │  │  │  │  ├─ executionHistory.bin
+│  │  │  │  │  └─ executionHistory.lock
+│  │  │  │  ├─ expanded
+│  │  │  │  ├─ fileChanges
+│  │  │  │  │  └─ last-build.bin
+│  │  │  │  ├─ fileHashes
+│  │  │  │  │  ├─ fileHashes.bin
+│  │  │  │  │  ├─ fileHashes.lock
+│  │  │  │  │  └─ resourceHashesCache.bin
+│  │  │  │  ├─ gc.properties
+│  │  │  │  └─ vcsMetadata
+│  │  │  ├─ buildOutputCleanup
+│  │  │  │  ├─ buildOutputCleanup.lock
+│  │  │  │  ├─ cache.properties
+│  │  │  │  └─ outputFiles.bin
+│  │  │  ├─ file-system.probe
+│  │  │  ├─ noVersion
+│  │  │  │  └─ buildLogic.lock
+│  │  │  └─ vcs-1
+│  │  │     └─ gc.properties
+│  │  ├─ .kotlin
+│  │  │  └─ sessions
 │  │  ├─ app
 │  │  │  ├─ build.gradle.kts
 │  │  │  └─ src
@@ -123,99 +152,32 @@ BrokerViet
 │  │  └─ RunnerTests
 │  │     └─ RunnerTests.swift
 │  ├─ lib
-│  │  └─ main.dart
-│  ├─ linux
-│  │  ├─ CMakeLists.txt
-│  │  ├─ flutter
-│  │  │  ├─ CMakeLists.txt
-│  │  │  ├─ generated_plugins.cmake
-│  │  │  ├─ generated_plugin_registrant.cc
-│  │  │  └─ generated_plugin_registrant.h
-│  │  └─ runner
-│  │     ├─ CMakeLists.txt
-│  │     ├─ main.cc
-│  │     ├─ my_application.cc
-│  │     └─ my_application.h
-│  ├─ macos
-│  │  ├─ Flutter
-│  │  │  ├─ ephemeral
-│  │  │  │  ├─ Flutter-Generated.xcconfig
-│  │  │  │  └─ flutter_export_environment.sh
-│  │  │  ├─ Flutter-Debug.xcconfig
-│  │  │  ├─ Flutter-Release.xcconfig
-│  │  │  └─ GeneratedPluginRegistrant.swift
-│  │  ├─ Runner
-│  │  │  ├─ AppDelegate.swift
-│  │  │  ├─ Assets.xcassets
-│  │  │  │  └─ AppIcon.appiconset
-│  │  │  │     ├─ app_icon_1024.png
-│  │  │  │     ├─ app_icon_128.png
-│  │  │  │     ├─ app_icon_16.png
-│  │  │  │     ├─ app_icon_256.png
-│  │  │  │     ├─ app_icon_32.png
-│  │  │  │     ├─ app_icon_512.png
-│  │  │  │     ├─ app_icon_64.png
-│  │  │  │     └─ Contents.json
-│  │  │  ├─ Base.lproj
-│  │  │  │  └─ MainMenu.xib
-│  │  │  ├─ Configs
-│  │  │  │  ├─ AppInfo.xcconfig
-│  │  │  │  ├─ Debug.xcconfig
-│  │  │  │  ├─ Release.xcconfig
-│  │  │  │  └─ Warnings.xcconfig
-│  │  │  ├─ DebugProfile.entitlements
-│  │  │  ├─ Info.plist
-│  │  │  ├─ MainFlutterWindow.swift
-│  │  │  └─ Release.entitlements
-│  │  ├─ Runner.xcodeproj
-│  │  │  ├─ project.pbxproj
-│  │  │  ├─ project.xcworkspace
-│  │  │  │  └─ xcshareddata
-│  │  │  │     └─ IDEWorkspaceChecks.plist
-│  │  │  └─ xcshareddata
-│  │  │     └─ xcschemes
-│  │  │        └─ Runner.xcscheme
-│  │  ├─ Runner.xcworkspace
-│  │  │  ├─ contents.xcworkspacedata
-│  │  │  └─ xcshareddata
-│  │  │     └─ IDEWorkspaceChecks.plist
-│  │  └─ RunnerTests
-│  │     └─ RunnerTests.swift
+│  │  ├─ features
+│  │  │  ├─ auth
+│  │  │  │  ├─ login_screen.dart
+│  │  │  │  └─ signup_screen.dart
+│  │  │  └─ home.dart
+│  │  ├─ main.dart
+│  │  ├─ models
+│  │  ├─ repositories
+│  │  └─ services
+│  │     ├─ auth
+│  │     │  └─ auth_service.dart
+│  │     └─ booking
 │  ├─ pubspec.lock
 │  ├─ pubspec.yaml
 │  ├─ README.md
 │  ├─ test
 │  │  └─ widget_test.dart
-│  ├─ web
-│  │  ├─ favicon.png
-│  │  ├─ icons
-│  │  │  ├─ Icon-192.png
-│  │  │  ├─ Icon-512.png
-│  │  │  ├─ Icon-maskable-192.png
-│  │  │  └─ Icon-maskable-512.png
-│  │  ├─ index.html
-│  │  └─ manifest.json
-│  └─ windows
-│     ├─ CMakeLists.txt
-│     ├─ flutter
-│     │  ├─ CMakeLists.txt
-│     │  ├─ generated_plugins.cmake
-│     │  ├─ generated_plugin_registrant.cc
-│     │  └─ generated_plugin_registrant.h
-│     └─ runner
-│        ├─ CMakeLists.txt
-│        ├─ flutter_window.cpp
-│        ├─ flutter_window.h
-│        ├─ main.cpp
-│        ├─ resource.h
-│        ├─ resources
-│        │  └─ app_icon.ico
-│        ├─ runner.exe.manifest
-│        ├─ Runner.rc
-│        ├─ utils.cpp
-│        ├─ utils.h
-│        ├─ win32_window.cpp
-│        └─ win32_window.h
+│  └─ web
+│     ├─ favicon.png
+│     ├─ icons
+│     │  ├─ Icon-192.png
+│     │  ├─ Icon-512.png
+│     │  ├─ Icon-maskable-192.png
+│     │  └─ Icon-maskable-512.png
+│     ├─ index.html
+│     └─ manifest.json
 └─ README.md
 
 ```

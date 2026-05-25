@@ -1,4 +1,4 @@
-# .NET / C# (backend_dotnet)
+# .NET
 backend_dotnet/[Bb]in/
 backend_dotnet/[Oo]bj/
 backend_dotnet/appsettings.Development.json
@@ -6,7 +6,7 @@ backend_dotnet/appsettings.Development.json
 *.suo
 .vs/
 
-# Flutter / Dart (frontend_flutter)
+# Flutter
 frontend_flutter/.dart_tool/
 frontend_flutter/.flutter-plugins
 frontend_flutter/.flutter-plugins-dependencies
