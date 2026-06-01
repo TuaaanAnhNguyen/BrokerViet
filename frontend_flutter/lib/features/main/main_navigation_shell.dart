@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../marketplace/service_marketplace_screen.dart';
+import 'service_marketplace_screen.dart';
 import '../booking/booking_history_screen.dart';
 import '../chat/chat_list_screen.dart';
 import './notification_screen.dart';
@@ -42,7 +42,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             padding: EdgeInsets.symmetric(horizontal: 16.0),
             child: CircleAvatar(
               radius: 16,
-              backgroundImage: AssetImage('assets/tako.png'),
+              backgroundImage: AssetImage('assets/tam tender.png'),
             ),
           ),
         ],

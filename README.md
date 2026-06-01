@@ -160,15 +160,17 @@ BrokerViet
 │  │  │  │  ├─ login_screen.dart
 │  │  │  │  └─ signup_screen.dart
 │  │  │  ├─ booking
-│  │  │  │  └─ booking_history_screen.dart
+│  │  │  │  ├─ booking_history_screen.dart
+│  │  │  │  └─ booking_service_screen.dart
 │  │  │  ├─ chat
 │  │  │  │  └─ chat_list_screen.dart
 │  │  │  ├─ home.dart
 │  │  │  ├─ main
 │  │  │  │  ├─ main_navigation_shell.dart
-│  │  │  │  └─ notification_screen.dart
+│  │  │  │  ├─ notification_screen.dart
+│  │  │  │  ├─ service_detail_screen.dart
+│  │  │  │  └─ service_marketplace_screen.dart
 │  │  │  └─ marketplace
-│  │  │     └─ service_marketplace_screen.dart
 │  │  ├─ main.dart
 │  │  ├─ models
 │  │  ├─ repositories
