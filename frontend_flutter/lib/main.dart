@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/auth/login_screen.dart';
-import 'features/home.dart'; // Ensure this matches your file location
 import 'services/auth/auth_service.dart';
+import 'features/main/main_navigation_shell.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,7 +30,7 @@ class BrokerVietApp extends StatelessWidget {
         home: BlocBuilder<AuthService, AuthState>(
           builder: (context, state) {
             if (state is AuthSuccess) {
-              return HomeScreen(username: state.username);
+              return MainNavigationShell();
             }
             return LoginScreen();
           },

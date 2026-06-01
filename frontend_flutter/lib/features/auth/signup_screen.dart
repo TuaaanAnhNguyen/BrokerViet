@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../services/auth/auth_service.dart';
+import '../../widgets/custom_text_field.dart';
 
 class SignUpScreen extends StatelessWidget {
   SignUpScreen({super.key});
@@ -37,47 +38,33 @@ class SignUpScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
 
-                  TextFormField(
+                  CustomTextField(
                     controller: _usernameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Username',
-                      prefixIcon: Icon(Icons.person_outlined),
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
+                    labelText: 'Username',
+                    prefixIcon: Icons.person_outlined,
+                    keyboardType: TextInputType.text,
                     validator: (value) => value == null || value.trim().isEmpty
                         ? 'Enter a username'
                         : null,
                   ),
                   const SizedBox(height: 16),
 
-                  TextFormField(
+                  CustomTextField(
                     controller: _phoneController,
+                    labelText: 'Phone Number',
+                    prefixIcon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'Phone Number',
-                      prefixIcon: Icon(Icons.phone_outlined),
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
                     validator: (value) => value == null || value.isEmpty
-                        ? 'Enter your phone number'
+                        ? 'Enter your phone'
                         : null,
                   ),
                   const SizedBox(height: 16),
 
-                  TextFormField(
+                  CustomTextField(
                     controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: Icon(Icons.lock_outlined),
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
+                    labelText: 'Password',
+                    prefixIcon: Icons.lock_outlined,
+                    isPasswordField: true,
                     validator: (value) => value == null || value.isEmpty
                         ? 'Enter your password'
                         : null,

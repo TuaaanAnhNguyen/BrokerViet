@@ -1,8 +1,10 @@
 // lib/features/auth/login_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../services/auth/auth_service.dart';
-import 'signup_screen.dart'; // <-- MAKE SURE THIS IMPORT IS HERE
+import 'signup_screen.dart';
+import '../../widgets/custom_text_field.dart';
 
 class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});
@@ -39,32 +41,22 @@ class LoginScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 40),
 
-                  TextFormField(
+                  CustomTextField(
                     controller: _phoneController,
+                    labelText: 'Phone Number',
+                    prefixIcon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'Phone Number',
-                      prefixIcon: Icon(Icons.phone_outlined),
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
                     validator: (value) => value == null || value.isEmpty
                         ? 'Enter your phone'
                         : null,
                   ),
                   const SizedBox(height: 16),
 
-                  TextFormField(
+                  CustomTextField(
                     controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: Icon(Icons.lock_outlined),
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
+                    labelText: 'Password',
+                    prefixIcon: Icons.lock_outlined,
+                    isPasswordField: true,
                     validator: (value) => value == null || value.isEmpty
                         ? 'Enter your password'
                         : null,
@@ -79,7 +71,7 @@ class LoginScreen extends StatelessWidget {
                             content: Text('Welcome back, ${state.username}!'),
                           ),
                         );
-                        // NOTE: No manual Navigator.push here!
+                        // NOTE: No manual Navigator.push here
                         // main.dart catches the change and swaps the screen layout.
                       }
                       if (state is AuthFailure) {
@@ -100,11 +92,11 @@ class LoginScreen extends StatelessWidget {
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
                             context.read<AuthService>().add(
-                                  LoginRequested(
-                                    _phoneController.text,
-                                    _passwordController.text,
-                                  ),
-                                );
+                              LoginRequested(
+                                _phoneController.text,
+                                _passwordController.text,
+                              ),
+                            );
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -115,20 +107,37 @@ class LoginScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text('Sign In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'Sign In',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       );
                     },
                   ),
                   const SizedBox(height: 16),
                   TextButton(
-                    onPressed: () {
-                      // Standard push transitions the viewport over to signup
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => SignUpScreen()),
-                      );
-                    },
-                    child: const Text("Don't have an account? Sign Up"),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SignUpScreen()),
+                    ),
+                    child: RichText(
+                      text: const TextSpan(
+                        text: "Don't have an account? ",
+                        style: TextStyle(color: Colors.black54, fontSize: 14),
+                        children: [
+                          TextSpan(
+                            text: "Sign Up",
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),

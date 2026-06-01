@@ -31,3 +31,4 @@ frontend_flutter/DerivedData/
 .vscode/
 .DS_Store
 Thumbs.db
+.env

@@ -89,6 +89,9 @@ BrokerViet
 │  │  ├─ gradlew.bat
 │  │  ├─ local.properties
 │  │  └─ settings.gradle.kts
+│  ├─ assets
+│  │  ├─ tako.png
+│  │  └─ tam tender.jpg
 │  ├─ broker_viet.iml
 │  ├─ ios
 │  │  ├─ Flutter
@@ -156,14 +159,28 @@ BrokerViet
 │  │  │  ├─ auth
 │  │  │  │  ├─ login_screen.dart
 │  │  │  │  └─ signup_screen.dart
-│  │  │  └─ home.dart
+│  │  │  ├─ booking
+│  │  │  │  └─ booking_history_screen.dart
+│  │  │  ├─ chat
+│  │  │  │  └─ chat_list_screen.dart
+│  │  │  ├─ home.dart
+│  │  │  ├─ main
+│  │  │  │  ├─ main_navigation_shell.dart
+│  │  │  │  └─ notification_screen.dart
+│  │  │  └─ marketplace
+│  │  │     └─ service_marketplace_screen.dart
 │  │  ├─ main.dart
 │  │  ├─ models
 │  │  ├─ repositories
-│  │  └─ services
-│  │     ├─ auth
-│  │     │  └─ auth_service.dart
-│  │     └─ booking
+│  │  ├─ services
+│  │  │  ├─ auth
+│  │  │  │  └─ auth_service.dart
+│  │  │  └─ booking
+│  │  └─ widgets
+│  │     ├─ button.dart
+│  │     ├─ custom_text_field.dart
+│  │     ├─ notification_tile.dart
+│  │     └─ service_card.dart
 │  ├─ pubspec.lock
 │  ├─ pubspec.yaml
 │  ├─ README.md
