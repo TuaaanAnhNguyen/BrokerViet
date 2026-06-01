@@ -6,12 +6,31 @@ import '../../services/auth/auth_service.dart';
 import 'signup_screen.dart';
 import '../../widgets/custom_text_field.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
+  late final TextEditingController _phoneController;
+  late final TextEditingController _passwordController;
+
+  @override
+  void initState() {
+    super.initState();
+    _phoneController = TextEditingController();
+    _passwordController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,15 +83,15 @@ class LoginScreen extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   BlocConsumer<AuthService, AuthState>(
+                    listenWhen: (previous, current) =>
+                        current is AuthSuccess || current is AuthFailure,
                     listener: (context, state) {
                       if (state is AuthSuccess) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Welcome back, ${state.username}!'),
+                            content: Text('Welcome back, ${state.name}!'),
                           ),
                         );
-                        // NOTE: No manual Navigator.push here
-                        // main.dart catches the change and swaps the screen layout.
                       }
                       if (state is AuthFailure) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -91,10 +110,13 @@ class LoginScreen extends StatelessWidget {
                       return ElevatedButton(
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
+                            // Hide onscreen keyboard cleanly before sending state request
+                            FocusScope.of(context).unfocus();
+
                             context.read<AuthService>().add(
                               LoginRequested(
-                                _phoneController.text,
-                                _passwordController.text,
+                                _phoneController.text.trim(),
+                                _passwordController.text.trim(),
                               ),
                             );
                           }
