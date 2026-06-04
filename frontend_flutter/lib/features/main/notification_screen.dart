@@ -22,31 +22,43 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Future<void> _simulateFetchFromBackend() async {
     await Future.delayed(const Duration(milliseconds: 1200));
-    
+
     if (mounted) {
       setState(() {
         _notifications = [
           NotificationModel(
             id: '1',
-            title: 'Booking Confirmed 🛠️',
-            body: 'Technician Nguyen Van A has accepted your Laptop Clean & Paste request.',
+            title: 'Yêu cầu Đang được Xử lý',
+            body:
+                'Kỹ thuật viên Nguyễn Văn A đã tiếp nhận đơn đặt lịch Vệ sinh & Tra keo tản nhiệt máy tính của bạn.',
             createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
-            iconType: Icons.build_circle_outlined,
+            status: 'In Progress',
           ),
           NotificationModel(
             id: '2',
-            title: 'New Chat Message 💬',
-            body: 'TechCare Danang sent: "Can you send over the current system specs?"',
+            title: 'Đơn hàng Chờ Xác nhận',
+            body:
+                'Đơn đặt lịch kiểm tra hệ thống của bạn đã được gửi thành công và đang chờ đối tác phản hồi.',
             createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-            iconType: Icons.chat_bubble_outline,
+            status: 'In Review',
           ),
           NotificationModel(
             id: '3',
-            title: 'Hardware Rental Returned 📦',
-            body: 'Your active rental for RTX 4060 GPU card has been processed cleanly.',
+            title: 'Hoàn thành Dịch vụ',
+            body:
+                'Yêu cầu hỗ trợ cấu hình và lắp đặt card đồ họa RTX của bạn đã hoàn tất bàn giao.',
             createdAt: DateTime.now().subtract(const Duration(days: 1)),
             isRead: true,
-            iconType: Icons.assignment_turned_in_outlined,
+            status: 'Done',
+          ),
+          NotificationModel(
+            id: '4',
+            title: 'Đơn hàng đã Hủy',
+            body:
+                'Yêu cầu sửa chữa thiết bị phần cứng mã đơn #BK-9912 đã bị hủy theo nguyện vọng của khách hàng.',
+            createdAt: DateTime.now().subtract(const Duration(days: 3)),
+            isRead: true,
+            status: 'Cancelled',
           ),
         ];
         _isLoading = false;
@@ -56,27 +68,59 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const Color primaryColor = Color(0xFF004AC6);
+    const Color darkText = Color(0xFF0B1C30);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('Notifications'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            size: 18,
+            color: primaryColor,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Thông báo',
+          style: TextStyle(
+            color: darkText,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
         centerTitle: true,
         actions: [
           if (_notifications.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.done_all),
-              tooltip: 'Mark all as read',
+              icon: const Icon(Icons.done_all, color: primaryColor),
+              tooltip: 'Đánh dấu tất cả là đã đọc',
               onPressed: () {
                 setState(() {
-                  _notifications = _notifications.map((n) => NotificationModel(
-                    id: n.id, title: n.title, body: n.body, createdAt: n.createdAt, iconType: n.iconType, isRead: true
-                  )).toList();
+                  _notifications = _notifications
+                      .map(
+                        (n) => NotificationModel(
+                          id: n.id,
+                          title: n.title,
+                          body: n.body,
+                          createdAt: n.createdAt,
+                          status: n.status,
+                          isRead: true,
+                        ),
+                      )
+                      .toList();
                 });
               },
-            )
+            ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: Colors.grey.shade200, height: 1),
+        ),
       ),
-      
       body: _buildBodyState(),
     );
   }
@@ -84,7 +128,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Widget _buildBodyState() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(),
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF004AC6)),
+        ),
       );
     }
 
@@ -93,16 +139,25 @@ class _NotificationScreenState extends State<NotificationScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.notifications_off_outlined, size: 72, color: Colors.grey.shade400),
+            Icon(
+              Icons.notifications_off_outlined,
+              size: 72,
+              color: Colors.grey.shade400,
+            ),
             const SizedBox(height: 16),
             const Text(
-              'All Caught Up!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black54),
+              'Hộp thư trống!',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0B1C30),
+              ),
             ),
             const SizedBox(height: 6),
             const Text(
-              'New alerts regarding service repairs will display here.',
-              style: TextStyle(fontSize: 14, color: Colors.black38),
+              'Các cập nhật và trạng thái đơn đặt lịch của bạn sẽ hiển thị tại đây.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Color(0xFF7E84A2)),
             ),
           ],
         ),
@@ -112,6 +167,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     return ListView.builder(
       itemCount: _notifications.length,
       padding: const EdgeInsets.only(top: 8, bottom: 16),
+      physics: const BouncingScrollPhysics(),
       itemBuilder: (context, index) {
         final item = _notifications[index];
         return NotificationTile(
@@ -123,7 +179,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 title: item.title,
                 body: item.body,
                 createdAt: item.createdAt,
-                iconType: item.iconType,
+                status: item.status,
                 isRead: true,
               );
             });

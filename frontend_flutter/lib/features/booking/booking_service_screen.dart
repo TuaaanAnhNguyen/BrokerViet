@@ -31,26 +31,26 @@ class _BookingScreenState extends State<BookingScreen> {
   
   int _selectedDateIndex = 0;
   late String _selectedTime;
-  int _selectedPaymentMethod = 0; // 0: VietQR, 1: Card, 2: Cash
+  int _selectedPaymentMethod = 0; // 0: VietQR, 1: Thẻ, 2: Tiền mặt
   bool _isSubmitting = false;
 
   final List<Map<String, String>> _dates = [
-    {'month': 'Oct', 'day': '24', 'weekday': 'Thu'},
-    {'month': 'Oct', 'day': '25', 'weekday': 'Fri'},
-    {'month': 'Oct', 'day': '26', 'weekday': 'Sat'},
-    {'month': 'Oct', 'day': '27', 'weekday': 'Sun'},
-    {'month': 'Oct', 'day': '28', 'weekday': 'Mon'},
+    {'month': 'Th10', 'day': '24', 'weekday': 'Th 5'},
+    {'month': 'Th10', 'day': '25', 'weekday': 'Th 6'},
+    {'month': 'Th10', 'day': '26', 'weekday': 'Th 7'},
+    {'month': 'Th10', 'day': '27', 'weekday': 'Chủ Nhật'},
+    {'month': 'Th10', 'day': '28', 'weekday': 'Th 2'},
   ];
 
   final List<String> _timeSlots = [
-    "09:00 AM", "10:30 AM", "01:00 PM", "02:30 PM", "04:00 PM", "05:30 PM (Full)"
+    "09:00 SA", "10:30 SA", "01:00 CH", "02:30 CH", "04:00 CH", "05:30 CH (Hết chỗ)"
   ];
 
   @override
   void initState() {
     super.initState();
     _addressController = TextEditingController(
-      text: "Landmark 81, Vinhomes Central Park, Ward 22, Binh Thanh District",
+      text: "Landmark 81, Vinhomes Central Park, Phường 22, Quận Bình Thạnh",
     );
     _selectedTime = widget.time;
   }
@@ -71,7 +71,6 @@ class _BookingScreenState extends State<BookingScreen> {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
 
-      // Fixed: Using standard root navigator mapping to cleanly navigate away
       final rootNavigator = Navigator.of(context);
 
       showDialog(
@@ -83,11 +82,11 @@ class _BookingScreenState extends State<BookingScreen> {
             children: [
               Icon(Icons.check_circle, color: Color(0xFF004AC6)),
               SizedBox(width: 8),
-              Text('Booking Confirmed', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              Text('Đặt lịch thành công', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             ],
           ),
           content: Text(
-            'Your appointment for Premium AC Deep Cleaning on Oct ${_dates[_selectedDateIndex]['day']} at $_selectedTime has been successfully recorded.',
+            'Lịch hẹn dịch vụ ${widget.serviceTitle} vào ngày ${_dates[_selectedDateIndex]['day']} thg 10 lúc $_selectedTime đã được ghi nhận hệ thống.',
             style: const TextStyle(color: Color(0xFF434655)),
           ),
           actions: [
@@ -101,7 +100,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text('Go to Home', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text('Về Trang Chủ', style: TextStyle(fontWeight: FontWeight.bold)),
             )
           ],
         ),
@@ -117,11 +116,21 @@ class _BookingScreenState extends State<BookingScreen> {
     const Color bodyText = Color(0xFF434655);
     const Color outlineVariant = Color(0xFFC3C6D7);
 
+    // Tính toán lại hóa đơn dựa trên dữ liệu giá của ví dụ dịch vụ nhận vào
+    final double serviceFee = widget.price.contains('1.200.000') ? 1200000 : 450000;
+    const double platformFee = 15000;
+    final double discount = serviceFee * 0.10; // Giảm giá 10% từ mã PROMO10
+    final double totalAmount = serviceFee + platformFee - discount;
+
+    String formatCurrency(double amount) {
+      return "${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')} VND";
+    }
+
     return Scaffold(
       backgroundColor: surfaceColor,
       appBar: AppBar(
         title: const Text(
-          'Review Booking',
+          'Xác nhận đặt lịch',
           style: TextStyle(color: darkText, fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: Colors.white,
@@ -148,7 +157,7 @@ class _BookingScreenState extends State<BookingScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 140),
             children: [
-              // 1. Summary Block
+              // 1. Summary Block (Thông tin dịch vụ)
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -176,13 +185,13 @@ class _BookingScreenState extends State<BookingScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'HVAC MAINTENANCE',
+                            'SỬA CHỮA PHẦN CỨNG',
                             style: TextStyle(color: primaryColor, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
                           ),
                           const SizedBox(height: 2),
-                          const Text(
-                            'Premium AC Deep Cleaning',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText),
+                          Text(
+                            widget.serviceTitle,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -192,7 +201,7 @@ class _BookingScreenState extends State<BookingScreen> {
                               const Icon(Icons.star, color: Colors.amber, size: 16),
                               const SizedBox(width: 2),
                               Text(
-                                '4.9 (124 reviews) • 60-90 mins',
+                                '4.9 (248 đánh giá) • 45-60 phút',
                                 style: TextStyle(color: bodyText.withOpacity(0.9), fontSize: 13),
                               ),
                             ],
@@ -205,8 +214,8 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
               const SizedBox(height: 24),
 
-              // 2. Schedule Grid Selector (Fixed compile errors here)
-              const Text('Schedule Appointment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText)),
+              // 2. Schedule Grid Selector
+              const Text('Chọn thời gian hẹn', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText)),
               const SizedBox(height: 12),
               SizedBox(
                 height: 80,
@@ -262,7 +271,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
                 itemBuilder: (context, index) {
                   final timeText = _timeSlots[index];
-                  final isFull = timeText.contains('(Full)');
+                  final isFull = timeText.contains('(Hết chỗ)');
                   final isSelected = _selectedTime == timeText && !isFull;
 
                   return InkWell(
@@ -275,10 +284,10 @@ class _BookingScreenState extends State<BookingScreen> {
                         border: Border.all(color: isSelected ? primaryColor : outlineVariant.withOpacity(0.7)),
                       ),
                       child: Text(
-                        timeText.replaceAll(' (Full)', ''),
+                        timeText.replaceAll(' (Hết chỗ)', ''),
                         style: TextStyle(
                           fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: AppFontWeight.boldOrNormal(isSelected),
                           color: isSelected ? Colors.white : (isFull ? darkText.withOpacity(0.3) : darkText),
                           decoration: isFull ? TextDecoration.lineThrough : null,
                         ),
@@ -290,11 +299,11 @@ class _BookingScreenState extends State<BookingScreen> {
               const SizedBox(height: 24),
 
               // 3. Location Input Block
-              const Text('Service Location', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText)),
+              const Text('Địa điểm làm việc', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText)),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _addressController,
-                validator: (value) => value!.isEmpty ? 'Location address required' : null,
+                validator: (value) => value!.isEmpty ? 'Vui lòng nhập địa chỉ cụ thể' : null,
                 style: const TextStyle(fontSize: 14, color: darkText),
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.location_on, color: primaryColor),
@@ -302,7 +311,7 @@ class _BookingScreenState extends State<BookingScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
                     child: ElevatedButton(
                       onPressed: () {
-                        setState(() => _addressController.text = "Landmark 81, Vinhomes Central Park, Ward 22, Binh Thanh District");
+                        setState(() => _addressController.text = "Landmark 81, Vinhomes Central Park, Phường 22, Quận Bình Thạnh");
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF39B8FD),
@@ -311,7 +320,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text('Use Current', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      child: const Text('Hiện tại', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                     ),
                   ),
                   filled: true,
@@ -323,14 +332,14 @@ class _BookingScreenState extends State<BookingScreen> {
               const SizedBox(height: 24),
 
               // 4. Instruction Notes Area
-              const Text('Instructions for Pro', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText)),
+              const Text('Ghi chú cho kỹ thuật viên', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText)),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _notesController,
                 maxLines: 3,
                 style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: 'Tell us more about the issue or entrance instructions...',
+                  hintText: 'Mô tả thêm về tình trạng máy hoặc hướng dẫn đường đi...',
                   hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
                   filled: true,
                   fillColor: Colors.white,
@@ -341,13 +350,13 @@ class _BookingScreenState extends State<BookingScreen> {
               const SizedBox(height: 24),
 
               // 5. Payment Matrix Rows
-              const Text('Payment Method', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText)),
+              const Text('Phương thức thanh toán', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText)),
               const SizedBox(height: 12),
-              _buildPaymentRow(0, Icons.qr_code_2, 'Online Banking (VietQR)', 'Direct transfer via mobile app', primaryColor, outlineVariant),
+              _buildPaymentRow(0, Icons.qr_code_2, 'Chuyển khoản Online (VietQR)', 'Quét mã QR nhanh chóng qua ứng dụng ngân hàng', primaryColor, outlineVariant),
               const SizedBox(height: 8),
-              _buildPaymentRow(1, Icons.credit_card, 'Credit / Debit Card', 'Visa, Mastercard, JCB', primaryColor, outlineVariant),
+              _buildPaymentRow(1, Icons.credit_card, 'Thẻ Tín dụng / Ghi nợ', 'Visa, Mastercard, JCB', primaryColor, outlineVariant),
               const SizedBox(height: 8),
-              _buildPaymentRow(2, Icons.payments, 'Cash on Service', 'Pay after completion', primaryColor, outlineVariant),
+              _buildPaymentRow(2, Icons.payments, 'Tiền mặt sau dịch vụ', 'Thanh toán sau khi hoàn thành sửa chữa', primaryColor, outlineVariant),
               const SizedBox(height: 28),
 
               // 6. Detailed Bill Cost Breakdown Block
@@ -361,19 +370,19 @@ class _BookingScreenState extends State<BookingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Bill Details', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: darkText)),
+                    const Text('Chi tiết hóa đơn', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: darkText)),
                     const SizedBox(height: 12),
-                    _buildBillRow('Service Fee', '450,000 VND', bodyText),
+                    _buildBillRow('Phí dịch vụ (${widget.packageName})', formatCurrency(serviceFee), bodyText),
                     const SizedBox(height: 6),
-                    _buildBillRow('Platform Fee', '15,000 VND', bodyText),
+                    _buildBillRow('Phí nền tảng', formatCurrency(platformFee), bodyText),
                     const SizedBox(height: 6),
-                    _buildBillRow('Promo Discount (BROKER10)', '-45,000 VND', primaryColor, isMedium: true),
+                    _buildBillRow('Khuyến mãi giảm giá (PROMO10)', '-${formatCurrency(discount)}', primaryColor, isMedium: true),
                     const Divider(height: 24, thickness: 0.5, color: outlineVariant),
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Total Amount', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText)),
-                        Text('420,000 VND', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: darkText)),
+                        const Text('Tổng cộng', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText)),
+                        Text(formatCurrency(totalAmount), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: darkText)),
                       ],
                     )
                   ],
@@ -384,7 +393,7 @@ class _BookingScreenState extends State<BookingScreen> {
         ),
       ),
       
-      // 7. Fixed Bottom Checkout Bar (Fixed: Moved layout constraints down into the Column layout body correctly)
+      // 7. Fixed Bottom Checkout Bar
       bottomSheet: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -392,25 +401,26 @@ class _BookingScreenState extends State<BookingScreen> {
           border: Border(top: BorderSide(color: outlineVariant.withOpacity(0.5))),
         ),
         child: SafeArea(
+          top: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Final Price', style: TextStyle(fontSize: 12, color: bodyText)),
-                      Text('420,000 VND', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor)),
+                      const Text('Giá thanh toán cuối', style: TextStyle(fontSize: 12, color: bodyText)),
+                      Text(formatCurrency(totalAmount), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor)),
                     ],
                   ),
                   Row(
                     children: [
                       const Icon(Icons.verified_user, color: bodyText, size: 14),
                       const SizedBox(width: 4),
-                      Text('Secure checkout', style: TextStyle(fontSize: 12, color: bodyText.withOpacity(0.8))),
+                      Text('Thanh toán bảo mật', style: TextStyle(fontSize: 12, color: bodyText.withOpacity(0.8))),
                     ],
                   )
                 ],
@@ -427,7 +437,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
                 child: _isSubmitting
                     ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Confirm Booking', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    : const Text('Xác nhận đặt lịch', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 8),
               RichText(
@@ -435,9 +445,9 @@ class _BookingScreenState extends State<BookingScreen> {
                 text: const TextSpan(
                   style: TextStyle(fontSize: 11, color: bodyText),
                   children: [
-                    TextSpan(text: 'By clicking "Confirm Booking", you agree to BrokerViet\'s '),
-                    TextSpan(text: 'Terms of Service', style: TextStyle(color: primaryColor, decoration: TextDecoration.underline)),
-                    TextSpan(text: '.'),
+                    TextSpan(text: 'Bằng việc nhấn nút "Xác nhận đặt lịch", bạn đồng ý với '),
+                    TextSpan(text: 'Điều khoản dịch vụ', style: TextStyle(color: primaryColor, decoration: TextDecoration.underline)),
+                    TextSpan(text: ' của chúng tôi.'),
                   ],
                 ),
               ),
@@ -500,5 +510,12 @@ class _BookingScreenState extends State<BookingScreen> {
         Text(cost, style: TextStyle(color: textColor, fontSize: 13, fontWeight: isMedium ? FontWeight.bold : FontWeight.normal)),
       ],
     );
+  }
+}
+
+// Helper class giải quyết lỗi gán kiểu trong logic TextStyle
+class AppFontWeight {
+  static FontWeight boldOrNormal(bool condition) {
+    return condition ? FontWeight.bold : FontWeight.normal;
   }
 }

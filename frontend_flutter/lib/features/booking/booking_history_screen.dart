@@ -11,7 +11,7 @@ class BookingModel {
   final String date;
   final String originalCost;
   final String cost;
-  final String status; // 'In Review', 'In Progress', 'Done', 'Cancelled'
+  final String status; // 'Chờ duyệt', 'Đang thực hiện', 'Đã hoàn thành', 'Đã hủy'
 
   const BookingModel({
     required this.bookingId,
@@ -33,47 +33,47 @@ class BookingHistoryScreen extends StatelessWidget {
     BookingModel(
       bookingId: 'BV-9831',
       shopName: 'TechCare Pro Service',
-      serviceTitle: 'Deep PC Cleaning & Thermal Paste Optimization',
+      serviceTitle: 'Vệ sinh PC chuyên sâu & Tối ưu hóa keo tản nhiệt',
       imageUrl: 'https://images.unsplash.com/photo-1588508065123-287b28e013da?w=150',
-      variantDetails: 'Thermal Grizzly, Standard Desktop Tower',
-      date: '01 June 2026',
+      variantDetails: 'Thermal Grizzly, Máy tính bàn Tiêu chuẩn',
+      date: '01 Tháng 6 2026',
       originalCost: '350.000đ',
       cost: '250.000đ',
-      status: 'In Progress',
+      status: 'Đang thực hiện',
     ),
     BookingModel(
       bookingId: 'BV-9210',
       shopName: 'An Phát Computer',
       serviceTitle: 'Bàn phím cơ DareU EK87L V2 Black no LED',
       imageUrl: 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=150',
-      variantDetails: 'Dream, Đen',
-      date: '25 May 2026',
+      variantDetails: 'Dream Switch, Màu Đen',
+      date: '25 Tháng 5 2026',
       originalCost: '499.000đ',
       cost: '289.000đ',
-      status: 'Done',
+      status: 'Đã hoàn thành',
     ),
     BookingModel(
       bookingId: 'BV-1102',
       shopName: 'Blood Lab Center',
-      serviceTitle: 'Clinical Analysis & Biomarker Testing Evaluation',
+      serviceTitle: 'Xét nghiệm lâm sàng & Đánh giá chỉ số sinh học',
       imageUrl: 'https://images.unsplash.com/photo-1579165466541-7183b6f6943a?w=150',
-      variantDetails: 'Express Standard Panels',
-      date: '12 May 2026',
+      variantDetails: 'Gói Xét nghiệm Tiêu chuẩn Hỏa tốc',
+      date: '12 Tháng 5 2026',
       originalCost: '600.000đ',
       cost: '600.000đ',
-      status: 'In Review',
+      status: 'Chờ duyệt',
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final List<String> statuses = ['All', 'In Review', 'In Progress', 'Done', 'Cancelled'];
-    const Color primaryColor = Color(0xFF004AC6); // Re-aligned back to platform theme blue
+    final List<String> statuses = ['Tất cả', 'Chờ duyệt', 'Đang thực hiện', 'Đã hoàn thành', 'Đã hủy'];
+    const Color primaryColor = Color(0xFF004AC6);
 
     return DefaultTabController(
       length: statuses.length,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FF), // Matches BookingScreen surface color
+        backgroundColor: const Color(0xFFF8F9FF),
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
@@ -102,12 +102,12 @@ class BookingHistoryScreen extends StatelessWidget {
         ),
         body: TabBarView(
           children: statuses.map((status) {
-            final filteredBookings = status == 'All'
+            final filteredBookings = status == 'Tất cả'
                 ? _mockBookings
                 : _mockBookings.where((item) => item.status.toLowerCase() == status.toLowerCase()).toList();
 
             return filteredBookings.isEmpty
-                ? const Center(child: Text('No bookings found.', style: TextStyle(color: Color(0xFF434655))))
+                ? const Center(child: Text('Không tìm thấy đơn hàng nào.', style: TextStyle(color: Color(0xFF434655))))
                 : ListView.builder(
                     itemCount: filteredBookings.length,
                     padding: const EdgeInsets.only(top: 8),
@@ -130,17 +130,13 @@ class BookingHistoryScreen extends StatelessWidget {
     String visibleStatusText = order.status;
     Color statusColor = primaryColor;
 
-    if (order.status == 'Done') {
-      visibleStatusText = 'Done';
-      statusColor = const Color(0xFF2E7D32); // Deep green for clean completion
-    } else if (order.status == 'In Progress') {
-      visibleStatusText = 'In Progress';
+    if (order.status == 'Đã hoàn thành') {
+      statusColor = const Color(0xFF2E7D32); // Xanh lá cho trạng thái hoàn thành
+    } else if (order.status == 'Đang thực hiện') {
       statusColor = primaryColor;
-    } else if (order.status == 'In Review') {
-      visibleStatusText = 'In Review';
-      statusColor = const Color(0xFFE65100); // Muted amber/orange for attention states
-    } else if (order.status == 'Cancelled') {
-      visibleStatusText = 'Cancelled';
+    } else if (order.status == 'Chờ duyệt') {
+      statusColor = const Color(0xFFE65100); // Cam/Hổ phách cho trạng thái chờ duyệt
+    } else if (order.status == 'Đã hủy') {
       statusColor = Colors.red.shade700;
     }
 
@@ -151,7 +147,7 @@ class BookingHistoryScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row 1: Header (Platform Faction/Tag + Vendor Identity & Clean Status)
+          // Row 1: Header (Đối tác cung cấp + Trạng thái đơn)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -165,7 +161,7 @@ class BookingHistoryScreen extends StatelessWidget {
                       border: Border.all(color: primaryColor.withOpacity(0.3)),
                     ),
                     child: const Text(
-                      'Provider:',
+                      'Nơi cung cấp:',
                       style: TextStyle(color: primaryColor, fontSize: 10, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -184,7 +180,7 @@ class BookingHistoryScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           
-          // Row 2: Content Body Block
+          // Row 2: Nội dung dịch vụ/sản phẩm chính
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -213,7 +209,7 @@ class BookingHistoryScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      order.variantDetails,
+                      'Phân loại: ${order.variantDetails}',
                       style: const TextStyle(color: bodyText, fontSize: 12),
                     ),
                     const SizedBox(height: 4),
@@ -228,7 +224,7 @@ class BookingHistoryScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // Row 3: Discount comparison line
+          // Row 3: Giá gốc và giá giảm
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -250,12 +246,12 @@ class BookingHistoryScreen extends StatelessWidget {
           ),
           const Divider(height: 20, thickness: 0.5, color: outlineVariant),
 
-          // Row 4: Total calculation block
+          // Row 4: Tổng số tiền tính toán
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               const Text(
-                'Total Amount (1 service): ',
+                'Thành tiền (1 dịch vụ): ',
                 style: TextStyle(fontSize: 13, color: bodyText),
               ),
               Text(
@@ -266,7 +262,7 @@ class BookingHistoryScreen extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
-          // Row 5: Interaction actions line context
+          // Row 5: Khối các nút tương tác hành động đơn hàng
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: _buildActionButtons(order.status),
@@ -294,34 +290,34 @@ class BookingHistoryScreen extends StatelessWidget {
     );
 
     switch (status) {
-      case 'Done':
+      case 'Đã hoàn thành':
         return [
           OutlinedButton(
             onPressed: () {},
             style: secondaryButtonStyle,
-            child: const Text('View Review', style: TextStyle(color: darkText, fontSize: 13)),
+            child: const Text('Xem đánh giá', style: TextStyle(color: darkText, fontSize: 13)),
           ),
           const SizedBox(width: 8),
           OutlinedButton(
             onPressed: () {},
             style: primaryButtonStyle,
-            child: const Text('Reschedule', style: TextStyle(color: primaryColor, fontSize: 13, fontWeight: FontWeight.bold)),
+            child: const Text('Đặt lịch lại', style: TextStyle(color: primaryColor, fontSize: 13, fontWeight: FontWeight.bold)),
           ),
         ];
-      case 'In Progress':
+      case 'Đang thực hiện':
         return [
           OutlinedButton(
             onPressed: () {},
             style: primaryButtonStyle,
-            child: const Text('Track Progress', style: TextStyle(color: primaryColor, fontSize: 13, fontWeight: FontWeight.bold)),
+            child: const Text('Theo dõi tiến độ', style: TextStyle(color: primaryColor, fontSize: 13, fontWeight: FontWeight.bold)),
           ),
         ];
-      case 'In Review':
+      case 'Chờ duyệt':
         return [
           OutlinedButton(
             onPressed: () {},
             style: secondaryButtonStyle,
-            child: const Text('Cancel Request', style: TextStyle(color: darkText, fontSize: 13)),
+            child: const Text('Hủy yêu cầu', style: TextStyle(color: darkText, fontSize: 13)),
           ),
         ];
       default:
@@ -329,7 +325,7 @@ class BookingHistoryScreen extends StatelessWidget {
           OutlinedButton(
             onPressed: () {},
             style: secondaryButtonStyle,
-            child: const Text('View Details', style: TextStyle(color: darkText, fontSize: 13)),
+            child: const Text('Xem chi tiết', style: TextStyle(color: darkText, fontSize: 13)),
           ),
         ];
     }

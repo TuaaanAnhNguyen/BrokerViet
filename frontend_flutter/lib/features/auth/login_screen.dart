@@ -62,22 +62,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   CustomTextField(
                     controller: _phoneController,
-                    labelText: 'Phone Number',
+                    labelText: 'Số điện thoại',
                     prefixIcon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
                     validator: (value) => value == null || value.isEmpty
-                        ? 'Enter your phone'
+                        ? 'Vui lòng nhập số điện thoại'
                         : null,
                   ),
                   const SizedBox(height: 16),
 
                   CustomTextField(
                     controller: _passwordController,
-                    labelText: 'Password',
+                    labelText: 'Mật khẩu',
                     prefixIcon: Icons.lock_outlined,
                     isPasswordField: true,
                     validator: (value) => value == null || value.isEmpty
-                        ? 'Enter your password'
+                        ? 'Vui lòng nhập mật khẩu'
                         : null,
                   ),
                   const SizedBox(height: 24),
@@ -89,7 +89,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (state is AuthSuccess) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Welcome back, ${state.name}!'),
+                            content: Text(
+                              'Chào mừng bạn quay trở lại, ${state.name}!',
+                            ),
                           ),
                         );
                       }
@@ -130,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         child: const Text(
-                          'Sign In',
+                          'Đăng Nhập',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -147,11 +149,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: RichText(
                       text: const TextSpan(
-                        text: "Don't have an account? ",
+                        text: "Chưa có tài khoản? ",
                         style: TextStyle(color: Colors.black54, fontSize: 14),
                         children: [
                           TextSpan(
-                            text: "Sign Up",
+                            text: "Đăng ký ngay",
                             style: TextStyle(
                               color: Colors.blue,
                               fontWeight: FontWeight.bold,

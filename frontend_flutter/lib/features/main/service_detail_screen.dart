@@ -12,19 +12,20 @@ class ServiceDetailScreen extends StatefulWidget {
 
 class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   bool _isFavorited = false;
-  int _selectedPriceIndex = 1;
+  int _selectedPriceIndex = 0;
   int _selectedDateIndex = 0;
   int _selectedTimeIndex = 0;
 
+  // Dữ liệu các ngày trong tuần
   final List<Map<String, String>> _dates = [
-    {'day': 'MON', 'num': '12'},
-    {'day': 'TUE', 'num': '13'},
-    {'day': 'WED', 'num': '14'},
-    {'day': 'THU', 'num': '15'},
-    {'day': 'FRI', 'num': '16'},
+    {'day': 'T2', 'num': '12'},
+    {'day': 'T3', 'num': '13'},
+    {'day': 'T4', 'num': '14'},
+    {'day': 'T5', 'num': '15'},
+    {'day': 'T6', 'num': '16'},
   ];
 
-  final List<String> _times = ['09:00 AM', '11:30 AM', '02:00 PM', '04:30 PM'];
+  final List<String> _times = ['09:00 SA', '11:30 SA', '02:00 CH', '04:30 CH'];
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +114,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Tags lấy từ ServiceModel ví dụ
                         Row(
                           children: [
                             Container(
@@ -121,13 +123,11 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(
-                                  0xFF39B8FD,
-                                ).withOpacity(0.15),
+                                color: const Color(0xFF39B8FD).withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text(
-                                'Hardware',
+                                'Sửa chữa', // Thay cho Repair
                                 style: TextStyle(
                                   color: Color(0xFF006591),
                                   fontWeight: FontWeight.bold,
@@ -146,7 +146,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text(
-                                'Verified',
+                                'Bảo hành', // Thay cho Warranty
                                 style: TextStyle(
                                   color: bodyText,
                                   fontWeight: FontWeight.bold,
@@ -158,8 +158,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         ),
                         const SizedBox(height: 12),
 
+                        // Title lấy từ ServiceModel
                         const Text(
-                          'Advanced Hardware Diagnostic',
+                          'Chẩn đoán & Sửa chữa Toàn diện',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -168,6 +169,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         ),
                         const SizedBox(height: 8),
 
+                        // Rating lấy từ ServiceModel
                         const Row(
                           children: [
                             Icon(Icons.star, color: Colors.amber, size: 20),
@@ -181,20 +183,21 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                             ),
                             SizedBox(width: 4),
                             Text(
-                              '(248 Reviews)',
+                              '(248 Đánh giá)',
                               style: TextStyle(color: bodyText, fontSize: 14),
                             ),
                             SizedBox(width: 8),
                             Text('•', style: TextStyle(color: Colors.grey)),
                             SizedBox(width: 8),
                             Text(
-                              '1.2k Bookings',
+                              '1.2k Lượt đặt',
                               style: TextStyle(color: bodyText, fontSize: 14),
                             ),
                           ],
                         ),
                         const SizedBox(height: 24),
 
+                        // Provider Info từ ServiceModel
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -223,7 +226,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                     Row(
                                       children: [
                                         const Text(
-                                          'Viet Nguyen',
+                                          'TechPro VN',
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
@@ -238,9 +241,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                           ),
                                           decoration: BoxDecoration(
                                             color: primaryColor,
-                                            borderRadius: BorderRadius.circular(
-                                              4,
-                                            ),
+                                            borderRadius: BorderRadius.circular(4),
                                           ),
                                           child: const Text(
                                             'PRO',
@@ -262,7 +263,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                         ),
                                         SizedBox(width: 4),
                                         Text(
-                                          '~15m response time',
+                                          'Phản hồi ~15 phút',
                                           style: TextStyle(
                                             color: bodyText,
                                             fontSize: 13,
@@ -283,7 +284,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         const SizedBox(height: 24),
 
                         const Text(
-                          'About this service',
+                          'Về dịch vụ này',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -292,7 +293,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Get a complete health check for your enterprise or personal workstation. Our advanced diagnostic includes thermal imaging, voltage stability testing, and deep-level board inspection using industry-standard oscilloscopes and multimeters.',
+                          'Kiểm tra toàn diện tình trạng sức khỏe cho máy trạm doanh nghiệp hoặc máy tính cá nhân của bạn. Dịch vụ chẩn đoán nâng cao bao gồm đo nhiệt độ phần cứng, kiểm tra độ ổn định điện áp và kiểm tra sâu vi mạch bo mạch bằng các thiết bị chuyên dụng chuẩn công nghiệp.',
                           style: TextStyle(
                             color: bodyText,
                             fontSize: 15,
@@ -307,16 +308,16 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                           crossAxisCount: 2,
                           childAspectRatio: 4,
                           children: const [
-                            _FeatureCheckRow(label: '6-month warranty'),
-                            _FeatureCheckRow(label: 'On-site available'),
-                            _FeatureCheckRow(label: 'Same-day report'),
-                            _FeatureCheckRow(label: 'Certified Lab'),
+                            _FeatureCheckRow(label: 'Bảo hành 6 tháng'),
+                            _FeatureCheckRow(label: 'Hỗ trợ tại nhà'),
+                            _FeatureCheckRow(label: 'Báo cáo trong ngày'),
+                            _FeatureCheckRow(label: 'Kỹ thuật viên chứng chỉ'),
                           ],
                         ),
                         const SizedBox(height: 24),
 
                         const Text(
-                          'Pricing Options',
+                          'Gói Dịch Vụ & Giá',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -326,35 +327,34 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         const SizedBox(height: 12),
                         _buildPriceCard(
                           0,
-                          'Standard Diagnostic',
-                          'General hardware inspection',
-                          '\$45.00',
+                          'Chẩn đoán Cơ bản',
+                          'Sửa laptop, sửa PC, diệt virus cơ bản',
+                          '450.000 VND',
                           primaryColor,
                         ),
                         const SizedBox(height: 12),
                         _buildPriceCard(
                           1,
-                          'Deep-Level Circuitry',
-                          'Board repair & micro-soldering',
-                          '\$120.00',
+                          'Sửa chữa Chuyên sâu',
+                          'Sửa lỗi bo mạch & hàn vi mạch chuyên sâu',
+                          '1.200.000 VND',
                           primaryColor,
                           isPopular: true,
                         ),
                         const SizedBox(height: 24),
 
-                        const Row(
+                        Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Select Schedule',
+                            const Text(
+                              'Chọn Lịch Hẹn',
                               style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: darkText,
-                              ),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: darkText),
                             ),
                             Text(
-                              'View Calendar',
+                              'Xem Lịch',
                               style: TextStyle(
                                 color: primaryColor,
                                 fontWeight: FontWeight.bold,
@@ -385,9 +385,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                     border: isSelected
                                         ? null
                                         : Border.all(
-                                            color: const Color(
-                                              0xFFC3C6D7,
-                                            ).withOpacity(0.5),
+                                            color: const Color(0xFFC3C6D7)
+                                                .withOpacity(0.5),
                                           ),
                                   ),
                                   child: Column(
@@ -447,9 +446,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                   side: BorderSide(
                                     color: isSelected
                                         ? primaryColor
-                                        : const Color(
-                                            0xFFC3C6D7,
-                                          ).withOpacity(0.5),
+                                        : const Color(0xFFC3C6D7)
+                                            .withOpacity(0.5),
                                   ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(24),
@@ -461,9 +459,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         ),
                         const SizedBox(height: 24),
 
-                        // 7. Inline Customer Reviews Box block
                         const Text(
-                          'Reviews',
+                          'Đánh giá',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -488,7 +485,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                             ),
                             const SizedBox(width: 8),
                             const Text(
-                              'Aria Smith',
+                              'Minh Thư',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             const Spacer(),
@@ -506,7 +503,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         ),
                         const SizedBox(height: 6),
                         const Text(
-                          '"Highly professional. My laptop wouldn\'t turn on, and Viet diagnosed the blown capacitor in 30 minutes."',
+                          '"Làm việc rất chuyên nghiệp. Máy mình không lên nguồn, anh kỹ thuật viên tìm ra lỗi hỏng tụ điện và sửa xong chỉ trong 30 phút."',
                           style: TextStyle(
                             fontStyle: FontStyle.italic,
                             color: bodyText,
@@ -523,16 +520,14 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                             ),
                           ),
                           child: const Text(
-                            'Show all reviews',
+                            'Xem tất cả đánh giá',
                             style: TextStyle(
                               color: darkText,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        const SizedBox(
-                          height: 80,
-                        ), // Creates safety buffer for floating bar layout
+                        const SizedBox(height: 80),
                       ],
                     ),
                   ),
@@ -541,7 +536,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             ],
           ),
 
-          // 8. Sticky Action Purchase Dock Drawer Block
+          // Sticky Action Purchase Dock
           Positioned(
             bottom: 0,
             left: 0,
@@ -578,13 +573,13 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          // 1. Gather the selected data from the state
+                          // Thu thập dữ liệu trạng thái được chọn để truyền qua BookingScreen
                           final selectedPackage = _selectedPriceIndex == 0
-                              ? 'Standard Diagnostic'
-                              : 'Deep-Level Circuitry';
+                              ? 'Chẩn đoán Cơ bản'
+                              : 'Sửa chữa Chuyên sâu';
                           final selectedPrice = _selectedPriceIndex == 0
-                              ? '\$45.00'
-                              : '\$120.00';
+                              ? '450.000 VND'
+                              : '1.200.000 VND';
                           final selectedDate =
                               '${_dates[_selectedDateIndex]['day']} ${_dates[_selectedDateIndex]['num']}';
                           final selectedTime = _times[_selectedTimeIndex];
@@ -593,8 +588,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => BookingScreen(
-                                serviceTitle: 'Advanced Hardware Diagnostic',
-                                providerName: 'Viet Nguyen',
+                                serviceTitle: 'Chẩn đoán & Sửa chữa Toàn diện',
+                                providerName: 'TechPro VN',
                                 packageName: selectedPackage,
                                 price: selectedPrice,
                                 date: selectedDate,
@@ -616,7 +611,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Book Now',
+                              'Đặt Lịch Ngay',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -665,26 +660,28 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0B1C30),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0B1C30),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        color: Color(0xFF434655),
-                        fontSize: 13,
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: Color(0xFF434655),
+                          fontSize: 13,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 Text(
                   price,
@@ -713,7 +710,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                     ),
                   ),
                   child: const Text(
-                    'POPULAR',
+                    'PHỔ BIẾN',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -750,7 +747,6 @@ class _FeatureCheckRow extends StatelessWidget {
   }
 }
 
-// Global safe Image widget fallback utility
 class NetworkImageWithFallback extends StatelessWidget {
   final String imageUrl;
   final double? width;
@@ -772,7 +768,6 @@ class NetworkImageWithFallback extends StatelessWidget {
       width: width,
       height: height,
       fit: fit,
-      // If the URL fails to resolve or breaks, gracefully swap to a placeholder icon
       errorBuilder: (context, error, stackTrace) {
         return Container(
           width: width,
@@ -781,7 +776,6 @@ class NetworkImageWithFallback extends StatelessWidget {
           child: const Icon(Icons.person, color: Color(0xFF004AC6)),
         );
       },
-      // Optional loading indicator spinner while downloading the asset image frame
       loadingBuilder: (context, child, loadingProgress) {
         if (loadingProgress == null) return child;
         return Container(

@@ -18,7 +18,7 @@ class SignUpScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('Create Account'),
+        title: const Text('Tạo tài khoản'),
         backgroundColor: Colors.transparent,
       ),
       body: SafeArea(
@@ -32,7 +32,7 @@ class SignUpScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    'Join BrokerViet',
+                    'Tham gia BrokerViet',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
@@ -40,33 +40,33 @@ class SignUpScreen extends StatelessWidget {
 
                   CustomTextField(
                     controller: _usernameController,
-                    labelText: 'Username',
+                    labelText: 'Tên người dùng',
                     prefixIcon: Icons.person_outlined,
                     keyboardType: TextInputType.text,
                     validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Enter a username'
+                        ? 'Vui lòng nhập tên người dùng'
                         : null,
                   ),
                   const SizedBox(height: 16),
 
                   CustomTextField(
                     controller: _phoneController,
-                    labelText: 'Phone Number',
+                    labelText: 'Số điện thoại',
                     prefixIcon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
                     validator: (value) => value == null || value.isEmpty
-                        ? 'Enter your phone'
+                        ? 'Vui lòng nhập số điện thoại'
                         : null,
                   ),
                   const SizedBox(height: 16),
 
                   CustomTextField(
                     controller: _passwordController,
-                    labelText: 'Password',
+                    labelText: 'Mật khẩu',
                     prefixIcon: Icons.lock_outlined,
                     isPasswordField: true,
                     validator: (value) => value == null || value.isEmpty
-                        ? 'Enter your password'
+                        ? 'Vui lòng nhập mật khẩu'
                         : null,
                   ),
                   const SizedBox(height: 24),
@@ -92,9 +92,9 @@ class SignUpScreen extends StatelessWidget {
                           if (_formKey.currentState!.validate()) {
                             context.read<AuthService>().add(
                               SignUpRequested(
-                                _usernameController.text,
-                                _phoneController.text,
-                                _passwordController.text,
+                                _usernameController.text.trim(),
+                                _phoneController.text.trim(),
+                                _passwordController.text.trim(),
                               ),
                             );
                           }
@@ -105,7 +105,7 @@ class SignUpScreen extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         child: const Text(
-                          'Sign Up',
+                          'Đăng Ký',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

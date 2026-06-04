@@ -17,17 +17,17 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
 
   // Cleaned Category List tailored precisely to project specifications
   final List<Map<String, dynamic>> _categories = [
-    {'label': 'All', 'icon': Icons.grid_view_rounded},
-    {'label': 'PC Repair', 'icon': Icons.computer_rounded},
-    {'label': 'Rentals', 'icon': Icons.precision_manufacturing_rounded},
+    {'label': 'Tất cả', 'icon': Icons.grid_view_rounded},
+    {'label': 'Sửa chữa thiết bị', 'icon': Icons.computer_rounded},
+    {'label': 'Cho thuê thiết bị', 'icon': Icons.precision_manufacturing_rounded},
   ];
 
   // Upgraded Mock Payload mapping to specific subcategories
   final List<ServiceModel> _allServices = const [
     ServiceModel(
       id: '1',
-      title: 'Full System Diagnostic & Fix',
-      subtitle: 'Laptop repair, PC troubleshooting & virus removal',
+      title: 'Chẩn đoán & Sửa chữa Toàn diện',
+      subtitle: 'Sửa laptop, sửa PC, diệt virus',
       providerName: 'TechPro VN',
       price: '450.000 VND',
       rating: 4.9,
@@ -35,8 +35,8 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
     ),
     ServiceModel(
       id: '2',
-      title: 'High-End Gaming PC Build',
-      subtitle: 'Hardware replacement & performance optimization',
+      title: 'Lắp ráp PC Gaming Cấu hình cao',
+      subtitle: 'Thay thế linh kiện & tối ưu hóa hiệu năng phần cứng',
       providerName: 'Linh System',
       price: '75.000.000 VND',
       rating: 5.0,
@@ -44,19 +44,19 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
     ),
     ServiceModel(
       id: '3',
-      title: 'PS5 & VR Headset Combo',
-      subtitle: 'Next-gen console rental with 2 dualsense controllers',
+      title: 'Combo Máy PS5 & Kính thực tế ảo VR',
+      subtitle: 'Thuê máy chơi game thế hệ mới kèm 2 tay cầm dualsense',
       providerName: 'BrokerViet Core Rental',
-      price: '30.000 VND/day',
+      price: '30.000 VND/ngày',
       rating: 4.8,
       tags: ['Rental', 'Gaming Device'],
     ),
     ServiceModel(
       id: '4',
-      title: '4K Creator Monitor & Camera Kit',
-      subtitle: 'Premium production setups & multi-monitor configurations',
+      title: 'Bộ Màn hình Creator 4K & Máy ảnh',
+      subtitle: 'Thiết lập không gian studio chuyên nghiệp & đa màn hình',
       providerName: 'Danang Tech Equipment',
-      price: '50.000 VND/day',
+      price: '50.000 VND/ngày',
       rating: 4.7,
       tags: ['Rental', 'Monitors'],
     ),
@@ -66,7 +66,7 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
   Widget build(BuildContext context) {
     // Live Client-Side Filtering matching Active Tab Constraints
     final List<ServiceModel> filteredServices = _allServices.where((service) {
-      if (_activeCategoryIndex == 0) return true; // 'All' Option
+      if (_activeCategoryIndex == 0) return true; // 'Tất cả' Option
       if (_activeCategoryIndex == 1) return service.tags.contains('Repair');
       if (_activeCategoryIndex == 2) return service.tags.contains('Rental');
       return true;
@@ -82,7 +82,7 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search services, repairs, rentals...',
+                hintText: 'Tìm kiếm dịch vụ, sửa chữa, thuê thiết bị...',
                 prefixIcon: const Icon(Icons.search, color: Color(0xFF737686)),
                 filled: true,
                 fillColor: const Color(0xFFE5EEFF),
@@ -100,7 +100,7 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
-              'Categories',
+              'Danh mục dịch vụ',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -161,77 +161,6 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
           ),
           const SizedBox(height: 24),
 
-          // Promotional Card Block
-          // Padding(
-          //   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          //   child: Container(
-          //     height: 176,
-          //     decoration: BoxDecoration(
-          //       borderRadius: BorderRadius.circular(16),
-          //       gradient: const LinearGradient(
-          //         colors: [Color(0xFF004AC6), Color(0x00004AC6)],
-          //         begin: Alignment.centerLeft,
-          //         end: Alignment.centerRight,
-          //       ),
-          //       color: const Color(0xFF213145),
-          //     ),
-          //     child: Padding(
-          //       padding: const EdgeInsets.all(24.0),
-          //       child: Column(
-          //         crossAxisAlignment: CrossAxisAlignment.start,
-          //         mainAxisAlignment: MainAxisAlignment.center,
-          //         children: [
-          //           const Text(
-          //             'LIMITED OFFER',
-          //             style: TextStyle(
-          //               color: Colors.white70,
-          //               fontSize: 11,
-          //               letterSpacing: 1.5,
-          //               fontWeight: FontWeight.bold,
-          //             ),
-          //           ),
-          //           const SizedBox(height: 4),
-          //           const SizedBox(
-          //             width: 200,
-          //             child: Text(
-          //               'Get 20% off your first PC Build',
-          //               style: TextStyle(
-          //                 color: Colors.white,
-          //                 fontSize: 22,
-          //                 fontWeight: FontWeight.bold,
-          //               ),
-          //             ),
-          //           ),
-          //           const SizedBox(height: 12),
-          //           ElevatedButton(
-          //             onPressed: () {},
-          //             style: ElevatedButton.styleFrom(
-          //               backgroundColor: Colors.white,
-          //               foregroundColor: const Color(0xFF004AC6),
-          //               shape: RoundedRectangleBorder(
-          //                 borderRadius: BorderRadius.circular(20),
-          //               ),
-          //               padding: const EdgeInsets.symmetric(
-          //                 horizontal: 16,
-          //                 vertical: 8,
-          //               ),
-          //               elevation: 0,
-          //             ),
-          //             child: const Text(
-          //               'Claim Now',
-          //               style: TextStyle(
-          //                 fontSize: 12,
-          //                 fontWeight: FontWeight.bold,
-          //               ),
-          //             ),
-          //           ),
-          //         ],
-          //       ),
-          //     ),
-          //   ),
-          // ),
-          const SizedBox(height: 24),
-
           // Nearby Providers Subsection
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -239,7 +168,7 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Nearby Providers',
+                  'Đơn vị cung cấp gần bạn',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -249,7 +178,7 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
                 TextButton(
                   onPressed: () {},
                   child: const Text(
-                    'View All',
+                    'Xem tất cả',
                     style: TextStyle(
                       color: Color(0xFF004AC6),
                       fontWeight: FontWeight.bold,
@@ -266,9 +195,9 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                _buildNearbyProviderTile('TechPro VN', '0.8 km away', '4.9'),
-                _buildNearbyProviderTile('Linh System', '1.2 km away', '4.8'),
-                _buildNearbyProviderTile('FixIt Fast', '2.5 km away', '4.7'),
+                _buildNearbyProviderTile('TechPro VN', 'Cách đây 0.8 km', '4.9'),
+                _buildNearbyProviderTile('Linh System', 'Cách đây 1.2 km', '4.8'),
+                _buildNearbyProviderTile('FixIt Fast', 'Cách đây 2.5 km', '4.7'),
               ],
             ),
           ),
@@ -278,9 +207,9 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
-              _categories[_activeCategoryIndex]['label'] == 'All'
-                  ? 'Popular Services'
-                  : 'Available ${_categories[_activeCategoryIndex]['label']}',
+              _categories[_activeCategoryIndex]['label'] == 'Tất cả'
+                  ? 'Dịch vụ phổ biến'
+                  : 'Dịch vụ ${_categories[_activeCategoryIndex]['label']}',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -296,7 +225,7 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 24.0),
                       child: Text(
-                        'No services found in this category.',
+                        'Không tìm thấy dịch vụ nào trong danh mục này.',
                         style: TextStyle(color: Colors.black38),
                       ),
                     ),
