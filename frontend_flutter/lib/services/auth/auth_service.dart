@@ -1,6 +1,7 @@
 // lib/services/auth/auth_service.dart
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 abstract class AuthState {}
 
@@ -47,27 +48,44 @@ class SignUpRequested extends AuthEvent {
 class LogoutRequested extends AuthEvent {}
 
 class AuthService extends Bloc<AuthEvent, AuthState> {
+  final _supabase = Supabase.instance.client;
+
+  String _formatPhoneNumber(String phone) {
+    phone = phone.trim();
+    if (phone.startsWith('0')) {
+      return '+84${phone.substring(1)}';
+    }
+    if (!phone.startsWith('+')) {
+      return '+84$phone'; // Mặc định là VN nếu không có dấu +
+    }
+    return phone;
+  }
+
   AuthService() : super(AuthInitial()) {
-    
     on<LoginRequested>((event, emit) async {
       emit(AuthLoading());
 
       try {
-        await Future.delayed(const Duration(seconds: 2));
+        final formattedPhone = _formatPhoneNumber(event.phone);
+        final response = await _supabase.auth.signInWithPassword(
+          phone: formattedPhone,
+          password: event.password,
+        );
+// ... tiếp tục code cũ
 
-        if (event.phone == '0123' && event.password == '0123') {
+        if (response.user != null) {
           emit(AuthSuccess(
-            uid: 'USR-8821',
-            name: 'Tuan Anh',
-            email: 'anv@fe.edu.vn',
+            uid: response.user!.id,
+            name: response.user!.userMetadata?['username'] ?? 'User',
+            email: response.user!.email ?? '',
             avatarPath: 'assets/tam tender.jpg',
             memberTier: 'Thành viên Đồng',
           ));
-        } else {
-          emit(AuthFailure('Invalid phone number or password credentials.'));
         }
+      } on AuthException catch (e) {
+        emit(AuthFailure(e.message));
       } catch (e) {
-        emit(AuthFailure('Server connection failure. Please try again.'));
+        emit(AuthFailure('Login failed. Please try again.'));
       }
     });
 
@@ -75,27 +93,31 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
       emit(AuthLoading());
 
       try {
-        await Future.delayed(const Duration(seconds: 1));
+        final formattedPhone = _formatPhoneNumber(event.phone);
+        final response = await _supabase.auth.signUp(
+          phone: formattedPhone,
+          password: event.password,
+          data: {'username': event.username},
+        );
 
-        if (event.phone == '0123') {
-          emit(AuthFailure('Phone number already registered. Please log in.'));
-        } else if (event.username.trim().isEmpty) {
-          emit(AuthFailure('Username cannot be empty.'));
-        } else {
+        if (response.user != null) {
           emit(AuthSuccess(
-            uid: 'USR-8822',
-            name: event.username,
-            email: '${event.username.toLowerCase().replaceAll(' ', '')}@fe.edu.vn',
+            uid: response.user!.id,
+            name: response.user!.userMetadata?['username'] ?? event.username,
+            email: response.user!.email ?? '',
             avatarPath: 'assets/tam tender.jpg',
             memberTier: 'Thành viên Mới',
           ));
         }
+      } on AuthException catch (e) {
+        emit(AuthFailure(e.message));
       } catch (e) {
-        emit(AuthFailure('Server connection failure. Please try again.'));
+        emit(AuthFailure('Registration failed.'));
       }
     });
 
-    on<LogoutRequested>((event, emit) {
+    on<LogoutRequested>((event, emit) async {
+      await _supabase.auth.signOut();
       emit(AuthInitial());
     });
   }
