@@ -48,7 +48,7 @@ class ProfileMenuScreen extends StatelessWidget {
         centerTitle: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: outlineVariant.withOpacity(0.5), height: 1),
+          child: Container(color: outlineVariant.withValues(alpha: 0.5), height: 1),
         ),
       ),
       body: ListView(

@@ -45,7 +45,7 @@ class ProfileScreen extends StatelessWidget {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: outlineVariant.withOpacity(0.5), height: 1),
+          child: Container(color: outlineVariant.withValues(alpha: 0.5), height: 1),
         ),
       ),
       // Wrapped with BlocBuilder to consume live authenticated data snapshots safely
@@ -75,7 +75,7 @@ class ProfileScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: outlineVariant.withOpacity(0.3)),
+                    border: Border.all(color: outlineVariant.withValues(alpha: 0.3)),
                   ),
                   child: Column(
                     children: [
@@ -156,14 +156,14 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             title,
-            style: TextStyle(color: darkText.withOpacity(0.8), fontSize: 14, fontWeight: FontWeight.bold),
+            style: TextStyle(color: darkText.withValues(alpha: 0.8), fontSize: 14, fontWeight: FontWeight.bold),
           ),
         ),
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: outlineVariant.withOpacity(0.3)),
+            border: Border.all(color: outlineVariant.withValues(alpha: 0.3)),
           ),
           child: Column(children: children),
         ),

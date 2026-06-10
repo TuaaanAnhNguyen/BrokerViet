@@ -65,7 +65,7 @@ class ChatListScreen extends StatelessWidget {
         centerTitle: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: outlineVariant.withOpacity(0.5), height: 1),
+          child: Container(color: outlineVariant.withValues(alpha: 0.5), height: 1),
         ),
       ),
       body: _mockChats.isEmpty
@@ -77,7 +77,7 @@ class ChatListScreen extends StatelessWidget {
             )
           : ListView.separated(
               itemCount: _mockChats.length,
-              separatorBuilder: (context, index) => Divider(height: 1, indent: 76, color: outlineVariant.withOpacity(0.3)),
+              separatorBuilder: (context, index) => Divider(height: 1, indent: 76, color: outlineVariant.withValues(alpha: 0.3)),
               itemBuilder: (context, index) {
                 final chat = _mockChats[index];
                 final hasUnread = chat.unreadCount > 0;
@@ -132,7 +132,7 @@ class ChatListScreen extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  color: hasUnread ? darkText.withOpacity(0.85) : bodyText,
+                                  color: hasUnread ? darkText.withValues(alpha: 0.85) : bodyText,
                                   fontSize: 13,
                                   fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
                                 ),
@@ -151,7 +151,7 @@ class ChatListScreen extends StatelessWidget {
                               chat.time,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: hasUnread ? primaryColor : bodyText.withOpacity(0.6),
+                                color: hasUnread ? primaryColor : bodyText.withValues(alpha: 0.6),
                                 fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
                               ),
                             ),

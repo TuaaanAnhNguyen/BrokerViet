@@ -78,7 +78,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: outlineVariant.withOpacity(0.5), height: 1),
+          child: Container(color: outlineVariant.withValues(alpha: 0.5), height: 1),
         ),
       ),
 
@@ -89,7 +89,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: outlineVariant.withOpacity(0.4), width: 0.5)),
+          border: Border(top: BorderSide(color: outlineVariant.withValues(alpha: 0.4), width: 0.5)),
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,

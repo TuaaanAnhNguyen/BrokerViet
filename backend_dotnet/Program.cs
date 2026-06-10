@@ -38,13 +38,27 @@ builder.Services.AddOpenApi(options =>
 
 builder.Services.AddScoped<ProfileRepository>();
 builder.Services.AddScoped<ProfileServiceImpl>();
+builder.Services.AddScoped<ServiceRepository>(); 
+builder.Services.AddScoped<ServiceSearchServiceImpl>();
 
 builder.Services.AddBrokerVietSupabase(builder.Configuration);
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddControllers();
 
 
 var app = builder.Build();
+
+app.UseCors();
 
 // 2. Cấu hình Pipeline cho môi trường Development
 if (app.Environment.IsDevelopment())

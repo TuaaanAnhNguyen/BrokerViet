@@ -136,7 +136,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: outlineVariant.withOpacity(0.5), height: 1),
+          child: Container(color: outlineVariant.withValues(alpha: 0.5), height: 1),
         ),
       ),
       body: Column(
@@ -179,7 +179,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
             padding: EdgeInsets.fromLTRB(12, 8, 12, MediaQuery.of(context).padding.bottom + 8),
             decoration: BoxDecoration(
               color: Colors.white,
-              border: Border(top: BorderSide(color: outlineVariant.withOpacity(0.5))),
+              border: Border(top: BorderSide(color: outlineVariant.withValues(alpha: 0.5))),
             ),
             child: Row(
               children: [
@@ -244,7 +244,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
           boxShadow: [
             if (!message.isMe)
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               )

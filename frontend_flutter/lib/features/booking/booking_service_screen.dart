@@ -137,7 +137,7 @@ class _BookingScreenState extends State<BookingScreen> {
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: outlineVariant.withOpacity(0.5), height: 1),
+          child: Container(color: outlineVariant.withValues(alpha: 0.5), height: 1),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: primaryColor),
@@ -163,7 +163,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: outlineVariant.withOpacity(0.5)),
+                  border: Border.all(color: outlineVariant.withValues(alpha: 0.5)),
                 ),
                 child: Row(
                   children: [
@@ -202,7 +202,7 @@ class _BookingScreenState extends State<BookingScreen> {
                               const SizedBox(width: 2),
                               Text(
                                 '4.9 (248 đánh giá) • 45-60 phút',
-                                style: TextStyle(color: bodyText.withOpacity(0.9), fontSize: 13),
+                                style: TextStyle(color: bodyText.withValues(alpha: 0.9), fontSize: 13),
                               ),
                             ],
                           ),
@@ -232,7 +232,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         decoration: BoxDecoration(
                           color: isSelected ? primaryColor : const Color(0xFFEFF4FF),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: isSelected ? primaryColor : outlineVariant.withOpacity(0.5)),
+                          border: Border.all(color: isSelected ? primaryColor : outlineVariant.withValues(alpha: 0.5)),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -281,14 +281,14 @@ class _BookingScreenState extends State<BookingScreen> {
                       decoration: BoxDecoration(
                         color: isSelected ? primaryColor : (isFull ? Colors.transparent : Colors.white),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: isSelected ? primaryColor : outlineVariant.withOpacity(0.7)),
+                        border: Border.all(color: isSelected ? primaryColor : outlineVariant.withValues(alpha: 0.7)),
                       ),
                       child: Text(
                         timeText.replaceAll(' (Hết chỗ)', ''),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: AppFontWeight.boldOrNormal(isSelected),
-                          color: isSelected ? Colors.white : (isFull ? darkText.withOpacity(0.3) : darkText),
+                          color: isSelected ? Colors.white : (isFull ? darkText.withValues(alpha: 0.3) : darkText),
                           decoration: isFull ? TextDecoration.lineThrough : null,
                         ),
                       ),
@@ -365,7 +365,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFEFF4FF),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: outlineVariant.withOpacity(0.3)),
+                  border: Border.all(color: outlineVariant.withValues(alpha: 0.3)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -398,7 +398,7 @@ class _BookingScreenState extends State<BookingScreen> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(top: BorderSide(color: outlineVariant.withOpacity(0.5))),
+          border: Border(top: BorderSide(color: outlineVariant.withValues(alpha: 0.5))),
         ),
         child: SafeArea(
           top: false,
@@ -420,7 +420,7 @@ class _BookingScreenState extends State<BookingScreen> {
                     children: [
                       const Icon(Icons.verified_user, color: bodyText, size: 14),
                       const SizedBox(width: 4),
-                      Text('Thanh toán bảo mật', style: TextStyle(fontSize: 12, color: bodyText.withOpacity(0.8))),
+                      Text('Thanh toán bảo mật', style: TextStyle(fontSize: 12, color: bodyText.withValues(alpha: 0.8))),
                     ],
                   )
                 ],
@@ -467,14 +467,14 @@ class _BookingScreenState extends State<BookingScreen> {
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFEFF4FF) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isSelected ? activeColor : defaultOutline.withOpacity(0.6), width: isSelected ? 2 : 1),
+          border: Border.all(color: isSelected ? activeColor : defaultOutline.withValues(alpha: 0.6), width: isSelected ? 2 : 1),
         ),
         child: Row(
           children: [
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: defaultOutline.withOpacity(0.5))),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: defaultOutline.withValues(alpha: 0.5))),
               child: Icon(icon, color: isSelected ? activeColor : const Color(0xFF434655)),
             ),
             const SizedBox(width: 12),
