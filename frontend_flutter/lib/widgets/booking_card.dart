@@ -57,7 +57,7 @@ class BookingCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: const Color(0xFFEFF4FF),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: primaryColor.withOpacity(0.3)),
+                      border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
                     ),
                     child: const Text(
                       'Nơi cung cấp:',
@@ -85,7 +85,7 @@ class BookingCard extends StatelessWidget {
                 width: 76,
                 height: 76,
                 decoration: BoxDecoration(
-                  border: Border.all(color: outlineVariant.withOpacity(0.5)),
+                  border: Border.all(color: outlineVariant.withValues(alpha: 0.5)),
                   borderRadius: BorderRadius.circular(8),
                   image: DecorationImage(
                     image: NetworkImage(order.imageUrl),

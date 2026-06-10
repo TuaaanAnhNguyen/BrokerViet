@@ -48,7 +48,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                 leading: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: CircleAvatar(
-                    backgroundColor: Colors.white.withOpacity(0.8),
+                    backgroundColor: Colors.white.withValues(alpha: 0.8),
                     child: IconButton(
                       icon: const Icon(Icons.arrow_back, color: darkText),
                       onPressed: () => Navigator.pop(context),
@@ -57,7 +57,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                 ),
                 actions: [
                   CircleAvatar(
-                    backgroundColor: Colors.white.withOpacity(0.8),
+                    backgroundColor: Colors.white.withValues(alpha: 0.8),
                     child: IconButton(
                       icon: const Icon(Icons.share, color: darkText),
                       onPressed: () {},
@@ -65,7 +65,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   ),
                   const SizedBox(width: 8),
                   CircleAvatar(
-                    backgroundColor: Colors.white.withOpacity(0.8),
+                    backgroundColor: Colors.white.withValues(alpha: 0.8),
                     child: IconButton(
                       icon: Icon(
                         _isFavorited ? Icons.favorite : Icons.favorite_border,
@@ -123,7 +123,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF39B8FD).withOpacity(0.15),
+                                color: const Color(0xFF39B8FD).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text(
@@ -201,10 +201,10 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE5EEFF).withOpacity(0.5),
+                            color: const Color(0xFFE5EEFF).withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: const Color(0xFFC3C6D7).withOpacity(0.3),
+                              color: const Color(0xFFC3C6D7).withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
@@ -386,7 +386,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                         ? null
                                         : Border.all(
                                             color: const Color(0xFFC3C6D7)
-                                                .withOpacity(0.5),
+                                                .withValues(alpha: 0.5),
                                           ),
                                   ),
                                   child: Column(
@@ -447,7 +447,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                     color: isSelected
                                         ? primaryColor
                                         : const Color(0xFFC3C6D7)
-                                            .withOpacity(0.5),
+                                            .withValues(alpha: 0.5),
                                   ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(24),
@@ -544,7 +544,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 border: const Border(
                   top: BorderSide(color: Color(0xFFC3C6D7), width: 0.5),
                 ),
@@ -647,7 +647,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? activeColor.withOpacity(0.05) : Colors.white,
+          color: isSelected ? activeColor.withValues(alpha: 0.05) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? activeColor : const Color(0xFFC3C6D7),

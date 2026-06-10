@@ -78,12 +78,12 @@ class NotificationTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: notification.isRead
             ? Colors.white
-            : activeColor.withOpacity(0.04),
+            : activeColor.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: notification.isRead
               ? Colors.grey.shade200
-              : activeColor.withOpacity(0.2),
+              : activeColor.withValues(alpha: 0.2),
         ),
       ),
       child: ListTile(

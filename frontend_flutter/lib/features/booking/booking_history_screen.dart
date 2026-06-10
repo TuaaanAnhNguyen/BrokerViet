@@ -73,7 +73,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
             preferredSize: const Size.fromHeight(48),
             child: Container(
               decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: const Color(0xFFC3C6D7).withOpacity(0.5))),
+                border: Border(bottom: BorderSide(color: const Color(0xFFC3C6D7).withValues(alpha: 0.5))),
               ),
               child: TabBar(
                 isScrollable: true,
