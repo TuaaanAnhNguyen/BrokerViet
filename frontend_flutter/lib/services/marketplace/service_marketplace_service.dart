@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import '../../widgets/service_card.dart';
+import '../../models/service_model.dart';
 
 class ServiceMarketplaceService {
   final String _baseUrl;
@@ -10,7 +10,7 @@ class ServiceMarketplaceService {
   ServiceMarketplaceService({String? baseUrl})
       : _baseUrl = baseUrl ??
             dotenv.env['BACKEND_URL'] ??
-            (kIsWeb ? 'http://localhost:5077' : 'http://10.0.2.2:5077'); // Fallback to Android emulator host alias
+            (kIsWeb ? 'http://localhost:5077' : 'http://10.0.2.2:5077');
 
   Future<List<ServiceModel>> searchServices({
     String? categoryId,

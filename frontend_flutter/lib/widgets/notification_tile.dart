@@ -1,24 +1,8 @@
 // lib/widgets/notification_tile.dart
 
 import 'package:flutter/material.dart';
-
-class NotificationModel {
-  final String id;
-  final String title;
-  final String body;
-  final DateTime createdAt;
-  final bool isRead;
-  final String status; // 'In Review', 'In Progress', 'Done', 'Cancelled'
-
-  const NotificationModel({
-    required this.id,
-    required this.title,
-    required this.body,
-    required this.createdAt,
-    this.isRead = false,
-    required this.status,
-  });
-}
+import 'package:flutter/services.dart';
+import '../models/notification_model.dart';
 
 class NotificationTile extends StatelessWidget {
   final NotificationModel notification;
@@ -30,103 +14,209 @@ class NotificationTile extends StatelessWidget {
     required this.onTap,
   });
 
-  // Map the strict string statuses to specialized thematic UI values
-  Map<String, dynamic> _getStatusUiDetails(String status) {
-    switch (status) {
-      case 'In Review':
-        return {
-          'icon': Icons.rate_review_outlined,
-          'color': const Color(0xFFF59E0B), // Warm Amber
-          'fallbackColor': Colors.amber.shade50,
-        };
-      case 'In Progress':
-        return {
-          'icon': Icons.build_circle_outlined,
-          'color': const Color(0xFF004AC6), // BrokerViet Primary Blue
-          'fallbackColor': const Color(0xFFEFF4FF),
-        };
-      case 'Done':
-        return {
-          'icon': Icons.check_circle_outline_rounded,
-          'color': const Color(0xFF10B981), // Emerald Green
-          'fallbackColor': Colors.green.shade50,
-        };
-      case 'Cancelled':
-        return {
-          'icon': Icons.cancel_outlined,
-          'color': const Color(0xFFEF4444), // Crimson Red
-          'fallbackColor': Colors.red.shade50,
-        };
-      default:
-        return {
-          'icon': Icons.notifications_none_outlined,
-          'color': const Color(0xFF434655),
-          'fallbackColor': Colors.grey.shade100,
-        };
+  // Structural Theme Configurator mapping key operational updates
+  Map<String, dynamic> _getStyleSpecs() {
+    final titleLower = notification.title.toLowerCase();
+
+    if (titleLower.contains('xử lý') || titleLower.contains('tiếp nhận')) {
+      return {
+        'label': 'TIẾP NHẬN',
+        'icon': Icons.bolt_rounded, // High-energy, modern speed icon
+        'brandColor': const Color(0xFF004AC6),
+        'bgGradStart': const Color(0xFFF0F5FF),
+        'bgGradEnd': const Color(0xFFE5EFFF),
+      };
+    } else if (titleLower.contains('chờ') || titleLower.contains('xác nhận')) {
+      return {
+        'label': 'XÁC NHẬN',
+        'icon': Icons.hourglass_empty_rounded,
+        'brandColor': const Color(0xFFF59E0B),
+        'bgGradStart': const Color(0xFFFFFBEB),
+        'bgGradEnd': const Color(0xFFFFF3CD),
+      };
+    } else if (titleLower.contains('hoàn thành') || titleLower.contains('tất')) {
+      return {
+        'label': 'HOÀN THÀNH',
+        'icon': Icons.auto_awesome_rounded, // Premium tech aesthetic flare
+        'brandColor': const Color(0xFF10B981),
+        'bgGradStart': const Color(0xFFECFDF5),
+        'bgGradEnd': const Color(0xFFD1FAE5),
+      };
+    } else if (titleLower.contains('hủy')) {
+      return {
+        'label': 'HỦY ĐƠN',
+        'icon': Icons.layers_clear_rounded,
+        'brandColor': const Color(0xFFEF4444),
+        'bgGradStart': const Color(0xFFFEF2F2),
+        'bgGradEnd': const Color(0xFFFEE2E2),
+      };
     }
+
+    return {
+      'label': 'CẬP NHẬT',
+      'icon': Icons.gpp_good_rounded,
+      'brandColor': const Color(0xFF6B7280),
+      'bgGradStart': const Color(0xFFF9FAFB),
+      'bgGradEnd': const Color(0xFFF3F4F6),
+    };
+  }
+
+  // Helper utility to parse out specific order hash tokens from plain text bodies
+  String? _extractOrderCode(String text) {
+    final RegExp regExp = RegExp(r'#\[?[A-Z0-9\-]+\]?');
+    final match = regExp.firstMatch(text);
+    return match?.group(0);
   }
 
   @override
   Widget build(BuildContext context) {
-    final uiDetails = _getStatusUiDetails(notification.status);
-    final IconData statusIcon = uiDetails['icon'];
-    final Color activeColor = uiDetails['color'];
-    final Color activeBgColor = uiDetails['fallbackColor'];
+    final specs = _getStyleSpecs();
+    final Color brandColor = specs['brandColor'];
+    final String labelText = specs['label'];
+    
+    final String timeStr = "${notification.createdAt.hour}:${notification.createdAt.minute.toString().padLeft(2, '0')}";
+    final String dateStr = "${notification.createdAt.day}/${notification.createdAt.month}";
+    final String? orderCode = _extractOrderCode(notification.content);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: notification.isRead
-            ? Colors.white
-            : activeColor.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: notification.isRead
-              ? Colors.grey.shade200
-              : activeColor.withValues(alpha: 0.2),
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24), // Ultra-smooth modern curvature
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0B1C30).withOpacity(notification.isRead ? 0.02 : 0.05),
+            blurRadius: notification.isRead ? 12 : 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      child: ListTile(
-        onTap: onTap,
-        leading: CircleAvatar(
-          backgroundColor: notification.isRead
-              ? Colors.grey.shade100
-              : activeBgColor,
-          child: Icon(
-            statusIcon,
-            color: notification.isRead ? Colors.grey : activeColor,
-          ),
-        ),
-        title: Text(
-          notification.title,
-          style: TextStyle(
-            color: const Color(0xFF0B1C30),
-            fontWeight: notification.isRead
-                ? FontWeight.normal
-                : FontWeight.bold,
-            fontSize: 15,
-          ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                notification.body,
-                style: const TextStyle(color: Color(0xFF434655), fontSize: 13),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            splashColor: brandColor.withOpacity(0.05),
+            highlightColor: Colors.transparent,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // HEADER LAYER: Label Pill, Unread Dot, and Timestamp
+                  Row(
+                    children: [
+                      // Modern, structured uppercase micro-tag badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: notification.isRead ? const Color(0xFFF3F4F6) : brandColor.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          labelText,
+                          style: TextStyle(
+                            color: notification.isRead ? const Color(0xFF6B7280) : brandColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Pulse Alert Indicator: Only visible on unread notifications
+                      if (!notification.isRead)
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: brandColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      const Spacer(),
+                      // Clean, modern text timestamp alignment
+                      Text(
+                        "$timeStr • $dateStr",
+                        style: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // CORE BODY LAYER: Title & Descriptive Content Text Layout
+                  Text(
+                    notification.title,
+                    style: TextStyle(
+                      color: const Color(0xFF0B1C30),
+                      fontSize: 16,
+                      fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.w800,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    notification.content,
+                    style: TextStyle(
+                      color: notification.isRead ? const Color(0xFF7E84A2) : const Color(0xFF334155),
+                      fontSize: 14,
+                      height: 1.45,
+                      fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w500,
+                    ),
+                  ),
+
+                  // REVOLUTIONARY EXTRA FOOTER: Interactive Data-Chips
+                  if (orderCode != null) ...[
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.layers_outlined, size: 14, color: Colors.blueGrey.shade600),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Mã đơn: $orderCode',
+                            style: TextStyle(
+                              color: Colors.blueGrey.shade700,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Courier', // Gives it a tech/hardware tracking vibe
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              Clipboard.setData(ClipboardData(text: orderCode.replaceAll('[', '').replaceAll(']', '')));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Đã sao chép mã đơn $orderCode'),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: const Duration(seconds: 1),
+                                ),
+                              );
+                            },
+                            child: Icon(Icons.copy_rounded, size: 14, color: brandColor),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                "${notification.createdAt.hour}:${notification.createdAt.minute.toString().padLeft(2, '0')} - ${notification.createdAt.day}/${notification.createdAt.month}",
-                style: const TextStyle(color: Colors.black38, fontSize: 11),
-              ),
-            ],
+            ),
           ),
         ),
-        trailing: !notification.isRead
-            ? Icon(Icons.circle, size: 10, color: activeColor)
-            : null,
       ),
     );
   }
