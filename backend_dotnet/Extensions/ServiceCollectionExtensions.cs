@@ -36,7 +36,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<NotificationRepository>();
         services.AddScoped<ProfileRepository>();
         services.AddScoped<ServiceCategoryRepository>();
-        services.AddScoped<ServiceRepository>();
+        services.AddScoped<ServiceRepository>(provider =>
+        {
+            var client = provider.GetRequiredService<Supabase.Client>();
+            var config = provider.GetRequiredService<IConfiguration>();
+            return new ServiceRepository(client, config);
+        });
         services.AddScoped<TempRepository>();
 
         return services;

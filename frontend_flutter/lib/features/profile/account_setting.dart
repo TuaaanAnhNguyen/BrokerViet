@@ -29,7 +29,7 @@ class AccountSettingScreen extends StatelessWidget {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: outlineVariant.withOpacity(0.5), height: 1),
+          child: Container(color: outlineVariant.withValues(alpha: 0.5), height: 1),
         ),
       ),
       // 2. Wrap the body with a BlocBuilder to extract the current user data
@@ -87,7 +87,7 @@ class AccountSettingScreen extends StatelessWidget {
                 subtitle: 'Bảo vệ bổ sung bằng mã OTP qua số điện thoại',
                 trailing: Switch(
                   value: true,
-                  activeColor: primaryColor,
+                  activeThumbColor: primaryColor,
                   onChanged: (bool value) {},
                 ),
               ),
@@ -117,7 +117,7 @@ class AccountSettingScreen extends StatelessWidget {
                 subtitle: 'Nhận cập nhật về tiến độ sửa chữa & tin nhắn',
                 trailing: Switch(
                   value: true,
-                  activeColor: primaryColor,
+                  activeThumbColor: primaryColor,
                   onChanged: (bool value) {},
                 ),
               ),
