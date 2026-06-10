@@ -4,9 +4,43 @@ BrokerViet
 ├─ backend_dotnet
 │  ├─ appsettings.json
 │  ├─ brokerviet_dotnet.csproj
+│  ├─ Configuration
+│  │  └─ SupabaseSettings.cs
+│  ├─ Controllers
+│  │  └─ ProfileController.cs
+│  ├─ Dtos
+│  │  └─ Requests
+│  │     └─ RegisterRequestDto.cs
+│  ├─ Extensions
+│  │  └─ ServiceCollectionExtensions.cs
+│  ├─ Models
+│  │  ├─ AuditLog.cs
+│  │  ├─ Booking.cs
+│  │  ├─ Chatroom.cs
+│  │  ├─ Message.cs
+│  │  ├─ Notification.cs
+│  │  ├─ Profile.cs
+│  │  ├─ Service.cs
+│  │  ├─ ServiceCategory.cs
+│  │  └─ Temp.cs
 │  ├─ Program.cs
-│  └─ Properties
-│     └─ launchSettings.json
+│  ├─ Properties
+│  │  └─ launchSettings.json
+│  ├─ Repositories
+│  │  ├─ AuditLogRepository.cs
+│  │  ├─ BookingRepository.cs
+│  │  ├─ ChatroomRepository.cs
+│  │  ├─ MessageRepository.cs
+│  │  ├─ NotificationRepository.cs
+│  │  ├─ ProfileRepository.cs
+│  │  ├─ ServiceCategoryRepository.cs
+│  │  ├─ ServiceRepository.cs
+│  │  ├─ SupabaseRepository.cs
+│  │  └─ TempRepository.cs
+│  └─ Services
+│     ├─ Impl
+│     │  └─ ProfileServiceImpl.cs
+│     └─ ProfileService.cs
 ├─ frontend_flutter
 │  ├─ .metadata
 │  ├─ analysis_options.yaml
@@ -34,11 +68,26 @@ BrokerViet
 │  │  │  │  ├─ cache.properties
 │  │  │  │  └─ outputFiles.bin
 │  │  │  ├─ file-system.probe
+│  │  │  ├─ kotlin
+│  │  │  │  └─ errors
+│  │  │  │     ├─ errors-1781048745797.log
+│  │  │  │     ├─ errors-1781048745816.log
+│  │  │  │     ├─ errors-1781051652967.log
+│  │  │  │     ├─ errors-1781051652977.log
+│  │  │  │     ├─ errors-1781071339465.log
+│  │  │  │     └─ errors-1781071339477.log
 │  │  │  ├─ noVersion
 │  │  │  │  └─ buildLogic.lock
 │  │  │  └─ vcs-1
 │  │  │     └─ gc.properties
 │  │  ├─ .kotlin
+│  │  │  ├─ errors
+│  │  │  │  ├─ errors-1781048745797.log
+│  │  │  │  ├─ errors-1781048745816.log
+│  │  │  │  ├─ errors-1781051652967.log
+│  │  │  │  ├─ errors-1781051652977.log
+│  │  │  │  ├─ errors-1781071339465.log
+│  │  │  │  └─ errors-1781071339477.log
 │  │  │  └─ sessions
 │  │  ├─ app
 │  │  │  ├─ build.gradle.kts
@@ -90,6 +139,7 @@ BrokerViet
 │  │  ├─ local.properties
 │  │  └─ settings.gradle.kts
 │  ├─ assets
+│  │  ├─ default_profile.png
 │  │  ├─ tako.png
 │  │  └─ tam tender.jpg
 │  ├─ broker_viet.iml
@@ -178,12 +228,16 @@ BrokerViet
 │  │  │     └─ profile_screen.dart
 │  │  ├─ main.dart
 │  │  ├─ models
+│  │  │  ├─ booking_model.dart
+│  │  │  └─ user_model.dart
 │  │  ├─ repositories
 │  │  ├─ services
 │  │  │  ├─ auth
 │  │  │  │  └─ auth_service.dart
 │  │  │  └─ booking
+│  │  │     └─ booking_service.dart
 │  │  └─ widgets
+│  │     ├─ booking_card.dart
 │  │     ├─ button.dart
 │  │     ├─ custom_text_field.dart
 │  │     ├─ notification_tile.dart
@@ -202,6 +256,8 @@ BrokerViet
 │     │  └─ Icon-maskable-512.png
 │     ├─ index.html
 │     └─ manifest.json
-└─ README.md
+├─ README.md
+└─ supabase
+   └─ config.toml
 
 ```

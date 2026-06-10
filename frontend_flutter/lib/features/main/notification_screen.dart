@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import '../../widgets/notification_tile.dart';
+import '../../models/notification_model.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -27,43 +28,59 @@ class _NotificationScreenState extends State<NotificationScreen> {
       setState(() {
         _notifications = [
           NotificationModel(
-            id: '1',
+            notification_id: '1',
+            user_id: 'user1',
             title: 'Yêu cầu Đang được Xử lý',
-            body:
+            content:
                 'Kỹ thuật viên Nguyễn Văn A đã tiếp nhận đơn đặt lịch Vệ sinh & Tra keo tản nhiệt máy tính của bạn.',
             createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
-            status: 'In Progress',
+            isRead: false,
           ),
           NotificationModel(
-            id: '2',
+            notification_id: '2',
+            user_id: 'user1',
             title: 'Đơn hàng Chờ Xác nhận',
-            body:
+            content:
                 'Đơn đặt lịch kiểm tra hệ thống của bạn đã được gửi thành công và đang chờ đối tác phản hồi.',
             createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-            status: 'In Review',
+            isRead: false,
           ),
           NotificationModel(
-            id: '3',
+            notification_id: '3',
+            user_id: 'user1',
             title: 'Hoàn thành Dịch vụ',
-            body:
+            content:
                 'Yêu cầu hỗ trợ cấu hình và lắp đặt card đồ họa RTX của bạn đã hoàn tất bàn giao.',
             createdAt: DateTime.now().subtract(const Duration(days: 1)),
             isRead: true,
-            status: 'Done',
           ),
           NotificationModel(
-            id: '4',
+            notification_id: '4',
+            user_id: 'user1',
             title: 'Đơn hàng đã Hủy',
-            body:
+            content:
                 'Yêu cầu sửa chữa thiết bị phần cứng mã đơn #BK-9912 đã bị hủy theo nguyện vọng của khách hàng.',
             createdAt: DateTime.now().subtract(const Duration(days: 3)),
             isRead: true,
-            status: 'Cancelled',
           ),
         ];
         _isLoading = false;
       });
     }
+  }
+
+  void _markAllAsRead() {
+    setState(() {
+      _notifications = _notifications
+          .map((n) => n.copyWith(isRead: true))
+          .toList();
+    });
+  }
+
+  void _markAsRead(int index) {
+    setState(() {
+      _notifications[index] = _notifications[index].copyWith(isRead: true);
+    });
   }
 
   @override
@@ -94,26 +111,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
         ),
         centerTitle: true,
         actions: [
-          if (_notifications.isNotEmpty)
+          if (_notifications.any((n) => !n.isRead))
             IconButton(
               icon: const Icon(Icons.done_all, color: primaryColor),
               tooltip: 'Đánh dấu tất cả là đã đọc',
-              onPressed: () {
-                setState(() {
-                  _notifications = _notifications
-                      .map(
-                        (n) => NotificationModel(
-                          id: n.id,
-                          title: n.title,
-                          body: n.body,
-                          createdAt: n.createdAt,
-                          status: n.status,
-                          isRead: true,
-                        ),
-                      )
-                      .toList();
-                });
-              },
+              onPressed: _markAllAsRead,
             ),
         ],
         bottom: PreferredSize(
@@ -126,16 +128,37 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Widget _buildBodyState() {
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF004AC6)),
-        ),
-      );
-    }
+    if (_isLoading) return const _LoadingState();
+    if (_notifications.isEmpty) return const _EmptyState();
 
-    if (_notifications.isEmpty) {
-      return Center(
+    return _NotificationList(
+      notifications: _notifications,
+      onNotificationTap: _markAsRead,
+    );
+  }
+}
+
+class _LoadingState extends StatelessWidget {
+  const _LoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF004AC6)),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -157,33 +180,38 @@ class _NotificationScreenState extends State<NotificationScreen> {
             const Text(
               'Các cập nhật và trạng thái đơn đặt lịch của bạn sẽ hiển thị tại đây.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Color(0xFF7E84A2)),
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF7E84A2),
+                height: 1.3,
+              ),
             ),
           ],
         ),
-      );
-    }
+      ),
+    );
+  }
+}
 
+class _NotificationList extends StatelessWidget {
+  final List<NotificationModel> notifications;
+  final ValueChanged<int> onNotificationTap;
+
+  const _NotificationList({
+    required this.notifications,
+    required this.onNotificationTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return ListView.builder(
-      itemCount: _notifications.length,
+      itemCount: notifications.length,
       padding: const EdgeInsets.only(top: 8, bottom: 16),
       physics: const BouncingScrollPhysics(),
       itemBuilder: (context, index) {
-        final item = _notifications[index];
         return NotificationTile(
-          notification: item,
-          onTap: () {
-            setState(() {
-              _notifications[index] = NotificationModel(
-                id: item.id,
-                title: item.title,
-                body: item.body,
-                createdAt: item.createdAt,
-                status: item.status,
-                isRead: true,
-              );
-            });
-          },
+          notification: notifications[index],
+          onTap: () => onNotificationTap(index),
         );
       },
     );

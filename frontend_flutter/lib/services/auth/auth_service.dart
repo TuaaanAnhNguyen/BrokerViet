@@ -80,14 +80,21 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
               .eq('user_id', userId)
               .maybeSingle();
 
-          final profileUsername = profileData != null ? profileData['username'] : null;
+          final profileUsername = profileData != null
+              ? profileData['username']
+              : null;
           final profileRole = profileData != null ? profileData['role'] : null;
-          final profileAvatar = profileData != null ? profileData['avatar_url'] : null;
+          final profileAvatar = profileData != null
+              ? profileData['avatar_url']
+              : null;
 
           emit(
             AuthSuccess(
               uid: userId,
-              name: profileUsername ?? response.user!.userMetadata?['username'] ?? 'Người dùng',
+              name:
+                  profileUsername ??
+                  response.user!.userMetadata?['username'] ??
+                  'Người dùng',
               email: response.user!.email ?? '',
               avatarPath: profileAvatar ?? 'assets/default_profile.png',
               memberTier: profileRole ?? 'Thành viên',
@@ -144,10 +151,18 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
             ),
           );
         } else {
-          emit(AuthFailure('Đăng ký thành công nhưng không thể tự động đăng nhập.'));
+          emit(
+            AuthFailure(
+              'Đăng ký thành công nhưng không thể tự động đăng nhập.',
+            ),
+          );
         }
       } on FunctionException catch (e) {
-        emit(AuthFailure(e.details?.toString() ?? 'Lỗi không xác định khi gọi hàm đăng ký.'));
+        emit(
+          AuthFailure(
+            e.details?.toString() ?? 'Lỗi không xác định khi gọi hàm đăng ký.',
+          ),
+        );
       } on AuthException catch (e) {
         emit(AuthFailure(e.message));
       } catch (e) {
@@ -156,6 +171,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
     });
 
     on<LogoutRequested>((event, emit) async {
+      emit(AuthLoading());
       try {
         await _supabase.auth.signOut();
       } catch (_) {}
@@ -163,4 +179,3 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
     });
   }
 }
-

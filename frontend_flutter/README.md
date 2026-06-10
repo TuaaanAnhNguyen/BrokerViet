@@ -16,9 +16,9 @@ For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 
-
 ```
 frontend_flutter
+├─ .env
 ├─ .metadata
 ├─ analysis_options.yaml
 ├─ android
@@ -45,11 +45,14 @@ frontend_flutter
 │  │  │  ├─ cache.properties
 │  │  │  └─ outputFiles.bin
 │  │  ├─ file-system.probe
+│  │  ├─ kotlin
+│  │  │  └─ errors
 │  │  ├─ noVersion
 │  │  │  └─ buildLogic.lock
 │  │  └─ vcs-1
 │  │     └─ gc.properties
 │  ├─ .kotlin
+│  │  ├─ errors
 │  │  └─ sessions
 │  ├─ app
 │  │  ├─ build.gradle.kts
@@ -100,6 +103,7 @@ frontend_flutter
 │  ├─ local.properties
 │  └─ settings.gradle.kts
 ├─ assets
+│  ├─ default_profile.png
 │  ├─ tako.png
 │  └─ tam tender.jpg
 ├─ ios
@@ -187,13 +191,23 @@ frontend_flutter
 │  │     └─ profile_screen.dart
 │  ├─ main.dart
 │  ├─ models
+│  │  ├─ booking_model.dart
+│  │  ├─ service_model.dart
 │  │  └─ user_model.dart
 │  ├─ repositories
 │  ├─ services
 │  │  ├─ auth
 │  │  │  └─ auth_service.dart
-│  │  └─ booking
+│  │  ├─ booking
+│  │  │  └─ booking_service.dart
+│  │  └─ message
 │  └─ widgets
+│     ├─ auth
+│     │  ├─ auth_header.dart
+│     │  ├─ login_form.dart
+│     │  └─ signup_form.dart
+│     ├─ avatar_builder.dart
+│     ├─ booking_card.dart
 │     ├─ button.dart
 │     ├─ custom_text_field.dart
 │     ├─ notification_tile.dart
