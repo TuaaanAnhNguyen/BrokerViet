@@ -89,8 +89,8 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
               uid: userId,
               name: profileUsername ?? response.user!.userMetadata?['username'] ?? 'Người dùng',
               email: response.user!.email ?? '',
-              avatarPath: profileAvatar ?? 'assets/tam tender.jpg',
-              memberTier: profileRole ?? 'Thành viên Đồng',
+              avatarPath: profileAvatar ?? 'assets/default_profile.png',
+              memberTier: profileRole ?? 'Thành viên',
             ),
           );
         } else {
@@ -139,8 +139,8 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
               uid: loginResponse.user!.id,
               name: event.username.trim(),
               email: loginResponse.user!.email ?? '',
-              avatarPath: 'assets/tam tender.jpg',
-              memberTier: 'Thành viên Mới',
+              avatarPath: 'assets/default_profile.png',
+              memberTier: 'Thành viên',
             ),
           );
         } else {

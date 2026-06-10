@@ -6,13 +6,19 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'features/auth/login_screen.dart';
 import 'services/auth/auth_service.dart';
 import 'features/main/main_navigation_shell.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: '.env');
+
+  String supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
+  String supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
   
   await Supabase.initialize(
-    url: 'https://dhknnhtskaeltqjdhunl.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoa25uaHRza2FlbHRxamRodW5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwODAxMjgsImV4cCI6MjA5NDY1NjEyOH0.9BwnUdYlt4PQA8jyvCP7caWjNAmCN9tvGz8-JQ0iWwM',
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
   );
 
   runApp(const BrokerVietApp());
