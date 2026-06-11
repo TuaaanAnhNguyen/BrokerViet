@@ -2,16 +2,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../widgets/service_card.dart';
+import '../../models/service_model.dart';
+import '../../widgets/service/service_card.dart';
+import '../../widgets/service/category_selector.dart';
+import '../../widgets/service/nearby_provider_tile.dart';
 import '../../services/marketplace/service_marketplace_service.dart';
 import './service_detail_screen.dart';
+import './search_screen.dart';
 
 class ServiceMarketplaceScreen extends StatefulWidget {
   const ServiceMarketplaceScreen({super.key});
 
   @override
-  State<ServiceMarketplaceScreen> createState() =>
-      _ServiceMarketplaceScreenState();
+  State<ServiceMarketplaceScreen> createState() => _ServiceMarketplaceScreenState();
 }
 
 class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
@@ -24,8 +27,14 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
 
   List<Map<String, dynamic>> _categories = [
     {'label': 'Tất cả', 'icon': Icons.grid_view_rounded, 'id': null},
-    {'label': 'Sửa chữa thiết bị', 'icon': Icons.computer_rounded, 'id': null},
-    {'label': 'Cho thuê thiết bị', 'icon': Icons.precision_manufacturing_rounded, 'id': null},
+    {'label': 'Sửa chữa thiết bị', 'icon': Icons.precision_manufacturing_rounded, 'id': null},
+    {'label': 'Cho thuê thiết bị', 'icon': Icons.computer_rounded, 'id': null},
+  ];
+
+  final List<Map<String, String>> _nearbyProviders = const [
+    {'name': 'TechPro VN', 'distance': 'Cách đây 0.8 km', 'score': '4.9'},
+    {'name': 'Linh System', 'distance': 'Cách đây 1.2 km', 'score': '4.8'},
+    {'name': 'FixIt Fast', 'distance': 'Cách đây 2.5 km', 'score': '4.7'},
   ];
 
   @override
@@ -76,14 +85,20 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
   }
 
   Future<void> _loadServices() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     try {
       final activeCat = _categories[_activeCategoryIndex];
-      final categoryId = activeCat['id']?.toString();
+      
+      final String? categoryId = _activeCategoryIndex == 0 
+          ? null 
+          : activeCat['id']?.toString();
+
       final results = await _marketplaceService.searchServices(
         categoryId: categoryId,
-        search: _searchController.text,
+        search: _searchController.text.isEmpty ? null : _searchController.text,
       );
+      
       if (mounted) {
         setState(() {
           _services = results;
@@ -91,6 +106,7 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
         });
       }
     } catch (e) {
+      print("Error fetching marketplace entries: $e");
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -99,264 +115,175 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentCategoryLabel = _categories[_activeCategoryIndex]['label'];
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
       body: RefreshIndicator(
         onRefresh: _loadServices,
+        color: const Color(0xFF004AC6),
         child: ListView(
           padding: const EdgeInsets.symmetric(vertical: 16),
+          physics: const AlwaysScrollableScrollPhysics(),
           children: [
-            // Search Interactive Bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: TextField(
-                controller: _searchController,
-                onSubmitted: (_) => _loadServices(),
-                decoration: InputDecoration(
-                  hintText: 'Tìm kiếm dịch vụ, sửa chữa, thuê thiết bị...',
-                  prefixIcon: IconButton(
-                    icon: const Icon(Icons.search, color: Color(0xFF737686)),
-                    onPressed: _loadServices,
-                  ),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, color: Color(0xFF737686)),
-                          onPressed: () {
-                            _searchController.clear();
-                            _loadServices();
-                          },
-                        )
-                      : null,
-                  filled: true,
-                  fillColor: const Color(0xFFE5EEFF),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-              ),
+            _buildSearchBar(),
+            const SizedBox(height: 24),
+            _buildSectionHeader('Danh mục dịch vụ'),
+            const SizedBox(height: 12),
+            
+            CategorySelector(
+              activeIndex: _activeCategoryIndex,
+              categories: _categories,
+              onCategorySelected: (index) {
+                setState(() => _activeCategoryIndex = index);
+                _loadServices();
+              },
             ),
             const SizedBox(height: 24),
-  
-            // Categories Horizontal Scroller Section
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'Danh mục dịch vụ',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0B1C30),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 96,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _categories.length,
-                itemBuilder: (context, index) {
-                  final isSelected = _activeCategoryIndex == index;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() => _activeCategoryIndex = index);
-                      _loadServices();
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 16),
-                      width: 80,
-                      child: Column(
-                        children: [
-                          Container(
-                            height: 64,
-                            width: 64,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFF39B8FD)
-                                  : const Color(0xFFDCE9FF),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Icon(
-                              _categories[index]['icon'],
-                              size: 32,
-                              color: isSelected
-                                  ? Colors.white
-                                  : const Color(0xFF004AC6),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            _categories[index]['label'],
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
+            _buildNearbyProvidersSection(),
             const SizedBox(height: 24),
-  
-            // Nearby Providers Subsection
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Đơn vị cung cấp gần bạn',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0B1C30),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'Xem tất cả',
-                      style: TextStyle(
-                        color: Color(0xFF004AC6),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            _buildSectionHeader(
+              _activeCategoryIndex == 0 ? 'Dịch vụ phổ biến' : 'Dịch vụ $currentCategoryLabel',
             ),
             const SizedBox(height: 12),
-            SizedBox(
-              height: 140,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: [
-                  _buildNearbyProviderTile('TechPro VN', 'Cách đây 0.8 km', '4.9'),
-                  _buildNearbyProviderTile('Linh System', 'Cách đây 1.2 km', '4.8'),
-                  _buildNearbyProviderTile('FixIt Fast', 'Cách đây 2.5 km', '4.7'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-  
-            // Popular Services Section List View Blocks
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                _categories[_activeCategoryIndex]['label'] == 'Tất cả'
-                    ? 'Dịch vụ phổ biến'
-                    : 'Dịch vụ ${_categories[_activeCategoryIndex]['label']}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0B1C30),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: _isLoading
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24.0),
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  : _services.isEmpty
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 24.0),
-                            child: Text(
-                              'Không tìm thấy dịch vụ nào.',
-                              style: TextStyle(color: Colors.black38),
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _services.length,
-                          itemBuilder: (context, index) {
-                            return ServiceCard(
-                              service: _services[index],
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const ServiceDetailScreen(),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        ),
-            ),
+            
+            _buildServicesList(_services),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNearbyProviderTile(String name, String distance, String score) {
-    return Container(
-      width: 144,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC3C6D7)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: const Color(0xFFE5EEFF),
-            child: Icon(
-              Icons.person,
-              color: const Color(0xFF004AC6).withValues(alpha: 0.7),
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ServiceSearchScreen(),
+            ),
+          );
+        },
+        child: AbsorbPointer(
+          child: TextField(
+            readOnly: true,
+            decoration: InputDecoration(
+              hintText: 'Tìm kiếm dịch vụ, sửa chữa, thuê thiết bị...',
+              hintStyle: const TextStyle(color: Color(0xFF737686), fontSize: 14),
+              prefixIcon: const Icon(Icons.search, color: Color(0xFF737686)),
+              filled: true,
+              fillColor: const Color(0xFFE5EEFF),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            name,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            distance,
-            style: const TextStyle(color: Color(0xFF434655), fontSize: 11),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 18, 
+          fontWeight: FontWeight.bold, 
+          color: Color(0xFF0B1C30),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNearbyProvidersSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(Icons.star, color: Colors.amber, size: 14),
-              const SizedBox(width: 2),
-              Text(
-                score,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF006591),
+              const Text(
+                'Đơn vị cung cấp gần bạn',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30)),
+              ),
+              TextButton(
+                onPressed: () {},
+                child: const Text(
+                  'Xem tất cả',
+                  style: TextStyle(color: Color(0xFF004AC6), fontWeight: FontWeight.bold),
                 ),
               ),
             ],
           ),
-        ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 140,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _nearbyProviders.length,
+            itemBuilder: (context, index) {
+              final provider = _nearbyProviders[index];
+              return NearbyProviderTile(
+                name: provider['name']!,
+                distance: provider['distance']!,
+                score: provider['score']!,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildServicesList(List<ServiceModel> services) {
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 40.0),
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF004AC6)),
+          ),
+        ),
+      );
+    }
+
+    if (services.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 40.0),
+          child: Text(
+            'Không tìm thấy dịch vụ nào trong danh mục này.',
+            style: TextStyle(color: Colors.black38, fontSize: 14),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: services.length,
+        itemBuilder: (context, index) {
+          return ServiceCard(
+            service: services[index],
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ServiceDetailScreen()),
+            ),
+          );
+        },
       ),
     );
   }

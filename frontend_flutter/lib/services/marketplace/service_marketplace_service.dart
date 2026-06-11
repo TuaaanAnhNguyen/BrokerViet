@@ -1,103 +1,62 @@
-// import 'dart:convert';
-// import 'package:flutter/foundation.dart';
-// import 'package:flutter_dotenv/flutter_dotenv.dart';
-// import 'package:http/http.dart' as http;
-// import '../../widgets/service_card.dart';
-
-// class ServiceMarketplaceService {
-//   final String _baseUrl;
-
-//   ServiceMarketplaceService({String? baseUrl})
-//       : _baseUrl = baseUrl ??
-//             dotenv.env['BACKEND_URL'] ??
-//             (kIsWeb ? 'http://localhost:5077' : 'http://10.0.2.2:5077'); // Fallback to Android emulator host alias
-
-//   Future<List<ServiceModel>> searchServices({
-//     String? categoryId,
-//     String? search,
-//     double? minPrice,
-//     double? maxPrice,
-//     int? limit,
-//     int? offset,
-//   }) async {
-//     try {
-//       final queryParams = <String, String>{};
-//       if (categoryId != null && categoryId.isNotEmpty) {
-//         queryParams['CategoryId'] = categoryId;
-//       }
-//       if (search != null && search.isNotEmpty) {
-//         queryParams['Search'] = search;
-//       }
-//       if (minPrice != null) {
-//         queryParams['MinPrice'] = minPrice.toString();
-//       }
-//       if (maxPrice != null) {
-//         queryParams['MaxPrice'] = maxPrice.toString();
-//       }
-//       if (limit != null) {
-//         queryParams['Limit'] = limit.toString();
-//       }
-//       if (offset != null) {
-//         queryParams['Offset'] = offset.toString();
-//       }
-
-//       final uri = Uri.parse('$_baseUrl/api/Service/search').replace(queryParameters: queryParams);
-//       print('Calling: $uri');
-//       print('QueryParams: $queryParams');
-//       final response = await http.get(uri);
-//       print('Status: ${response.statusCode}');
-//     print('Body: ${response.body}');
-
-//       if (response.statusCode == 200) {
-//         final List<dynamic> body = jsonDecode(response.body);
-//         return body.map((dynamic item) => ServiceModel.fromJson(item as Map<String, dynamic>)).toList();
-//       } else {
-//         throw Exception('Failed to load services: ${response.statusCode}');
-//       }
-//     } catch (e) {
-//       // Return empty list on connection error or exception
-//       print('ServiceMarketplaceService error: $e');
-//       return [];
-//     }
-//   }
-// }
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../widgets/service_card.dart';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import '../../models/service_model.dart';
 
 class ServiceMarketplaceService {
-  final _client = Supabase.instance.client;
+  final String _baseUrl;
+
+  ServiceMarketplaceService({String? baseUrl})
+    : _baseUrl =
+          baseUrl ??
+          dotenv.env['BACKEND_URL'] ??
+          (kIsWeb ? 'http://localhost:5077' : 'http://10.0.2.2:5077');
 
   Future<List<ServiceModel>> searchServices({
     String? categoryId,
     String? search,
     double? minPrice,
     double? maxPrice,
-    int? limit,
-    int? offset,
   }) async {
-    print('>>> searchServices called');
+    final Map<String, String> queryParameters = {};
+
+    if (categoryId != null && categoryId.isNotEmpty && categoryId != 'null') {
+      queryParameters['CategoryId'] = categoryId;
+    }
+    if (search != null && search.trim().isNotEmpty) {
+      queryParameters['Search'] = search.trim();
+    }
+    if (minPrice != null) {
+      queryParameters['MinPrice'] = minPrice.toString();
+    }
+    if (maxPrice != null) {
+      queryParameters['MaxPrice'] = maxPrice.toString();
+    }
+
     try {
-      print('>>> calling RPC...');
-      final result = await _client.rpc(
-        'get_services_list',
-        params: {
-          'p_category_id': categoryId,
-          'p_search': (search == null || search.isEmpty) ? null : search,
-          'p_min_price': minPrice,
-          'p_max_price': maxPrice,
-          'p_limit': limit ?? 20,
-          'p_offset': offset ?? 0,
-        },
+      final uri = Uri.parse(
+        '$_baseUrl/api/Service/search',
+      ).replace(queryParameters: queryParameters);
+
+      print('>>> Flutter Request URL: $uri');
+
+      final response = await http.get(
+        uri,
+        headers: {'Content-Type': 'application/json'},
       );
-      print('>>> RPC type: ${result.runtimeType}');
-      print('>>> RPC done: $result');
-      final List<dynamic> data = result as List<dynamic>;
-      return data
-          .map((item) => ServiceModel.fromJson(item as Map<String, dynamic>))
-          .toList();
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((item) => ServiceModel.fromJson(item)).toList();
+      } else {
+        throw Exception(
+          'Backend returned code ${response.statusCode}: ${response.body}',
+        );
+      }
     } catch (e) {
-      print('ServiceMarketplaceService error: $e');
-      return [];
+      print('Error calling search service API endpoint: $e');
+      rethrow;
     }
   }
 }

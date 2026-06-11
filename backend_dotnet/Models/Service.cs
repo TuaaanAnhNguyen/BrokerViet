@@ -24,4 +24,7 @@ public class Service : BaseModel
 
     [Column("price")]
     public decimal? Price { get; set; }
+
+    [Column("image_url")]
+    public string? ImageUrl { get; set; }
 }
