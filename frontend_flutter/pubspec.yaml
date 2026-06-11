@@ -16,6 +16,7 @@ dependencies:
   flutter_dotenv: ^5.0.2
   http: ^1.2.0
   cached_network_image: ^3.4.1
+  equatable: ^2.0.8
 
 
 dev_dependencies:

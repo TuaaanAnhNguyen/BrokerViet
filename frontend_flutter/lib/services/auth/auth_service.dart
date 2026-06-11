@@ -1,7 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
+import 'package:equatable/equatable.dart';
 
-abstract class AuthState {}
+abstract class AuthState extends Equatable {
+  @override
+  List<Object?> get props => [];
+}
 
 class AuthInitial extends AuthState {}
 
@@ -21,11 +25,17 @@ class AuthSuccess extends AuthState {
     required this.avatarPath,
     required this.memberTier,
   });
+
+  @override
+  List<Object?> get props => [uid, name, email, avatarPath, memberTier];
 }
 
 class AuthFailure extends AuthState {
   final String errorMessage;
   AuthFailure(this.errorMessage);
+
+  @override
+  List<Object?> get props => [errorMessage];
 }
 
 abstract class AuthEvent {}
