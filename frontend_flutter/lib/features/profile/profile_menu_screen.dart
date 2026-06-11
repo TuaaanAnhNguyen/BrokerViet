@@ -168,7 +168,7 @@ class ProfileMenuScreen extends StatelessWidget {
             _buildMenuTile(
               icon: Icons.info_outline_rounded,
               title: 'Về BrokerViet',
-              subtitle: 'Phiên bản hệ thống 1.0.2-Stable',
+              subtitle: 'Phiên bản hệ thống 0.0.1',
               onTap: () {},
             ),
 
