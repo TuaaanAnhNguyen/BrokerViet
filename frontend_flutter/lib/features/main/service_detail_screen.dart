@@ -386,7 +386,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? primaryColor.withValues(alpha: 0.05) : Colors.white,
+          color: isSelected
+              ? primaryColor.withValues(alpha: 0.05)
+              : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? primaryColor : const Color(0xFFC3C6D7),
@@ -687,6 +689,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => BookingScreen(
+                          serviceId: 'svc-001',
                           serviceTitle: 'Chẩn đoán & Sửa chữa Toàn diện',
                           providerName: 'TechPro VN',
                           packageName: selectedPackage,

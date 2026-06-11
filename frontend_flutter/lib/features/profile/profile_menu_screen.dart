@@ -63,13 +63,12 @@ class ProfileMenuScreen extends StatelessWidget {
 
         Navigator.of(context).pushAndRemoveUntil(
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: child,
-              );
-            },
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const LoginScreen(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
             transitionDuration: const Duration(milliseconds: 350),
           ),
           (route) => false,
@@ -81,13 +80,21 @@ class ProfileMenuScreen extends StatelessWidget {
           backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: primaryColor),
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: primaryColor,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           titleSpacing: 0,
           title: const Text(
             'Tài khoản',
-            style: TextStyle(color: darkText, fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: darkText,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           centerTitle: false,
           bottom: PreferredSize(
@@ -126,11 +133,17 @@ class ProfileMenuScreen extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.arrow_forward_ios, size: 16, color: bodyText),
+                    icon: const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: bodyText,
+                    ),
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const ProfileScreen(),
+                        ),
                       );
                     },
                   ),
@@ -147,7 +160,9 @@ class ProfileMenuScreen extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileScreen(),
+                  ),
                 );
               },
             ),
@@ -158,7 +173,9 @@ class ProfileMenuScreen extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AccountSettingScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const AccountSettingScreen(),
+                  ),
                 );
               },
             ),
@@ -179,7 +196,11 @@ class ProfileMenuScreen extends StatelessWidget {
                 leading: Icon(Icons.logout_rounded, color: Colors.red.shade700),
                 title: Text(
                   'Đăng xuất',
-                  style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 15),
+                  style: TextStyle(
+                    color: Colors.red.shade700,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
                 ),
                 onTap: () {
                   showDialog(
@@ -188,7 +209,9 @@ class ProfileMenuScreen extends StatelessWidget {
                       backgroundColor: Colors.white,
                       surfaceTintColor: Colors.transparent,
                       title: const Text('Đăng xuất'),
-                      content: const Text('Bạn có chắc chắn muốn thoát khỏi phiên làm việc?'),
+                      content: const Text(
+                        'Bạn có chắc chắn muốn thoát khỏi phiên làm việc?',
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(dialogContext),
@@ -241,16 +264,29 @@ class ProfileMenuScreen extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFF1F3F6), width: 0.5)),
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFF1F3F6), width: 0.5),
+        ),
       ),
       child: ListTile(
         leading: Icon(icon, color: const Color(0xFF004AC6), size: 22),
         title: Text(
           title,
-          style: const TextStyle(color: Color(0xFF0B1C30), fontSize: 15, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+            color: Color(0xFF0B1C30),
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
         ),
-        subtitle: Text(subtitle, style: const TextStyle(color: Color(0xFF7E84A2), fontSize: 12)),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFFC3C6D7)),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(color: Color(0xFF7E84A2), fontSize: 12),
+        ),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          size: 14,
+          color: Color(0xFFC3C6D7),
+        ),
         onTap: onTap,
       ),
     );

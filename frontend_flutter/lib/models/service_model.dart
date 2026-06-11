@@ -22,7 +22,7 @@ class ServiceModel {
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
     final priceVal = json['price'];
     String formattedPrice = 'Liên hệ';
-    
+
     if (priceVal != null) {
       final parsedPrice = double.tryParse(priceVal.toString())?.toInt();
       if (parsedPrice != null) {

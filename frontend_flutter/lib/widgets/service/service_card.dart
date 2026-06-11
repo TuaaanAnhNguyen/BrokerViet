@@ -41,7 +41,10 @@ class ServiceCard extends StatelessWidget {
                   top: 12,
                   right: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF006591),
                       borderRadius: BorderRadius.circular(20),
@@ -65,7 +68,7 @@ class ServiceCard extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -110,26 +113,33 @@ class ServiceCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // tags
                   Wrap(
                     spacing: 8,
                     runSpacing: 4,
-                    children: service.tags.map((tag) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE5EEFF),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        tag,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF434655),
-                        ),
-                      ),
-                    )).toList(),
+                    children: service.tags
+                        .map(
+                          (tag) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE5EEFF),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              tag,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF434655),
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
                   ),
                 ],
               ),

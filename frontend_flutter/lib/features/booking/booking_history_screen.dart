@@ -17,7 +17,13 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
   List<BookingModel> _bookings = [];
   bool _isLoading = true;
 
-  final List<String> _statuses = ['Tất cả', 'Chờ duyệt', 'Đang thực hiện', 'Đã hoàn thành', 'Đã hủy'];
+  final List<String> _statuses = [
+    'Tất cả',
+    'Chờ duyệt',
+    'Đang thực hiện',
+    'Đã hoàn thành',
+    'Đã hủy',
+  ];
 
   @override
   void initState() {
@@ -44,11 +50,15 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
     if (success && mounted) {
       setState(() {
         _bookings = _bookings.map((b) {
-          return b.bookingId == bookingId ? b.copyWith(status: BookingStatus.daHuy) : b;
+          return b.bookingId == bookingId
+              ? b.copyWith(status: BookingStatus.daHuy)
+              : b;
         }).toList();
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Đã hủy yêu cầu đơn hàng $bookingId thành công.')),
+        SnackBar(
+          content: Text('Đã hủy yêu cầu đơn hàng $bookingId thành công.'),
+        ),
       );
     }
   }
@@ -66,14 +76,22 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
           elevation: 0,
           title: const Text(
             'Đơn đã mua',
-            style: TextStyle(color: Color(0xFF0B1C30), fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Color(0xFF0B1C30),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           centerTitle: false,
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(48),
             child: Container(
               decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: const Color(0xFFC3C6D7).withValues(alpha: 0.5))),
+                border: Border(
+                  bottom: BorderSide(
+                    color: const Color(0xFFC3C6D7).withValues(alpha: 0.5),
+                  ),
+                ),
               ),
               child: TabBar(
                 isScrollable: true,
@@ -81,23 +99,37 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                 unselectedLabelColor: const Color(0xFF434655),
                 indicatorColor: primaryColor,
                 indicatorSize: TabBarIndicatorSize.label,
-                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
                 tabs: _statuses.map((status) => Tab(text: status)).toList(),
               ),
             ),
           ),
         ),
         body: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: primaryColor))
+            ? const Center(
+                child: CircularProgressIndicator(color: primaryColor),
+              )
             : TabBarView(
                 children: _statuses.map((tabStatus) {
                   final filtered = tabStatus == 'Tất cả'
                       ? _bookings
-                      : _bookings.where((item) => item.status.value.toLowerCase() == tabStatus.toLowerCase()).toList();
+                      : _bookings
+                            .where(
+                              (item) =>
+                                  item.status.value.toLowerCase() ==
+                                  tabStatus.toLowerCase(),
+                            )
+                            .toList();
 
                   if (filtered.isEmpty) {
                     return const Center(
-                      child: Text('Không tìm thấy đơn hàng nào.', style: TextStyle(color: Color(0xFF434655))),
+                      child: Text(
+                        'Không tìm thấy đơn hàng nào.',
+                        style: TextStyle(color: Color(0xFF434655)),
+                      ),
                     );
                   }
 

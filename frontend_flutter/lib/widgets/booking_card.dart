@@ -53,27 +53,44 @@ class BookingCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFEFF4FF),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: primaryColor.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: const Text(
                       'Nơi cung cấp:',
-                      style: TextStyle(color: primaryColor, fontSize: 10, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     order.shopName,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: darkText),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: darkText,
+                    ),
                   ),
                 ],
               ),
               Text(
                 order.status.value,
-                style: TextStyle(color: statusColor, fontSize: 13, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  color: statusColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
@@ -85,7 +102,9 @@ class BookingCard extends StatelessWidget {
                 width: 76,
                 height: 76,
                 decoration: BoxDecoration(
-                  border: Border.all(color: outlineVariant.withValues(alpha: 0.5)),
+                  border: Border.all(
+                    color: outlineVariant.withValues(alpha: 0.5),
+                  ),
                   borderRadius: BorderRadius.circular(8),
                   image: DecorationImage(
                     image: NetworkImage(order.imageUrl),
@@ -100,7 +119,12 @@ class BookingCard extends StatelessWidget {
                   children: [
                     Text(
                       order.serviceTitle,
-                      style: const TextStyle(fontSize: 14, color: darkText, fontWeight: FontWeight.w500, height: 1.2),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: darkText,
+                        fontWeight: FontWeight.w500,
+                        height: 1.2,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -112,7 +136,10 @@ class BookingCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     const Align(
                       alignment: Alignment.centerRight,
-                      child: Text('x1', style: TextStyle(color: bodyText, fontSize: 12)),
+                      child: Text(
+                        'x1',
+                        style: TextStyle(color: bodyText, fontSize: 12),
+                      ),
                     ),
                   ],
                 ),
@@ -135,7 +162,11 @@ class BookingCard extends StatelessWidget {
               if (order.originalCost != order.cost) const SizedBox(width: 6),
               Text(
                 order.cost,
-                style: const TextStyle(fontSize: 14, color: darkText, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: darkText,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
@@ -149,7 +180,11 @@ class BookingCard extends StatelessWidget {
               ),
               Text(
                 order.cost,
-                style: const TextStyle(fontSize: 16, color: primaryColor, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -186,13 +221,23 @@ class BookingCard extends StatelessWidget {
           OutlinedButton(
             onPressed: () {},
             style: secondaryStyle,
-            child: const Text('Xem đánh giá', style: TextStyle(color: darkText, fontSize: 13)),
+            child: const Text(
+              'Xem đánh giá',
+              style: TextStyle(color: darkText, fontSize: 13),
+            ),
           ),
           const SizedBox(width: 8),
           OutlinedButton(
             onPressed: onRebook,
             style: primaryStyle,
-            child: const Text('Đặt lịch lại', style: TextStyle(color: primaryColor, fontSize: 13, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Đặt lịch lại',
+              style: TextStyle(
+                color: primaryColor,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ];
       case BookingStatus.dangThucHien:
@@ -200,7 +245,14 @@ class BookingCard extends StatelessWidget {
           OutlinedButton(
             onPressed: TrackProgress,
             style: primaryStyle,
-            child: const Text('Theo dõi tiến độ', style: TextStyle(color: primaryColor, fontSize: 13, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Theo dõi tiến độ',
+              style: TextStyle(
+                color: primaryColor,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ];
       case BookingStatus.choDuyet:
@@ -208,7 +260,10 @@ class BookingCard extends StatelessWidget {
           OutlinedButton(
             onPressed: onCancel,
             style: secondaryStyle,
-            child: const Text('Hủy yêu cầu', style: TextStyle(color: darkText, fontSize: 13)),
+            child: const Text(
+              'Hủy yêu cầu',
+              style: TextStyle(color: darkText, fontSize: 13),
+            ),
           ),
         ];
       case BookingStatus.daHuy:
@@ -216,7 +271,10 @@ class BookingCard extends StatelessWidget {
           OutlinedButton(
             onPressed: () {},
             style: secondaryStyle,
-            child: const Text('Xem chi tiết', style: TextStyle(color: darkText, fontSize: 13)),
+            child: const Text(
+              'Xem chi tiết',
+              style: TextStyle(color: darkText, fontSize: 13),
+            ),
           ),
         ];
     }

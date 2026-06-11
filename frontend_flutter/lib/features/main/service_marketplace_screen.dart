@@ -13,13 +13,15 @@ class ServiceMarketplaceScreen extends StatefulWidget {
   const ServiceMarketplaceScreen({super.key});
 
   @override
-  State<ServiceMarketplaceScreen> createState() => _ServiceMarketplaceScreenState();
+  State<ServiceMarketplaceScreen> createState() =>
+      _ServiceMarketplaceScreenState();
 }
 
 class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
-  final ServiceMarketplaceService _marketplaceService = ServiceMarketplaceService();
+  final ServiceMarketplaceService _marketplaceService =
+      ServiceMarketplaceService();
   final TextEditingController _searchController = TextEditingController();
-  
+
   int _activeCategoryIndex = 0;
   List<ServiceModel> _services = [];
   bool _isLoading = false;
@@ -28,7 +30,11 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
   List<Map<String, dynamic>> _categories = [
     {'label': 'Tất cả', 'icon': Icons.grid_view_rounded, 'id': null},
     {'label': 'Sửa chữa thiết bị', 'icon': Icons.computer_rounded, 'id': null},
-    {'label': 'Cho thuê thiết bị', 'icon': Icons.precision_manufacturing_rounded, 'id': null},
+    {
+      'label': 'Cho thuê thiết bị',
+      'icon': Icons.precision_manufacturing_rounded,
+      'id': null,
+    },
   ];
 
   // Keep your structural presentation lists clean for local layout parsing
@@ -64,9 +70,11 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
         for (var item in data) {
           final String name = item['name'] ?? '';
           IconData icon = Icons.work_outline;
-          if (name.toLowerCase().contains('sửa') || name.toLowerCase().contains('repair')) {
+          if (name.toLowerCase().contains('sửa') ||
+              name.toLowerCase().contains('repair')) {
             icon = Icons.computer_rounded;
-          } else if (name.toLowerCase().contains('thuê') || name.toLowerCase().contains('rental')) {
+          } else if (name.toLowerCase().contains('thuê') ||
+              name.toLowerCase().contains('rental')) {
             icon = Icons.precision_manufacturing_rounded;
           }
           loadedCategories.add({
@@ -121,13 +129,14 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
         color: const Color(0xFF004AC6),
         child: ListView(
           padding: const EdgeInsets.symmetric(vertical: 16),
-          physics: const AlwaysScrollableScrollPhysics(), // Forces pull-to-refresh to work even when short
+          physics:
+              const AlwaysScrollableScrollPhysics(), // Forces pull-to-refresh to work even when short
           children: [
             _buildSearchBar(),
             const SizedBox(height: 24),
             _buildSectionHeader('Danh mục dịch vụ'),
             const SizedBox(height: 12),
-            
+
             // Restored your modular, gorgeous CategorySelector widget smoothly driven by dynamic DB labels
             CategorySelector(
               activeIndex: _activeCategoryIndex,
@@ -141,10 +150,12 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             _buildNearbyProvidersSection(),
             const SizedBox(height: 24),
             _buildSectionHeader(
-              _activeCategoryIndex == 0 ? 'Dịch vụ phổ biến' : 'Dịch vụ $currentCategoryLabel',
+              _activeCategoryIndex == 0
+                  ? 'Dịch vụ phổ biến'
+                  : 'Dịch vụ $currentCategoryLabel',
             ),
             const SizedBox(height: 12),
-            
+
             // Runs your custom rendering view but hooks directly into live queried backend data states
             _buildServicesList(_services),
           ],
@@ -192,8 +203,8 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
       child: Text(
         title,
         style: const TextStyle(
-          fontSize: 18, 
-          fontWeight: FontWeight.bold, 
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
           color: Color(0xFF0B1C30),
         ),
       ),
@@ -211,13 +222,20 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             children: [
               const Text(
                 'Đơn vị cung cấp gần bạn',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30)),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0B1C30),
+                ),
               ),
               TextButton(
                 onPressed: () {},
                 child: const Text(
                   'Xem tất cả',
-                  style: TextStyle(color: Color(0xFF004AC6), fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Color(0xFF004AC6),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -279,7 +297,9 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             service: services[index],
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ServiceDetailScreen()),
+              MaterialPageRoute(
+                builder: (context) => const ServiceDetailScreen(),
+              ),
             ),
           );
         },

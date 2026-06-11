@@ -35,11 +35,11 @@ class _LoginFormState extends State<LoginForm> {
     if (_formKey.currentState!.validate()) {
       FocusManager.instance.primaryFocus?.unfocus();
       context.read<AuthService>().add(
-            LoginRequested(
-              _phoneController.text.trim(),
-              _passwordController.text.trim(),
-            ),
-          );
+        LoginRequested(
+          _phoneController.text.trim(),
+          _passwordController.text.trim(),
+        ),
+      );
     }
   }
 
@@ -76,7 +76,9 @@ class _LoginFormState extends State<LoginForm> {
             listener: (context, state) {
               if (state is AuthSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Chào mừng bạn quay trở lại, ${state.name}!')),
+                  SnackBar(
+                    content: Text('Chào mừng bạn quay trở lại, ${state.name}!'),
+                  ),
                 );
               }
               if (state is AuthFailure) {

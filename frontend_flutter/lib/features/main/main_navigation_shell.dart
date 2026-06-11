@@ -1,9 +1,9 @@
 // lib/features/main/main_navigation_shell.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart'; 
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../services/auth/auth_service.dart'; 
+import '../../services/auth/auth_service.dart';
 import '../../widgets/avatar_builder.dart';
 import 'service_marketplace_screen.dart';
 import '../booking/booking_history_screen.dart';
@@ -48,15 +48,24 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         elevation: 0,
         title: const Text(
           'BrokerViet',
-          style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 20),
+          style: TextStyle(
+            color: primaryColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none_outlined, color: darkText),
+            icon: const Icon(
+              Icons.notifications_none_outlined,
+              color: darkText,
+            ),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const NotificationScreen(),
+                ),
               );
             },
           ),
@@ -68,28 +77,35 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ProfileMenuScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileMenuScreen(),
+                    ),
                   );
                 },
-                child: buildAvatar(avatar, radius: 16), 
+                child: buildAvatar(avatar, radius: 16),
               ),
             ),
           ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: outlineVariant.withValues(alpha: 0.5), height: 1),
+          child: Container(
+            color: outlineVariant.withValues(alpha: 0.5),
+            height: 1,
+          ),
         ),
       ),
 
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _customerTabs,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _customerTabs),
 
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: outlineVariant.withValues(alpha: 0.4), width: 0.5)),
+          border: Border(
+            top: BorderSide(
+              color: outlineVariant.withValues(alpha: 0.4),
+              width: 0.5,
+            ),
+          ),
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
@@ -97,7 +113,10 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           elevation: 0,
           selectedItemColor: primaryColor,
           unselectedItemColor: bodyText,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
           unselectedLabelStyle: const TextStyle(fontSize: 12),
           type: BottomNavigationBarType.fixed,
           onTap: (index) {

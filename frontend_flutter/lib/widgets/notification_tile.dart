@@ -34,7 +34,8 @@ class NotificationTile extends StatelessWidget {
         'bgGradStart': const Color(0xFFFFFBEB),
         'bgGradEnd': const Color(0xFFFFF3CD),
       };
-    } else if (titleLower.contains('hoàn thành') || titleLower.contains('tất')) {
+    } else if (titleLower.contains('hoàn thành') ||
+        titleLower.contains('tất')) {
       return {
         'label': 'HOÀN THÀNH',
         'icon': Icons.auto_awesome_rounded, // Premium tech aesthetic flare
@@ -73,19 +74,25 @@ class NotificationTile extends StatelessWidget {
     final specs = _getStyleSpecs();
     final Color brandColor = specs['brandColor'];
     final String labelText = specs['label'];
-    
-    final String timeStr = "${notification.createdAt.hour}:${notification.createdAt.minute.toString().padLeft(2, '0')}";
-    final String dateStr = "${notification.createdAt.day}/${notification.createdAt.month}";
+
+    final String timeStr =
+        "${notification.createdAt.hour}:${notification.createdAt.minute.toString().padLeft(2, '0')}";
+    final String dateStr =
+        "${notification.createdAt.day}/${notification.createdAt.month}";
     final String? orderCode = _extractOrderCode(notification.content);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24), // Ultra-smooth modern curvature
+        borderRadius: BorderRadius.circular(
+          24,
+        ), // Ultra-smooth modern curvature
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0B1C30).withOpacity(notification.isRead ? 0.02 : 0.05),
+            color: const Color(
+              0xFF0B1C30,
+            ).withOpacity(notification.isRead ? 0.02 : 0.05),
             blurRadius: notification.isRead ? 12 : 20,
             offset: const Offset(0, 6),
           ),
@@ -109,15 +116,22 @@ class NotificationTile extends StatelessWidget {
                     children: [
                       // Modern, structured uppercase micro-tag badge
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: notification.isRead ? const Color(0xFFF3F4F6) : brandColor.withOpacity(0.12),
+                          color: notification.isRead
+                              ? const Color(0xFFF3F4F6)
+                              : brandColor.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           labelText,
                           style: TextStyle(
-                            color: notification.isRead ? const Color(0xFF6B7280) : brandColor,
+                            color: notification.isRead
+                                ? const Color(0xFF6B7280)
+                                : brandColor,
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.1,
@@ -155,7 +169,9 @@ class NotificationTile extends StatelessWidget {
                     style: TextStyle(
                       color: const Color(0xFF0B1C30),
                       fontSize: 16,
-                      fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.w800,
+                      fontWeight: notification.isRead
+                          ? FontWeight.w600
+                          : FontWeight.w800,
                       letterSpacing: -0.3,
                     ),
                   ),
@@ -163,10 +179,14 @@ class NotificationTile extends StatelessWidget {
                   Text(
                     notification.content,
                     style: TextStyle(
-                      color: notification.isRead ? const Color(0xFF7E84A2) : const Color(0xFF334155),
+                      color: notification.isRead
+                          ? const Color(0xFF7E84A2)
+                          : const Color(0xFF334155),
                       fontSize: 14,
                       height: 1.45,
-                      fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w500,
+                      fontWeight: notification.isRead
+                          ? FontWeight.normal
+                          : FontWeight.w500,
                     ),
                   ),
 
@@ -174,7 +194,10 @@ class NotificationTile extends StatelessWidget {
                   if (orderCode != null) ...[
                     const SizedBox(height: 14),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(12),
@@ -183,7 +206,11 @@ class NotificationTile extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.layers_outlined, size: 14, color: Colors.blueGrey.shade600),
+                          Icon(
+                            Icons.layers_outlined,
+                            size: 14,
+                            color: Colors.blueGrey.shade600,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             'Mã đơn: $orderCode',
@@ -191,22 +218,35 @@ class NotificationTile extends StatelessWidget {
                               color: Colors.blueGrey.shade700,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Courier', // Gives it a tech/hardware tracking vibe
+                              fontFamily:
+                                  'Courier', // Gives it a tech/hardware tracking vibe
                             ),
                           ),
                           const SizedBox(width: 8),
                           GestureDetector(
                             onTap: () {
-                              Clipboard.setData(ClipboardData(text: orderCode.replaceAll('[', '').replaceAll(']', '')));
+                              Clipboard.setData(
+                                ClipboardData(
+                                  text: orderCode
+                                      .replaceAll('[', '')
+                                      .replaceAll(']', ''),
+                                ),
+                              );
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Đã sao chép mã đơn $orderCode'),
+                                  content: Text(
+                                    'Đã sao chép mã đơn $orderCode',
+                                  ),
                                   behavior: SnackBarBehavior.floating,
                                   duration: const Duration(seconds: 1),
                                 ),
                               );
                             },
-                            child: Icon(Icons.copy_rounded, size: 14, color: brandColor),
+                            child: Icon(
+                              Icons.copy_rounded,
+                              size: 14,
+                              color: brandColor,
+                            ),
                           ),
                         ],
                       ),

@@ -38,12 +38,12 @@ class _SignUpFormState extends State<SignUpForm> {
     if (_formKey.currentState!.validate()) {
       FocusManager.instance.primaryFocus?.unfocus();
       context.read<AuthService>().add(
-            SignUpRequested(
-              _usernameController.text.trim(),
-              _phoneController.text.trim(),
-              _passwordController.text.trim(),
-            ),
-          );
+        SignUpRequested(
+          _usernameController.text.trim(),
+          _phoneController.text.trim(),
+          _passwordController.text.trim(),
+        ),
+      );
     }
   }
 
