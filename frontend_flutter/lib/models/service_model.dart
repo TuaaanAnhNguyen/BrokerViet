@@ -8,6 +8,7 @@ class ServiceModel {
   final String? categoryId;
   final String? categoryName;
   final String price;
+  final double priceValue;
   final double rating;
   final List<String> tags;
   final String? imageUrl;
@@ -20,6 +21,7 @@ class ServiceModel {
     this.categoryId,
     this.categoryName,
     required this.price,
+    required this.priceValue,
     required this.rating,
     required this.tags,
     this.imageUrl,
@@ -44,8 +46,12 @@ class ServiceModel {
       categoryId: json['service_cat_id']?.toString(),
       categoryName: json['category_name'],
       price: formatPrice(json['price']),
+      priceValue:
+          double.tryParse(json['price']?.toString() ?? '0') ?? 0, // ← THÊM
       rating: (json['rating'] ?? 5.0).toDouble(),
-      tags: json['category_name'] != null ? [json['category_name'].toString()] : [],
+      tags: json['category_name'] != null
+          ? [json['category_name'].toString()]
+          : [],
       imageUrl: json['image_url']?.toString(),
     );
   }
