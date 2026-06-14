@@ -2,9 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../features/main/main_navigation_shell.dart';
-import '../../services/auth/auth_service.dart';
-import '../custom_text_field.dart';
+import '../../../../../services/auth/auth_service.dart';
+import '../../../../../widgets/custom_text_field.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -78,11 +77,6 @@ class _LoginFormState extends State<LoginForm> {
               if (state is AuthSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Chào mừng bạn quay trở lại, ${state.name}!')),
-                );
-                // Thêm dòng này để chuyển trang khi đăng nhập thành công
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const MainNavigationShell()),
-                  (route) => false,
                 );
               }
               if (state is AuthFailure) {
