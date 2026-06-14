@@ -16,9 +16,13 @@ class ServiceSearchScreen extends StatefulWidget {
 }
 
 class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
-  final ServiceMarketplaceService _marketplaceService = ServiceMarketplaceService();
+  final ServiceMarketplaceService _marketplaceService =
+      ServiceMarketplaceService();
   final TextEditingController _searchController = TextEditingController();
-  
+  // Controllers for price range filters
+  final TextEditingController _minPriceController = TextEditingController();
+  final TextEditingController _maxPriceController = TextEditingController();
+
   List<ServiceModel> _searchResults = [];
   bool _isLoading = false;
   bool _hasSearched = false;
@@ -35,6 +39,8 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _minPriceController.dispose();
+    _maxPriceController.dispose();
     super.dispose();
   }
 
@@ -51,17 +57,19 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
       // Direct integration into your classmate's .NET routing endpoint handler
       final results = await _marketplaceService.searchServices(
         search: query,
+        minPrice: double.tryParse(_minPriceController.text), // ← THÊM
+        maxPrice: double.tryParse(_maxPriceController.text), // ← THÊM
       );
-      
+
       setState(() {
         _searchResults = results;
         _isLoading = false;
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi tìm kiếm: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Lỗi tìm kiếm: $e')));
     }
   }
 
@@ -73,7 +81,11 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0B1C30), size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Color(0xFF0B1C30),
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         titleSpacing: 0,
@@ -92,15 +104,26 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
               onSubmitted: (_) => _performSearch(),
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm dịch vụ, sửa chữa...',
-                hintStyle: const TextStyle(color: Color(0xFF737686), fontSize: 14),
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF737686), size: 20),
+                hintStyle: const TextStyle(
+                  color: Color(0xFF737686),
+                  fontSize: 14,
+                ),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: Color(0xFF737686),
+                  size: 20,
+                ),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? GestureDetector(
                         onTap: () {
                           _searchController.clear();
                           setState(() {});
                         },
-                        child: const Icon(Icons.clear, color: Color(0xFF737686), size: 20),
+                        child: const Icon(
+                          Icons.clear,
+                          color: Color(0xFF737686),
+                          size: 20,
+                        ),
                       )
                     : null,
                 border: InputBorder.none,
@@ -113,7 +136,69 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
             ),
           ),
         ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _minPriceController,
+                    keyboardType: TextInputType.number,
+                    onSubmitted: (_) => _performSearch(),
+                    decoration: InputDecoration(
+                      hintText: 'Giá tối thiểu',
+                      hintStyle: const TextStyle(
+                        color: Color(0xFF737686),
+                        fontSize: 13,
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFE5EEFF),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _maxPriceController,
+                    keyboardType: TextInputType.number,
+                    onSubmitted: (_) => _performSearch(),
+                    decoration: InputDecoration(
+                      hintText: 'Giá tối đa',
+                      hintStyle: const TextStyle(
+                        color: Color(0xFF737686),
+                        fontSize: 13,
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFE5EEFF),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
+
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
@@ -121,10 +206,10 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
               ),
             )
           : !_hasSearched
-              ? _buildEmptySearchState()
-              : _searchResults.isEmpty
-                  ? _buildNoResultsState()
-                  : _buildResultsList(),
+          ? _buildEmptySearchState()
+          : _searchResults.isEmpty
+          ? _buildNoResultsState()
+          : _buildResultsList(),
     );
   }
 
@@ -151,12 +236,20 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.find_in_page_rounded, size: 64, color: Color(0xFFEF4444)),
+            const Icon(
+              Icons.find_in_page_rounded,
+              size: 64,
+              color: Color(0xFFEF4444),
+            ),
             const SizedBox(height: 12),
             Text(
               'Không tìm thấy kết quả nào khớp với "${_searchController.text}"',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF0B1C30), fontWeight: FontWeight.w600, fontSize: 15),
+              style: const TextStyle(
+                color: Color(0xFF0B1C30),
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
             ),
             const SizedBox(height: 6),
             const Text(

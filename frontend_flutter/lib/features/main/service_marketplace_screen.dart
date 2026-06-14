@@ -10,24 +10,32 @@ import '../../services/marketplace/service_marketplace_service.dart';
 import './service_detail_screen.dart';
 import './search_screen.dart';
 
+String _sortOrder = 'none'; // 'none', 'asc', 'desc'
+
 class ServiceMarketplaceScreen extends StatefulWidget {
   const ServiceMarketplaceScreen({super.key});
 
   @override
-  State<ServiceMarketplaceScreen> createState() => _ServiceMarketplaceScreenState();
+  State<ServiceMarketplaceScreen> createState() =>
+      _ServiceMarketplaceScreenState();
 }
 
 class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
-  final ServiceMarketplaceService _marketplaceService = ServiceMarketplaceService();
+  final ServiceMarketplaceService _marketplaceService =
+      ServiceMarketplaceService();
   final TextEditingController _searchController = TextEditingController();
-  
+
   int _activeCategoryIndex = 0;
   List<ServiceModel> _services = [];
   bool _isLoading = false;
 
   List<Map<String, dynamic>> _categories = [
     {'label': 'Tất cả', 'icon': Icons.grid_view_rounded, 'id': null},
-    {'label': 'Sửa chữa thiết bị', 'icon': Icons.precision_manufacturing_rounded, 'id': null},
+    {
+      'label': 'Sửa chữa thiết bị',
+      'icon': Icons.precision_manufacturing_rounded,
+      'id': null,
+    },
     {'label': 'Cho thuê thiết bị', 'icon': Icons.computer_rounded, 'id': null},
   ];
 
@@ -50,11 +58,50 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
     super.dispose();
   }
 
+  // Future<void> _loadCategories() async {
+  //   try {
+  //     final data = await Supabase.instance.client
+  //         .from('service_categories')
+  //         .select();
+  //     if (data.isNotEmpty) {
+  //       final List<Map<String, dynamic>> loadedCategories = [
+  //         {'label': 'Tất cả', 'icon': Icons.grid_view_rounded, 'id': null},
+  //       ];
+  //       for (var item in data) {
+  //         final String name = item['name'] ?? '';
+  //         IconData icon = Icons.work_outline;
+  //         if (name.toLowerCase().contains('sửa') ||
+  //             name.toLowerCase().contains('repair')) {
+  //           icon = Icons.computer_rounded;
+  //         } else if (name.toLowerCase().contains('thuê') ||
+  //             name.toLowerCase().contains('rental')) {
+  //           icon = Icons.precision_manufacturing_rounded;
+  //         }
+  //         loadedCategories.add({
+  //           'label': name,
+  //           'icon': icon,
+  //           'id': item['service_cat_id'],
+  //         });
+  //       }
+  //       if (mounted) {
+  //         setState(() {
+  //           _categories = loadedCategories;
+  //         });
+  //       }
+  //     }
+  //     print('>>> categories: $data');
+  //   } catch (e) {
+  //     print('Error loading categories from Supabase: $e');
+  //   }
+  // }
   Future<void> _loadCategories() async {
     try {
-      final data = await Supabase.instance.client
-          .from('service_categories')
-          .select();
+      final response = await Supabase.instance.client.functions.invoke(
+        'get-categories',
+      );
+      final List<dynamic> data = response.data as List<dynamic>;
+      print('>>> categories: $data');
+
       if (data.isNotEmpty) {
         final List<Map<String, dynamic>> loadedCategories = [
           {'label': 'Tất cả', 'icon': Icons.grid_view_rounded, 'id': null},
@@ -62,9 +109,11 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
         for (var item in data) {
           final String name = item['name'] ?? '';
           IconData icon = Icons.work_outline;
-          if (name.toLowerCase().contains('sửa') || name.toLowerCase().contains('repair')) {
+          if (name.toLowerCase().contains('repair') ||
+              name.toLowerCase().contains('sửa')) {
             icon = Icons.computer_rounded;
-          } else if (name.toLowerCase().contains('thuê') || name.toLowerCase().contains('rental')) {
+          } else if (name.toLowerCase().contains('rental') ||
+              name.toLowerCase().contains('thuê')) {
             icon = Icons.precision_manufacturing_rounded;
           }
           loadedCategories.add({
@@ -74,13 +123,11 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
           });
         }
         if (mounted) {
-          setState(() {
-            _categories = loadedCategories;
-          });
+          setState(() => _categories = loadedCategories);
         }
       }
     } catch (e) {
-      print('Error loading categories from Supabase: $e');
+      print('Error loading categories: $e');
     }
   }
 
@@ -89,16 +136,16 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
     setState(() => _isLoading = true);
     try {
       final activeCat = _categories[_activeCategoryIndex];
-      
-      final String? categoryId = _activeCategoryIndex == 0 
-          ? null 
+
+      final String? categoryId = _activeCategoryIndex == 0
+          ? null
           : activeCat['id']?.toString();
 
       final results = await _marketplaceService.searchServices(
         categoryId: categoryId,
         search: _searchController.text.isEmpty ? null : _searchController.text,
       );
-      
+
       if (mounted) {
         setState(() {
           _services = results;
@@ -111,6 +158,17 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  // ← THÊM: sort services theo priceValue
+  List<ServiceModel> _getSortedServices() {
+    final sorted = List<ServiceModel>.from(_services);
+    if (_sortOrder == 'asc') {
+      sorted.sort((a, b) => a.priceValue.compareTo(b.priceValue));
+    } else if (_sortOrder == 'desc') {
+      sorted.sort((a, b) => b.priceValue.compareTo(a.priceValue));
+    }
+    return sorted;
   }
 
   @override
@@ -130,7 +188,7 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             const SizedBox(height: 24),
             _buildSectionHeader('Danh mục dịch vụ'),
             const SizedBox(height: 12),
-            
+
             CategorySelector(
               activeIndex: _activeCategoryIndex,
               categories: _categories,
@@ -142,12 +200,14 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             const SizedBox(height: 24),
             _buildNearbyProvidersSection(),
             const SizedBox(height: 24),
-            _buildSectionHeader(
-              _activeCategoryIndex == 0 ? 'Dịch vụ phổ biến' : 'Dịch vụ $currentCategoryLabel',
+            _buildServicesSectionHeader(
+              _activeCategoryIndex == 0
+                  ? 'Dịch vụ phổ biến'
+                  : 'Dịch vụ $currentCategoryLabel',
             ),
             const SizedBox(height: 12),
-            
-            _buildServicesList(_services),
+
+            _buildServicesList(_getSortedServices()),
           ],
         ),
       ),
@@ -171,7 +231,10 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             readOnly: true,
             decoration: InputDecoration(
               hintText: 'Tìm kiếm dịch vụ, sửa chữa, thuê thiết bị...',
-              hintStyle: const TextStyle(color: Color(0xFF737686), fontSize: 14),
+              hintStyle: const TextStyle(
+                color: Color(0xFF737686),
+                fontSize: 14,
+              ),
               prefixIcon: const Icon(Icons.search, color: Color(0xFF737686)),
               filled: true,
               fillColor: const Color(0xFFE5EEFF),
@@ -193,10 +256,74 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
       child: Text(
         title,
         style: const TextStyle(
-          fontSize: 18, 
-          fontWeight: FontWeight.bold, 
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
           color: Color(0xFF0B1C30),
         ),
+      ),
+    );
+  }
+
+  // ← THÊM: section header riêng cho services, có nút sort
+  Widget _buildServicesSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0B1C30),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                if (_sortOrder == 'none' || _sortOrder == 'desc') {
+                  _sortOrder = 'asc';
+                } else {
+                  _sortOrder = 'desc';
+                }
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: _sortOrder != 'none'
+                    ? const Color(0xFF004AC6)
+                    : const Color(0xFFE5EEFF),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _sortOrder == 'desc'
+                        ? Icons.arrow_downward_rounded
+                        : Icons.arrow_upward_rounded,
+                    size: 14,
+                    color: _sortOrder != 'none'
+                        ? Colors.white
+                        : const Color(0xFF004AC6),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _sortOrder == 'desc' ? 'Giá cao' : 'Giá thấp',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _sortOrder != 'none'
+                          ? Colors.white
+                          : const Color(0xFF004AC6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -212,13 +339,20 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             children: [
               const Text(
                 'Đơn vị cung cấp gần bạn',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30)),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0B1C30),
+                ),
               ),
               TextButton(
                 onPressed: () {},
                 child: const Text(
                   'Xem tất cả',
-                  style: TextStyle(color: Color(0xFF004AC6), fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Color(0xFF004AC6),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -280,7 +414,9 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             service: services[index],
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ServiceDetailScreen()),
+              MaterialPageRoute(
+                builder: (context) => const ServiceDetailScreen(),
+              ),
             ),
           );
         },
