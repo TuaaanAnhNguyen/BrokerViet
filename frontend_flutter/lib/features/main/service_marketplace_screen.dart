@@ -58,11 +58,50 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
     super.dispose();
   }
 
+  // Future<void> _loadCategories() async {
+  //   try {
+  //     final data = await Supabase.instance.client
+  //         .from('service_categories')
+  //         .select();
+  //     if (data.isNotEmpty) {
+  //       final List<Map<String, dynamic>> loadedCategories = [
+  //         {'label': 'Tất cả', 'icon': Icons.grid_view_rounded, 'id': null},
+  //       ];
+  //       for (var item in data) {
+  //         final String name = item['name'] ?? '';
+  //         IconData icon = Icons.work_outline;
+  //         if (name.toLowerCase().contains('sửa') ||
+  //             name.toLowerCase().contains('repair')) {
+  //           icon = Icons.computer_rounded;
+  //         } else if (name.toLowerCase().contains('thuê') ||
+  //             name.toLowerCase().contains('rental')) {
+  //           icon = Icons.precision_manufacturing_rounded;
+  //         }
+  //         loadedCategories.add({
+  //           'label': name,
+  //           'icon': icon,
+  //           'id': item['service_cat_id'],
+  //         });
+  //       }
+  //       if (mounted) {
+  //         setState(() {
+  //           _categories = loadedCategories;
+  //         });
+  //       }
+  //     }
+  //     print('>>> categories: $data');
+  //   } catch (e) {
+  //     print('Error loading categories from Supabase: $e');
+  //   }
+  // }
   Future<void> _loadCategories() async {
     try {
-      final data = await Supabase.instance.client
-          .from('service_categories')
-          .select();
+      final response = await Supabase.instance.client.functions.invoke(
+        'get-categories',
+      );
+      final List<dynamic> data = response.data as List<dynamic>;
+      print('>>> categories: $data');
+
       if (data.isNotEmpty) {
         final List<Map<String, dynamic>> loadedCategories = [
           {'label': 'Tất cả', 'icon': Icons.grid_view_rounded, 'id': null},
@@ -70,11 +109,11 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
         for (var item in data) {
           final String name = item['name'] ?? '';
           IconData icon = Icons.work_outline;
-          if (name.toLowerCase().contains('sửa') ||
-              name.toLowerCase().contains('repair')) {
+          if (name.toLowerCase().contains('repair') ||
+              name.toLowerCase().contains('sửa')) {
             icon = Icons.computer_rounded;
-          } else if (name.toLowerCase().contains('thuê') ||
-              name.toLowerCase().contains('rental')) {
+          } else if (name.toLowerCase().contains('rental') ||
+              name.toLowerCase().contains('thuê')) {
             icon = Icons.precision_manufacturing_rounded;
           }
           loadedCategories.add({
@@ -84,14 +123,11 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
           });
         }
         if (mounted) {
-          setState(() {
-            _categories = loadedCategories;
-          });
+          setState(() => _categories = loadedCategories);
         }
       }
-      print('>>> categories: $data');
     } catch (e) {
-      print('Error loading categories from Supabase: $e');
+      print('Error loading categories: $e');
     }
   }
 
