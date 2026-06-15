@@ -1,25 +1,30 @@
+using System.Text.Json.Serialization;
+
 namespace brokerviet_dotnet.Dtos.Responses;
 
 public sealed class ServiceSearchItemDto
 {
-    [Newtonsoft.Json.JsonProperty("service_id")]
+    [JsonPropertyName("service_id")]
     public Guid? ServiceId { get; set; }
 
-    [Newtonsoft.Json.JsonProperty("provider_id")]
+    [JsonPropertyName("provider_id")]
     public Guid ProviderId { get; set; }
 
-    [Newtonsoft.Json.JsonProperty("service_cat_id")]
+    [JsonPropertyName("service_cat_id")]
     public Guid? ServiceCatId { get; set; }
 
-    [Newtonsoft.Json.JsonProperty("category_name")]
+    [JsonPropertyName("category_name")]
     public string? CategoryName { get; set; }
 
-    [Newtonsoft.Json.JsonProperty("title")]
+    [JsonPropertyName("title")]
     public string? Title { get; set; }
 
-    [Newtonsoft.Json.JsonProperty("description")]
+    [JsonPropertyName("description")]
     public string? Description { get; set; }
 
-    [Newtonsoft.Json.JsonProperty("price")]
+    [JsonPropertyName("price")]
     public decimal? Price { get; set; }
+
+    [JsonPropertyName("image_url")]
+    public string? ImageUrl { get; set; }
 }

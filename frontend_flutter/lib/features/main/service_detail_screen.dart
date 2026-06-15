@@ -17,23 +17,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   int _selectedDateIndex = 0;
   int _selectedTimeIndex = 0;
 
-  // --- LOCAL STATIC DATA ---
-  final List<Map<String, String>> _dates = const [
-    {'day': 'T2', 'num': '12'},
-    {'day': 'T3', 'num': '13'},
-    {'day': 'T4', 'num': '14'},
-    {'day': 'T5', 'num': '15'},
-    {'day': 'T6', 'num': '16'},
-  ];
-
-  final List<String> _times = const [
-    '09:00 SA',
-    '11:30 SA',
-    '02:00 CH',
-    '04:30 CH',
-  ];
-
-  // Theme Constants
   static const Color primaryColor = Color(0xFF004AC6);
   static const Color surfaceColor = Color(0xFFF8F9FF);
   static const Color darkText = Color(0xFF0B1C30);
@@ -72,12 +55,10 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         const SizedBox(height: 24),
                         _buildPricePackagesSection(),
                         const SizedBox(height: 24),
-                        _buildSchedulerSection(),
-                        const SizedBox(height: 24),
                         _buildReviewsSection(),
                         const SizedBox(
                           height: 80,
-                        ), // Padding below content for the floating dock
+                        ),
                       ],
                     ),
                   ),
@@ -90,8 +71,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       ),
     );
   }
-
-  // --- COMPONENT SUB-LAYOUT BUILDERS ---
 
   SliverAppBar _buildAppBar() {
     return SliverAppBar(
@@ -463,118 +442,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     );
   }
 
-  Widget _buildSchedulerSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Chọn Lịch Hẹn',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: darkText,
-              ),
-            ),
-            Text(
-              'Xem Lịch',
-              style: TextStyle(
-                color: primaryColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 80,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: _dates.length,
-            itemBuilder: (context, index) {
-              final isSelected = _selectedDateIndex == index;
-              return GestureDetector(
-                onTap: () => setState(() => _selectedDateIndex = index),
-                child: Container(
-                  width: 64,
-                  margin: const EdgeInsets.only(right: 12),
-                  decoration: BoxDecoration(
-                    color: isSelected ? primaryColor : const Color(0xFFE5EEFF),
-                    borderRadius: BorderRadius.circular(12),
-                    border: isSelected
-                        ? null
-                        : Border.all(
-                            color: const Color(0xFFC3C6D7).withOpacity(0.5),
-                          ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _dates[index]['day']!,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white70 : bodyText,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _dates[index]['num']!,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : darkText,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 44,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: _times.length,
-            itemBuilder: (context, index) {
-              final isSelected = _selectedTimeIndex == index;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: ChoiceChip(
-                  label: Text(_times[index]),
-                  selected: isSelected,
-                  onSelected: (val) =>
-                      setState(() => _selectedTimeIndex = index),
-                  selectedColor: primaryColor,
-                  backgroundColor: const Color(0xFFE5EEFF),
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : darkText,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  side: BorderSide(
-                    color: isSelected
-                        ? primaryColor
-                        : const Color(0xFFC3C6D7).withOpacity(0.5),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildReviewsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -681,21 +548,17 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                     final selectedPrice = _selectedPriceIndex == 0
                         ? '450.000 VND'
                         : '1.200.000 VND';
-                    final selectedDate =
-                        '${_dates[_selectedDateIndex]['day']} ${_dates[_selectedDateIndex]['num']}';
-                    final selectedTime = _times[_selectedTimeIndex];
 
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => BookingScreen(
-                          serviceId: '5e8d4e56-5440-401f-9236-b1bd69aea145',
                           serviceTitle: 'Chẩn đoán & Sửa chữa Toàn diện',
-                          customerId: '0bd39e0e-40c3-4e44-b532-9e43fbb829aa',
-                          providerId: '590c93d4-4331-46e8-91e5-755ab41879eb',
-                          scheduledAt: DateTime.now(),
-                          totalPrice: 500000,
+                          providerName: 'TechPro VN',
                           packageName: selectedPackage,
+                          price: selectedPrice,
+                          date: '',
+                          time: '',
                         ),
                       ),
                     );

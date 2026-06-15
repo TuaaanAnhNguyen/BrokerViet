@@ -28,7 +28,14 @@ class NetworkImageWithFallback extends StatelessWidget {
           width: width,
           height: height,
           color: const Color(0xFFE5EEFF),
-          child: const Icon(Icons.person, color: Color(0xFF004AC6)),
+          // Thay đổi sang icon báo lỗi thiết bị/dịch vụ hợp lý hơn
+          child: const Center(
+            child: Icon(
+              Icons.image_not_supported_rounded, 
+              color: Color(0xFF004AC6),
+              size: 24,
+            ),
+          ),
         );
       },
       loadingBuilder: (context, child, loadingProgress) {
@@ -41,7 +48,7 @@ class NetworkImageWithFallback extends StatelessWidget {
             child: SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF004AC6)),
             ),
           ),
         );

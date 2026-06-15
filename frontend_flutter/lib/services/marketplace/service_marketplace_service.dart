@@ -1,17 +1,10 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/service_model.dart';
+import '../../models/service_category_model.dart';
+import 'dart:convert';
 
 class ServiceMarketplaceService {
-  final String _baseUrl;
-
-  ServiceMarketplaceService({String? baseUrl})
-    : _baseUrl =
-          baseUrl ??
-          dotenv.env['BACKEND_URL'] ??
-          (kIsWeb ? 'http://localhost:5077' : 'http://10.0.2.2:5077');
+  final _supabase = Supabase.instance.client;
 
   Future<List<ServiceModel>> searchServices({
     String? categoryId,
@@ -21,51 +14,93 @@ class ServiceMarketplaceService {
     int? limit,
     int? offset,
   }) async {
+    if (minPrice != null && maxPrice != null && minPrice > maxPrice) {
+      throw ArgumentError('MinPrice cannot be greater than MaxPrice.');
+    }
+
+    // Gộp tất cả tham số vào một Map và truyền trực tiếp giá trị thực tế (hoặc null)
+    // Điều này giúp Postgres nhận diện đúng cấu trúc hàm giống như khi bạn test thủ công
+    final params = <String, dynamic>{
+      'p_limit': _normalizeLimit(limit),
+      'p_offset': _normalizeOffset(offset),
+      'p_category_id':
+          (categoryId != null && categoryId.isNotEmpty && categoryId != 'null')
+          ? categoryId
+          : null,
+      'p_search': (search != null && search.trim().isNotEmpty)
+          ? search.trim()
+          : null,
+      'p_min_price': minPrice,
+      'p_max_price': maxPrice,
+    };
+
     try {
-      final queryParams = <String, String>{};
-      if (categoryId != null && categoryId.isNotEmpty) {
-        queryParams['CategoryId'] = categoryId;
-      }
-      if (search != null && search.isNotEmpty) {
-        queryParams['Search'] = search;
-      }
-      if (minPrice != null) {
-        queryParams['MinPrice'] = minPrice.toString();
-      }
-      if (maxPrice != null) {
-        queryParams['MaxPrice'] = maxPrice.toString();
-      }
-      if (limit != null) {
-        queryParams['Limit'] = limit.toString();
-      }
-      if (offset != null) {
-        queryParams['Offset'] = offset.toString();
+      final response = await _supabase.functions.invoke(
+        'get-services',
+        body: params,
+      );
+
+      if (response.status != 200) {
+        final err = (response.data as Map?)?['error'] ?? 'Unknown error';
+        throw Exception('Edge Function lỗi: $err');
       }
 
-      final uri = Uri.parse(
-        '$_baseUrl/api/Service/search',
-      ).replace(queryParameters: queryParams);
-      print('Calling: $uri');
-      print('QueryParams: $queryParams');
-      final response = await http.get(uri);
-      print('Status: ${response.statusCode}');
-      print('Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final List<dynamic> body = jsonDecode(response.body);
-        return body
-            .map(
-              (dynamic item) =>
-                  ServiceModel.fromJson(item as Map<String, dynamic>),
-            )
-            .toList();
+      List<dynamic> dataList;
+      if (response.data is String) {
+        dataList = jsonDecode(response.data as String) as List<dynamic>;
+      } else if (response.data is List) {
+        dataList = response.data as List<dynamic>;
       } else {
-        throw Exception('Failed to load services: ${response.statusCode}');
+        throw Exception(
+          'Unexpected response type: ${response.data.runtimeType}',
+        );
       }
+
+      return dataList.map((item) {
+        try {
+          return ServiceModel.fromJson(item as Map<String, dynamic>);
+        } catch (e) {
+          print('>>> Lỗi ép kiểu Model tại item: $item. Chi tiết: $e');
+          rethrow;
+        }
+      }).toList();
     } catch (e) {
-      // Return empty list on connection error or exception
-      print('ServiceMarketplaceService error: $e');
-      return [];
+      print('>>> Lỗi khi gọi RPC get_services_list: $e');
+      rethrow;
+    }
+  }
+
+  int _normalizeLimit(int? limit) {
+    const defaultLimit = 20;
+    const maxLimit = 100;
+    if (limit == null || limit <= 0) return defaultLimit;
+    return limit > maxLimit ? maxLimit : limit;
+  }
+
+  int _normalizeOffset(int? offset) {
+    if (offset == null || offset < 0) return 0;
+    return offset;
+  }
+
+  Future<List<ServiceCategoryModel>> fetchServiceCategories() async {
+    try {
+      final response = await _supabase.from('service_categories').select();
+
+      return response.map((item) {
+        try {
+          print('>>> Đã fetch được: $item');
+          return ServiceCategoryModel(
+            serviceCatId: (item['service_cat_id'] ?? '').toString(),
+            name: item['name'] ?? 'Chưa có tên',
+          );
+        } catch (e) {
+          print('>>> Lỗi ép kiểu Category Model tại item: $item. Chi tiết: $e');
+          rethrow;
+        }
+      }).toList();
+    } catch (e) {
+      print('>>> Lỗi khi gọi Supabase để fetch dữ liệu từ bảng service_categories: $e');
+      rethrow;
     }
   }
 }

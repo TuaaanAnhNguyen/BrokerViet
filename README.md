@@ -7,10 +7,14 @@ BrokerViet
 │  ├─ Configuration
 │  │  └─ SupabaseSettings.cs
 │  ├─ Controllers
-│  │  └─ ProfileController.cs
+│  │  ├─ ProfileController.cs
+│  │  └─ ServiceController.cs
 │  ├─ Dtos
-│  │  └─ Requests
-│  │     └─ RegisterRequestDto.cs
+│  │  ├─ Requests
+│  │  │  ├─ RegisterRequestDto.cs
+│  │  │  └─ ServiceSearchRequestDto.cs
+│  │  └─ Responses
+│  │     └─ ServiceSearchItemDto.cs
 │  ├─ Extensions
 │  │  └─ ServiceCollectionExtensions.cs
 │  ├─ Models
@@ -39,8 +43,10 @@ BrokerViet
 │  │  └─ TempRepository.cs
 │  └─ Services
 │     ├─ Impl
-│     │  └─ ProfileServiceImpl.cs
-│     └─ ProfileService.cs
+│     │  ├─ ProfileServiceImpl.cs
+│     │  └─ ServiceSearchServiceImpl.cs
+│     ├─ ProfileService.cs
+│     └─ ServiceSearchService.cs
 ├─ frontend_flutter
 │  ├─ .metadata
 │  ├─ analysis_options.yaml
@@ -75,7 +81,13 @@ BrokerViet
 │  │  │  │     ├─ errors-1781051652967.log
 │  │  │  │     ├─ errors-1781051652977.log
 │  │  │  │     ├─ errors-1781071339465.log
-│  │  │  │     └─ errors-1781071339477.log
+│  │  │  │     ├─ errors-1781071339477.log
+│  │  │  │     ├─ errors-1781072190139.log
+│  │  │  │     ├─ errors-1781072190148.log
+│  │  │  │     ├─ errors-1781108389885.log
+│  │  │  │     ├─ errors-1781108389893.log
+│  │  │  │     ├─ errors-1781110576626.log
+│  │  │  │     └─ errors-1781110576641.log
 │  │  │  ├─ noVersion
 │  │  │  │  └─ buildLogic.lock
 │  │  │  └─ vcs-1
@@ -87,7 +99,13 @@ BrokerViet
 │  │  │  │  ├─ errors-1781051652967.log
 │  │  │  │  ├─ errors-1781051652977.log
 │  │  │  │  ├─ errors-1781071339465.log
-│  │  │  │  └─ errors-1781071339477.log
+│  │  │  │  ├─ errors-1781071339477.log
+│  │  │  │  ├─ errors-1781072190139.log
+│  │  │  │  ├─ errors-1781072190148.log
+│  │  │  │  ├─ errors-1781108389885.log
+│  │  │  │  ├─ errors-1781108389893.log
+│  │  │  │  ├─ errors-1781110576626.log
+│  │  │  │  └─ errors-1781110576641.log
 │  │  │  └─ sessions
 │  │  ├─ app
 │  │  │  ├─ build.gradle.kts
@@ -139,9 +157,7 @@ BrokerViet
 │  │  ├─ local.properties
 │  │  └─ settings.gradle.kts
 │  ├─ assets
-│  │  ├─ default_profile.png
-│  │  ├─ tako.png
-│  │  └─ tam tender.jpg
+│  │  └─ default_profile.png
 │  ├─ broker_viet.iml
 │  ├─ ios
 │  │  ├─ Flutter
@@ -229,19 +245,33 @@ BrokerViet
 │  │  ├─ main.dart
 │  │  ├─ models
 │  │  │  ├─ booking_model.dart
+│  │  │  ├─ notification_model.dart
+│  │  │  ├─ service_model.dart
 │  │  │  └─ user_model.dart
 │  │  ├─ repositories
 │  │  ├─ services
 │  │  │  ├─ auth
 │  │  │  │  └─ auth_service.dart
-│  │  │  └─ booking
-│  │  │     └─ booking_service.dart
+│  │  │  ├─ booking
+│  │  │  │  └─ booking_service.dart
+│  │  │  ├─ marketplace
+│  │  │  │  └─ service_marketplace_service.dart
+│  │  │  └─ message
 │  │  └─ widgets
+│  │     ├─ auth
+│  │     │  ├─ auth_header.dart
+│  │     │  ├─ login_form.dart
+│  │     │  └─ signup_form.dart
+│  │     ├─ avatar_builder.dart
 │  │     ├─ booking_card.dart
 │  │     ├─ button.dart
 │  │     ├─ custom_text_field.dart
+│  │     ├─ network_image_fallback.dart
 │  │     ├─ notification_tile.dart
-│  │     └─ service_card.dart
+│  │     └─ service
+│  │        ├─ category_selector.dart
+│  │        ├─ nearby_provider_tile.dart
+│  │        └─ service_card.dart
 │  ├─ pubspec.lock
 │  ├─ pubspec.yaml
 │  ├─ README.md

@@ -55,6 +55,6 @@ public sealed class ServiceRepository : SupabaseRepository<Service>
             throw new Exception($"Supabase RPC error {response.StatusCode}: {responseBody}");
         }
 
-        return JsonConvert.DeserializeObject<List<ServiceSearchItemDto>>(responseBody) ?? [];
+        return System.Text.Json.JsonSerializer.Deserialize<List<ServiceSearchItemDto>>(responseBody) ?? [];
     }
 }
