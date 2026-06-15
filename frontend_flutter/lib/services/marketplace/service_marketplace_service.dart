@@ -17,8 +17,6 @@ class ServiceMarketplaceService {
       throw ArgumentError('MinPrice cannot be greater than MaxPrice.');
     }
 
-    // Gộp tất cả tham số vào một Map và truyền trực tiếp giá trị thực tế (hoặc null)
-    // Điều này giúp Postgres nhận diện đúng cấu trúc hàm giống như khi bạn test thủ công
     final params = <String, dynamic>{
       'p_limit': _normalizeLimit(limit),
       'p_offset': _normalizeOffset(offset),
@@ -44,13 +42,10 @@ class ServiceMarketplaceService {
         throw Exception('Edge Function lỗi: $err');
       }
 
-      // ✅ Xử lý cả 2 trường hợp: data là String JSON hoặc đã là List
       List<dynamic> dataList;
       if (response.data is String) {
-        // Trường hợp trả về raw JSON string → decode trước
         dataList = jsonDecode(response.data as String) as List<dynamic>;
       } else if (response.data is List) {
-        // Trường hợp đã được parse sẵn thành List
         dataList = response.data as List<dynamic>;
       } else {
         throw Exception(
@@ -60,6 +55,7 @@ class ServiceMarketplaceService {
 
       return dataList.map((item) {
         try {
+          print('>>> Item raw: $item');
           return ServiceModel.fromJson(item as Map<String, dynamic>);
         } catch (e) {
           print('>>> Lỗi ép kiểu Model tại item: $item. Chi tiết: $e');
