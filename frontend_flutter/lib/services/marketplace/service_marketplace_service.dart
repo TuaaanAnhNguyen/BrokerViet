@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/service_model.dart';
+import '../../models/service_category_model.dart';
 import 'dart:convert';
 
 class ServiceMarketplaceService {
@@ -44,13 +45,10 @@ class ServiceMarketplaceService {
         throw Exception('Edge Function lỗi: $err');
       }
 
-      // ✅ Xử lý cả 2 trường hợp: data là String JSON hoặc đã là List
       List<dynamic> dataList;
       if (response.data is String) {
-        // Trường hợp trả về raw JSON string → decode trước
         dataList = jsonDecode(response.data as String) as List<dynamic>;
       } else if (response.data is List) {
-        // Trường hợp đã được parse sẵn thành List
         dataList = response.data as List<dynamic>;
       } else {
         throw Exception(
@@ -82,5 +80,27 @@ class ServiceMarketplaceService {
   int _normalizeOffset(int? offset) {
     if (offset == null || offset < 0) return 0;
     return offset;
+  }
+
+  Future<List<ServiceCategoryModel>> fetchServiceCategories() async {
+    try {
+      final response = await _supabase.from('service_categories').select();
+
+      return response.map((item) {
+        try {
+          print('>>> Đã fetch được: $item');
+          return ServiceCategoryModel(
+            serviceCatId: (item['service_cat_id'] ?? '').toString(),
+            name: item['name'] ?? 'Chưa có tên',
+          );
+        } catch (e) {
+          print('>>> Lỗi ép kiểu Category Model tại item: $item. Chi tiết: $e');
+          rethrow;
+        }
+      }).toList();
+    } catch (e) {
+      print('>>> Lỗi khi gọi Supabase để fetch dữ liệu từ bảng service_categories: $e');
+      rethrow;
+    }
   }
 }

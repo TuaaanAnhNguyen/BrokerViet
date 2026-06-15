@@ -1,7 +1,6 @@
 // lib/features/main/service_marketplace_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/service_model.dart';
 import '../../widgets/service/service_card.dart';
 import '../../widgets/service/category_selector.dart';
@@ -27,8 +26,6 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
 
   List<Map<String, dynamic>> _categories = [
     {'label': 'Tất cả', 'icon': Icons.grid_view_rounded, 'id': null},
-    {'label': 'Sửa chữa thiết bị', 'icon': Icons.precision_manufacturing_rounded, 'id': null},
-    {'label': 'Cho thuê thiết bị', 'icon': Icons.computer_rounded, 'id': null},
   ];
 
   final List<Map<String, String>> _nearbyProviders = const [
@@ -40,8 +37,7 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
   @override
   void initState() {
     super.initState();
-    _loadCategories();
-    _loadServices();
+    _initData();
   }
 
   @override
@@ -50,37 +46,56 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
     super.dispose();
   }
 
+  Future<void> _initData() async {
+    Future.wait([
+      _loadCategories(),
+      _loadServices(),
+    ]);
+  }
+
   Future<void> _loadCategories() async {
     try {
-      final data = await Supabase.instance.client
-          .from('service_categories')
-          .select();
-      if (data.isNotEmpty) {
+      print('>>> Bắt đầu gửi yêu cầu lấy danh mục từ DB...');
+      
+      final categoriesFromDb = await _marketplaceService
+          .fetchServiceCategories()
+          .timeout(const Duration(seconds: 10));
+      
+      print('>>> Kết quả trả về từ Service: ${categoriesFromDb.length} danh mục.');
+      
+      if (categoriesFromDb.isNotEmpty) {
         final List<Map<String, dynamic>> loadedCategories = [
           {'label': 'Tất cả', 'icon': Icons.grid_view_rounded, 'id': null},
         ];
-        for (var item in data) {
-          final String name = item['name'] ?? '';
+
+        for (var cat in categoriesFromDb) {
+          final String name = cat.name;
           IconData icon = Icons.work_outline;
+
           if (name.toLowerCase().contains('sửa') || name.toLowerCase().contains('repair')) {
             icon = Icons.computer_rounded;
           } else if (name.toLowerCase().contains('thuê') || name.toLowerCase().contains('rental')) {
             icon = Icons.precision_manufacturing_rounded;
           }
+
           loadedCategories.add({
             'label': name,
             'icon': icon,
-            'id': item['service_cat_id'],
+            'id': cat.serviceCatId,
           });
         }
+
         if (mounted) {
           setState(() {
             _categories = loadedCategories;
           });
+          print('>>> Đã cập nhật trạng thái UI với ${_categories.length} danh mục (bao gồm nút Tất cả).');
         }
+      } else {
+        print('>>> Database trả về danh sách danh mục rỗng.');
       }
     } catch (e) {
-      print('Error loading categories from Supabase: $e');
+      print('>>> LỖI HOÀN TOÀN TẠI MÀN HÌNH UI KHI LOAD CATEGORIES: $e');
     }
   }
 
@@ -88,25 +103,31 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      final activeCat = _categories[_activeCategoryIndex];
+      print('>>> Bắt đầu tải danh sách dịch vụ...');
+      final activeCat = _activeCategoryIndex < _categories.length 
+          ? _categories[_activeCategoryIndex] 
+          : {'id': null};
       
       final String? categoryId = _activeCategoryIndex == 0 
           ? null 
           : activeCat['id']?.toString();
 
-      final results = await _marketplaceService.searchServices(
-        categoryId: categoryId,
-        search: _searchController.text.isEmpty ? null : _searchController.text,
-      );
+      final results = await _marketplaceService
+          .searchServices(
+            categoryId: categoryId,
+            search: _searchController.text.isEmpty ? null : _searchController.text,
+          )
+          .timeout(const Duration(seconds: 10));
       
       if (mounted) {
         setState(() {
           _services = results;
           _isLoading = false;
         });
+        print('>>> Đã tải thành công ${results.length} dịch vụ.');
       }
     } catch (e) {
-      print("Error fetching marketplace entries: $e");
+      print(">>> LỖI HOÀN TOÀN TẠI MÀN HÌNH UI KHI LOAD SERVICES: $e");
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -115,12 +136,17 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentCategoryLabel = _categories[_activeCategoryIndex]['label'];
+    final currentCategoryLabel = _activeCategoryIndex < _categories.length 
+        ? _categories[_activeCategoryIndex]['label'] 
+        : '';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
       body: RefreshIndicator(
-        onRefresh: _loadServices,
+        onRefresh: () async {
+          await _loadCategories();
+          await _loadServices();
+        },
         color: const Color(0xFF004AC6),
         child: ListView(
           padding: const EdgeInsets.symmetric(vertical: 16),
