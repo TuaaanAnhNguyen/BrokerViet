@@ -33,7 +33,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
 
   Future<void> _loadInitialData() async {
     try {
-      final data = await _bookingService.fetchBookings();
+      final data = await _bookingService.listBookings();
       setState(() {
         _bookings = data;
         _isLoading = false;
@@ -45,20 +45,30 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
   }
 
   void _handleCancelRequest(String bookingId) async {
-    // Optimistic state updates or quick confirm dialogs can be added here
-    final success = await _bookingService.cancelBookingRequest(bookingId);
-    if (success && mounted) {
-      setState(() {
-        _bookings = _bookings.map((b) {
-          return b.bookingId == bookingId
-              ? b.copyWith(status: BookingStatus.daHuy)
-              : b;
-        }).toList();
-      });
+    try {
+      final success = await _bookingService.updateBooking(
+        bookingId,
+        status: 'Đã hủy',
+      );
+
+      if (success && mounted) {
+        setState(() {
+          _bookings = _bookings.map((b) {
+            return b.bookingId == bookingId
+                ? b.copyWith(status: BookingStatus.daHuy)
+                : b;
+          }).toList();
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đã hủy yêu cầu đơn hàng $bookingId thành công.'),
+          ),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Đã hủy yêu cầu đơn hàng $bookingId thành công.'),
-        ),
+        SnackBar(content: Text('Lỗi: $e')),
       );
     }
   }

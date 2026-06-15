@@ -1,3 +1,4 @@
+/*
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -34,7 +35,15 @@ class BookingSubmissionService {
 
       final response = await _supabase.functions.invoke(
         'create-booking',
-        body: payload,
+        method: HttpMethod.post,
+        body: {
+          'service_id':   serviceId,
+          'customer_id':  customerId,
+          'provider_id':  providerId,
+          'total_price':  totalPrice,
+          'scheduled_at': scheduledAt.toIso8601String(),
+          if (serviceType != null) 'service_type': serviceType,
+        },
       );
 
       return response.status == 200 || response.status == 201;
@@ -47,3 +56,4 @@ class BookingSubmissionService {
     }
   }
 }
+*/
