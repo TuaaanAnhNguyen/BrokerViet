@@ -5,6 +5,7 @@ class ServiceModel {
   final String title;
   final String subtitle;
   final String providerId;
+  final String? providerUsername;
   final String? categoryId;
   final String? categoryName;
   final String price;
@@ -18,6 +19,7 @@ class ServiceModel {
     required this.title,
     required this.subtitle,
     required this.providerId,
+    this.providerUsername,
     this.categoryId,
     this.categoryName,
     required this.price,
@@ -32,7 +34,7 @@ class ServiceModel {
       if (rawPrice == null) return 'Liên hệ';
       try {
         final double value = double.parse(rawPrice.toString());
-        return "${value.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')} đ";
+        return "${value.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')} VND";
       } catch (_) {
         return '$rawPrice đ';
       }
@@ -43,6 +45,7 @@ class ServiceModel {
       title: json['title'] ?? 'Chưa có tiêu đề',
       subtitle: json['description'] ?? '',
       providerId: (json['provider_id'] ?? '').toString(),
+      providerUsername: json['provider_username']?.toString(),
       categoryId: json['service_cat_id']?.toString(),
       categoryName: json['category_name'],
       price: formatPrice(json['price']),

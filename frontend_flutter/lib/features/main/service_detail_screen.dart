@@ -1,21 +1,27 @@
-// lib/features/main/service_detail_screen.dart
-
 import 'package:flutter/material.dart';
 import '../../widgets/network_image_fallback.dart';
+import '../../models/service_model.dart';
+import '../../services/marketplace/service_marketplace_service.dart';
 import '../booking/booking_service_screen.dart';
 
 class ServiceDetailScreen extends StatefulWidget {
-  const ServiceDetailScreen({super.key});
+  final String serviceId;
+  const ServiceDetailScreen({super.key, required this.serviceId});
 
   @override
   State<ServiceDetailScreen> createState() => _ServiceDetailScreenState();
 }
 
 class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
+  final ServiceMarketplaceService _marketplaceService =
+      ServiceMarketplaceService();
+
+  ServiceModel? _service;
+  bool _isLoading = true;
+  String? _errorMessage;
+
   bool _isFavorited = false;
   int _selectedPriceIndex = 0;
-  int _selectedDateIndex = 0;
-  int _selectedTimeIndex = 0;
 
   static const Color primaryColor = Color(0xFF004AC6);
   static const Color surfaceColor = Color(0xFFF8F9FF);
@@ -23,7 +29,71 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   static const Color bodyText = Color(0xFF434655);
 
   @override
+  void initState() {
+    super.initState();
+    _loadServiceDetail();
+  }
+
+  Future<void> _loadServiceDetail() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+      final service = await _marketplaceService.fetchServiceDetail(
+        widget.serviceId,
+      );
+      if (mounted) {
+        setState(() {
+          _service = service;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('>>> Lỗi load service detail: $e');
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Không thể tải thông tin dịch vụ.';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF8F9FF),
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF004AC6)),
+          ),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        backgroundColor: surfaceColor,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+              const SizedBox(height: 12),
+              Text(_errorMessage!, style: const TextStyle(color: Colors.grey)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadServiceDetail,
+                child: const Text('Thử lại'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: surfaceColor,
       body: Stack(
@@ -56,9 +126,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         _buildPricePackagesSection(),
                         const SizedBox(height: 24),
                         _buildReviewsSection(),
-                        const SizedBox(
-                          height: 80,
-                        ),
+                        const SizedBox(height: 80),
                       ],
                     ),
                   ),
@@ -114,8 +182,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           fit: StackFit.expand,
           children: [
             NetworkImageWithFallback(
-              imageUrl:
-                  'https://dhknnhtskaeltqjdhunl.supabase.co/storage/v1/object/public/profile_avatar/ugh%20bro.jpg',
+              // ← THAY THẾ hardcode
+              imageUrl: _service?.imageUrl ?? '',
               fit: BoxFit.cover,
             ),
             const DecoratedBox(
@@ -135,73 +203,58 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   }
 
   Widget _buildTagsSection() {
+    // ← THAY THẾ hardcode, chỉ hiện tag nếu có categoryName
+    final categoryName = _service?.categoryName;
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: const Color(0xFF39B8FD).withOpacity(0.15),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Text(
-            'Sửa chữa',
-            style: TextStyle(
-              color: Color(0xFF006591),
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
+        if (categoryName != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF39B8FD).withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              categoryName,
+              style: const TextStyle(
+                color: Color(0xFF006591),
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE5EEFF),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Text(
-            'Bảo hành',
-            style: TextStyle(
-              color: bodyText,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ),
       ],
     );
   }
 
   Widget _buildTitleSection() {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Chẩn đoán & Sửa chữa Toàn diện',
-          style: TextStyle(
+          // ← THAY THẾ hardcode
+          _service?.title ?? '',
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: darkText,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Row(
           children: [
-            Icon(Icons.star, color: Colors.amber, size: 20),
-            SizedBox(width: 4),
+            const Icon(Icons.star, color: Colors.amber, size: 20),
+            const SizedBox(width: 4),
             Text(
-              '4.9',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              // ← THAY THẾ hardcode
+              _service?.rating.toStringAsFixed(1) ?? '0.0',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            SizedBox(width: 4),
-            Text(
-              '(248 Đánh giá)',
-              style: TextStyle(color: bodyText, fontSize: 14),
-            ),
-            SizedBox(width: 8),
-            Text('•', style: TextStyle(color: Colors.grey)),
-            SizedBox(width: 8),
-            Text(
+            const SizedBox(width: 8),
+            const Text('•', style: TextStyle(color: Colors.grey)),
+            const SizedBox(width: 8),
+            // review count chưa có trong DB → giữ hardcode tạm
+            const Text(
               '1.2k Lượt đặt',
               style: TextStyle(color: bodyText, fontSize: 14),
             ),
@@ -224,8 +277,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(24),
             child: const NetworkImageWithFallback(
-              imageUrl:
-                  'https://lh3.googleusercontent.com/aida-public/AB6AXuCwd61UI8Lox-PUNWYEKXmdGVchlycNnBlxy-ayktMz5e52rYhMBhDMTedR9a1oaoyxI-SG6fFwg8o4XEo0CoVpWNwlDmcUiEpFbHbsTsYYQYKPx__Jqal3TSygcASYv8TP2aJ5lZVN6MzZjoqW1m120QKKP_JP2Y9hXqCWjp24iZTE10leq_hq2-9ydTphNDoBWytek89fFapWaB420N0RU3rzqANgFTVUJQu3K7IOg_S1en-rn0iZ14Q9rfLPUBqh-lHVeJ0W2Olc',
+              // avatar provider chưa có trong DB → giữ tạm
+              imageUrl: '',
               width: 48,
               height: 48,
               fit: BoxFit.cover,
@@ -238,9 +291,10 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               children: [
                 Row(
                   children: [
-                    const Text(
-                      'TechPro VN',
-                      style: TextStyle(
+                    Text(
+                      // ← THAY THẾ hardcode
+                      _service?.providerUsername ?? 'Nhà cung cấp',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: darkText,
@@ -299,11 +353,13 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Kiểm tra toàn diện tình trạng sức khỏe cho máy trạm doanh nghiệp hoặc máy tính cá nhân của bạn. Dịch vụ chẩn đoán nâng cao bao gồm đo nhiệt độ phần cứng, kiểm tra độ ổn định điện áp và kiểm tra sâu vi mạch bo mạch bằng các thiết bị chuyên dụng chuẩn công nghiệp.',
-          style: TextStyle(color: bodyText, fontSize: 15, height: 1.5),
+        Text(
+          // ← THAY THẾ hardcode
+          _service?.subtitle ?? '',
+          style: const TextStyle(color: bodyText, fontSize: 15, height: 1.5),
         ),
         const SizedBox(height: 16),
+        // feature checklist chưa có trong DB → giữ hardcode tạm
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -321,6 +377,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   }
 
   Widget _buildPricePackagesSection() {
+    // price packages chưa có trong DB → giữ hardcode tạm
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -337,17 +394,17 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           0,
           'Chẩn đoán Cơ bản',
           'Sửa laptop, sửa PC, diệt virus cơ bản',
-          '450.000 VND',
+          _service?.price ?? '450.000 VND',
           isPopular: false,
         ),
         const SizedBox(height: 12),
-        _buildPriceCard(
-          1,
-          'Sửa chữa Chuyên sâu',
-          'Sửa lỗi bo mạch & hàn vi mạch chuyên sâu',
-          '1.200.000 VND',
-          isPopular: true,
-        ),
+        //   _buildPriceCard(
+        //     1,
+        //     'Sửa chữa Chuyên sâu',
+        //     'Sửa lỗi bo mạch & hàn vi mạch chuyên sâu',
+        //     '1.200.000 VND',
+        //     isPopular: true,
+        //   ),
       ],
     );
   }
@@ -443,6 +500,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   }
 
   Widget _buildReviewsSection() {
+    // reviews chưa có trong DB → giữ hardcode tạm
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -463,8 +521,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: const NetworkImageWithFallback(
-                  imageUrl:
-                      'https://lh3.googleusercontent.com/aida-public/AB6AXuBoqeaz1N4IfWAVsvvV_d6Itb6mJnzOSjkSBnVH5Ek1AXXd2CfrK_Wu-CidsO4tBAcM_riWGRKXXb1dtoF7SMwVLDo3TGKdNP8SDUWT52Y5NaVHQWbwKT9ExlgBDZPKTqO9aBKXykk61o1e87TdwsszLDf0IR7sSkfs64glK8QU7rPKzDIYRrU2T3qnoV3fyRvEnK4fYDe2ySL14Ao6z-2JBsdsHE_0Gh1txiRE60j4iBo8Il3eg5_W4FOaD6zWpxfPYYVWgOd_SS9k',
+                  imageUrl: '',
                   width: 32,
                   height: 32,
                 ),
@@ -542,21 +599,20 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    final selectedPackage = _selectedPriceIndex == 0
-                        ? 'Chẩn đoán Cơ bản'
-                        : 'Sửa chữa Chuyên sâu';
-                    final selectedPrice = _selectedPriceIndex == 0
-                        ? '450.000 VND'
-                        : '1.200.000 VND';
-
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => BookingScreen(
-                          serviceTitle: 'Chẩn đoán & Sửa chữa Toàn diện',
-                          providerName: 'TechPro VN',
-                          packageName: selectedPackage,
-                          price: selectedPrice,
+                          // ← THAY THẾ hardcode
+                          serviceTitle: _service?.title ?? '',
+                          providerName: _service?.providerUsername ?? '',
+                          packageName: _selectedPriceIndex == 0
+                              ? 'Chẩn đoán Cơ bản'
+                              : 'Sửa chữa Chuyên sâu',
+                          // price: _selectedPriceIndex == 0
+                          //     ? '450.000 VND'
+                          //     : '1.200.000 VND',
+                          price: _service?.price ?? '450.000 VND',
                           date: '',
                           time: '',
                         ),

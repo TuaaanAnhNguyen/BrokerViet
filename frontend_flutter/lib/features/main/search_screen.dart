@@ -274,7 +274,8 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const ServiceDetailScreen(),
+                builder: (context) =>
+                    ServiceDetailScreen(serviceId: _searchResults[index].id),
               ),
             );
           },
