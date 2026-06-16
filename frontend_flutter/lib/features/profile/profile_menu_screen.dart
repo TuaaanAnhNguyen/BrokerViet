@@ -222,6 +222,9 @@ class ProfileMenuScreen extends StatelessWidget {
                             Navigator.pop(dialogContext);
                             _showLoadingDialog(context);
                             context.read<AuthService>().add(LogoutRequested());
+                            Navigator.of(
+                              context,
+                            ).popUntil((route) => route.isFirst);
                           },
                           child: Text(
                             'Đăng xuất',
