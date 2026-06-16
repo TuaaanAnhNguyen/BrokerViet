@@ -1,5 +1,6 @@
 // lib/features/widgets/booking_card.dart
 
+import 'package:broker_viet/widgets/network_image_fallback.dart';
 import 'package:flutter/material.dart';
 import '../../../models/booking_model.dart';
 
@@ -98,6 +99,7 @@ class BookingCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // FIXED IMAGE WRAPPER STRUCTURE HERE
               Container(
                 width: 76,
                 height: 76,
@@ -106,8 +108,13 @@ class BookingCard extends StatelessWidget {
                     color: outlineVariant.withValues(alpha: 0.5),
                   ),
                   borderRadius: BorderRadius.circular(8),
-                  image: DecorationImage(
-                    image: NetworkImage(order.imageUrl),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(7), // Slightly less than container border to prevent overlay gaps
+                  child: NetworkImageWithFallback(
+                    imageUrl: order.imageUrl,
+                    width: 76,
+                    height: 76,
                     fit: BoxFit.cover,
                   ),
                 ),

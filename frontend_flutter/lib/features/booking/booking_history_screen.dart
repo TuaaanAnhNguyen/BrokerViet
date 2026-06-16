@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../models/booking_model.dart';
 import '../../services/booking/booking_service.dart';
 import '../../widgets/booking_card.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BookingHistoryScreen extends StatefulWidget {
   const BookingHistoryScreen({super.key});
@@ -32,17 +33,28 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
   }
 
   Future<void> _loadInitialData() async {
-    try {
-      final data = await _bookingService.listBookings();
-      setState(() {
-        _bookings = data;
-        _isLoading = false;
-      });
-    } catch (e) {
+  try {
+    // Lấy userId từ phiên đăng nhập hiện tại của Supabase
+    final currentUserId = Supabase.instance.client.auth.currentSession?.user.id;
+
+    if (currentUserId == null) {
+      // Nếu chưa đăng nhập thì không thể lấy lịch sử
       setState(() => _isLoading = false);
-      // Handle error display logging logic here
+      return;
     }
+
+    // Truyền customerId vào hàm listBookings
+    final data = await _bookingService.listBookings(customerId: currentUserId);
+    
+    setState(() {
+      _bookings = data;
+      _isLoading = false;
+    });
+  } catch (e) {
+    setState(() => _isLoading = false);
+    print("Lỗi tải danh sách booking: $e");
   }
+}
 
   void _handleCancelRequest(String bookingId) async {
     try {

@@ -4,8 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class BookingService {
   final _client = Supabase.instance.client;
 
-
-
   // ── CREATE ────────────────────────────────────────────────
   Future<Map<String, dynamic>> createBooking({
     required String serviceId,
@@ -14,7 +12,6 @@ class BookingService {
     required int totalPrice,
     required DateTime scheduledAt,
     String? serviceType,
-
   }) async {
     final session = Supabase.instance.client.auth.currentSession;
     print('Session exists: ${session != null}');
@@ -24,10 +21,10 @@ class BookingService {
       'create-booking',
       method: HttpMethod.post,
       body: {
-        'service_id':   serviceId,
-        'customer_id':  customerId,
-        'provider_id':  providerId,
-        'total_price':  totalPrice,
+        'service_id': serviceId,
+        'customer_id': customerId,
+        'provider_id': providerId,
+        'total_price': totalPrice,
         'scheduled_at': scheduledAt.toIso8601String(),
         if (serviceType != null) 'service_type': serviceType,
       },
@@ -55,41 +52,55 @@ class BookingService {
     int limit = 20,
     int offset = 0,
   }) async {
-    final response = await _client.functions.invoke(
-      'list-bookings',
-      method: HttpMethod.get,
-      queryParameters: {
-        if (customerId != null) 'customer_id': customerId,
-        if (providerId != null) 'provider_id': providerId,
-        if (status != null)     'status':      status,
-        'limit':  limit.toString(),
-        'offset': offset.toString(),
-      },
-    );
+    print('BookingService: listBookings called with customerId: $customerId, status: $status');
 
-    final data = response.data as Map<String, dynamic>;
-    return data['bookings'] as List<BookingModel>;
+    try {
+      final response = await _client.functions.invoke(
+        'list-booking',
+        method: HttpMethod.get,
+        queryParameters: {
+          if (customerId != null) 'customer_id': customerId,
+          if (providerId != null) 'provider_id': providerId,
+          if (status != null) 'status': status,
+          'limit': limit.toString(),
+          'offset': offset.toString(),
+        },
+      );
+
+      print('BookingService: Success. Status code: ${response.status}');
+
+      final data = response.data as Map<String, dynamic>;
+      final List<dynamic> bookingsJson = data['bookings'] ?? [];
+
+      final List<BookingModel> result = bookingsJson.map((json) {
+        return BookingModel.fromJson(json as Map<String, dynamic>);
+      }).toList();
+
+      print('BookingService: Parsed ${result.length} bookings');
+      return result;
+    } catch (e) {
+      print('BookingService Error: $e');
+      rethrow;
+    }
   }
 
   // ── UPDATE ────────────────────────────────────────────────
   Future<bool> updateBooking(
-      String bookingId, {
-        String? status,
-        DateTime? scheduledAt,
-        DateTime? completedAt,
-        int? totalPrice,
-        String? serviceType,
-      }) async {
+    String bookingId, {
+    String? status,
+    DateTime? scheduledAt,
+    DateTime? completedAt,
+    int? totalPrice,
+    String? serviceType,
+  }) async {
     await _client.functions.invoke(
       'update-booking',
       method: HttpMethod.patch,
       queryParameters: {'booking_id': bookingId},
       body: {
         if (status != null) 'status': status,
-        if (scheduledAt != null)
-          'scheduled_at': scheduledAt.toIso8601String(),
-        if (completedAt != null)
-          'completed_at': completedAt.toIso8601String(),
+        if (scheduledAt != null) 'scheduled_at': scheduledAt.toIso8601String(),
+        if (completedAt != null) 'completed_at': completedAt.toIso8601String(),
         if (totalPrice != null) 'total_price': totalPrice,
         if (serviceType != null) 'service_type': serviceType,
       },
