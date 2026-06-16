@@ -40,22 +40,31 @@ class ServiceModel {
       }
     }
 
+    final profilesData = json['profiles'];
+    final String? extractedUsername = profilesData is Map<String, dynamic>
+        ? profilesData['username']?.toString()
+        : json['provider_username']?.toString();
+
+    final categoriesData = json['service_categories'];
+    final String? extractedCategoryName = categoriesData is Map<String, dynamic>
+        ? categoriesData['name']?.toString()
+        : json['category_name']?.toString();
+
     return ServiceModel(
       id: (json['service_id'] ?? '').toString(),
       title: json['title'] ?? 'Chưa có tiêu đề',
       subtitle: json['description'] ?? '',
       providerId: (json['provider_id'] ?? '').toString(),
-      providerUsername: json['provider_username']?.toString(),
+      providerUsername: extractedUsername,
       categoryId: json['service_cat_id']?.toString(),
-      categoryName: json['category_name'],
+      categoryName: extractedCategoryName,
       price: formatPrice(json['price']),
-      priceValue:
-          double.tryParse(json['price']?.toString() ?? '0') ?? 0, // ← THÊM
+      priceValue: double.tryParse(json['price']?.toString() ?? '0') ?? 0,
       rating: (json['rating'] ?? 5.0).toDouble(),
-      tags: json['category_name'] != null
-          ? [json['category_name'].toString()]
-          : [],
-      imageUrl: json['image_url']?.toString(),
+      tags: extractedCategoryName != null
+          ? [extractedCategoryName]
+          : (json['category_name'] != null ? [json['category_name'].toString()] : []),
+      imageUrl: json['image_url']?.toString() ?? 'assets/no_image_placeholder.png',
     );
   }
 }

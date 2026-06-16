@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // CHANGE: Imported Supabase client
 import '../../widgets/network_image_fallback.dart';
 import '../../models/service_model.dart';
 import '../../services/marketplace/service_marketplace_service.dart';
@@ -15,6 +16,9 @@ class ServiceDetailScreen extends StatefulWidget {
 class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   final ServiceMarketplaceService _marketplaceService =
       ServiceMarketplaceService();
+
+  // CHANGE: Get reference to global Supabase client instance
+  final SupabaseClient supabase = Supabase.instance.client;
 
   ServiceModel? _service;
   bool _isLoading = true;
@@ -182,7 +186,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           fit: StackFit.expand,
           children: [
             NetworkImageWithFallback(
-              // ← THAY THẾ hardcode
               imageUrl: _service?.imageUrl ?? '',
               fit: BoxFit.cover,
             ),
@@ -203,7 +206,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   }
 
   Widget _buildTagsSection() {
-    // ← THAY THẾ hardcode, chỉ hiện tag nếu có categoryName
     final categoryName = _service?.categoryName;
     return Row(
       children: [
@@ -232,7 +234,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          // ← THAY THẾ hardcode
           _service?.title ?? '',
           style: const TextStyle(
             fontSize: 24,
@@ -246,14 +247,12 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             const Icon(Icons.star, color: Colors.amber, size: 20),
             const SizedBox(width: 4),
             Text(
-              // ← THAY THẾ hardcode
               _service?.rating.toStringAsFixed(1) ?? '0.0',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(width: 8),
             const Text('•', style: TextStyle(color: Colors.grey)),
             const SizedBox(width: 8),
-            // review count chưa có trong DB → giữ hardcode tạm
             const Text(
               '1.2k Lượt đặt',
               style: TextStyle(color: bodyText, fontSize: 14),
@@ -277,7 +276,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(24),
             child: const NetworkImageWithFallback(
-              // avatar provider chưa có trong DB → giữ tạm
               imageUrl: '',
               width: 48,
               height: 48,
@@ -292,7 +290,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                 Row(
                   children: [
                     Text(
-                      // ← THAY THẾ hardcode
                       _service?.providerUsername ?? 'Nhà cung cấp',
                       style: const TextStyle(
                         fontSize: 16,
@@ -354,12 +351,10 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          // ← THAY THẾ hardcode
           _service?.subtitle ?? '',
           style: const TextStyle(color: bodyText, fontSize: 15, height: 1.5),
         ),
         const SizedBox(height: 16),
-        // feature checklist chưa có trong DB → giữ hardcode tạm
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -377,7 +372,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   }
 
   Widget _buildPricePackagesSection() {
-    // price packages chưa có trong DB → giữ hardcode tạm
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -398,13 +392,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           isPopular: false,
         ),
         const SizedBox(height: 12),
-        //   _buildPriceCard(
-        //     1,
-        //     'Sửa chữa Chuyên sâu',
-        //     'Sửa lỗi bo mạch & hàn vi mạch chuyên sâu',
-        //     '1.200.000 VND',
-        //     isPopular: true,
-        //   ),
       ],
     );
   }
@@ -500,7 +487,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   }
 
   Widget _buildReviewsSection() {
-    // reviews chưa có trong DB → giữ hardcode tạm
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -599,22 +585,28 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
+                    // CHANGE: Get current logged-in user id for dynamic customer tracking
+                    final currentCustomerId = supabase.auth.currentUser?.id ?? '';
+
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => BookingScreen(
-                          // ← THAY THẾ hardcode
-                          serviceTitle: _service?.title ?? '',
-                          providerName: _service?.providerUsername ?? '',
+                          // CHANGE: Cleaned up conflict block, mapped UI metadata dynamically
+                          serviceTitle: _service?.title ?? 'Chưa có tiêu đề',
+                          providerName: _service?.providerUsername ?? 'Nhà cung cấp',
                           packageName: _selectedPriceIndex == 0
                               ? 'Chẩn đoán Cơ bản'
                               : 'Sửa chữa Chuyên sâu',
-                          // price: _selectedPriceIndex == 0
-                          //     ? '450.000 VND'
-                          //     : '1.200.000 VND',
-                          price: _service?.price ?? '450.000 VND',
-                          date: '',
-                          time: '',
+                          
+                          // CHANGE: Added dynamic relational references instead of hardcoded IDs
+                          serviceId: _service?.id ?? '',
+                          providerId: _service?.providerId ?? '',
+                          customerId: currentCustomerId,
+                          
+                          // CHANGE: Used safe parsed int value from model instead of regex replacement logic
+                          totalPrice: _service?.priceValue.toInt() ?? 0,
+                          scheduledAt: DateTime.now(),
                         ),
                       ),
                     );

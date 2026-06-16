@@ -34,27 +34,32 @@ class _ConversationScreenState extends State<ConversationScreen> {
   final TextEditingController _messageController = TextEditingController();
   final List<ChatMessageModel> _messages = [
     const ChatMessageModel(
-      text: "Xin chào! Tôi có thể giúp gì cho bạn về dịch vụ vệ sinh máy lạnh ạ?",
+      text:
+          "Xin chào! Tôi có thể giúp gì cho bạn về dịch vụ vệ sinh máy lạnh ạ?",
       timestamp: "10:30 AM",
       isMe: false,
     ),
     const ChatMessageModel(
-      text: "Chào anh, phòng mình xài máy lạnh treo tường Daikin 1.5 HP, dạo này bật tầm 30 phút mới thấy mát với hơi có mùi ẩm á.",
+      text:
+          "Chào anh, phòng mình xài máy lạnh treo tường Daikin 1.5 HP, dạo này bật tầm 30 phút mới thấy mát với hơi có mùi ẩm á.",
       timestamp: "10:32 AM",
       isMe: true,
     ),
     const ChatMessageModel(
-      text: "Dạ hiện tượng này thường do lưới lọc bị bám bụi dày dặn hoặc máng nước có chút nhớt tích tụ bẩn á anh. Gói 'Deep Cleaning' bên em sẽ xử lý triệt để xịt rửa dàn lạnh, dàn nóng và thông máng thoát nước luôn ạ.",
+      text:
+          "Dạ hiện tượng này thường do lưới lọc bị bám bụi dày dặn hoặc máng nước có chút nhớt tích tụ bẩn á anh. Gói 'Deep Cleaning' bên em sẽ xử lý triệt để xịt rửa dàn lạnh, dàn nóng và thông máng thoát nước luôn ạ.",
       timestamp: "10:35 AM",
       isMe: false,
     ),
     const ChatMessageModel(
-      text: "Dạ vâng, em vừa bấm đặt lịch trên app vào lúc 2:30 PM chiều nay luôn rồi á, không biết bên mình sắp xếp kỹ thuật viên qua kịp không?",
+      text:
+          "Dạ vâng, em vừa bấm đặt lịch trên app vào lúc 2:30 PM chiều nay luôn rồi á, không biết bên mình sắp xếp kỹ thuật viên qua kịp không?",
       timestamp: "10:36 AM",
       isMe: true,
     ),
     const ChatMessageModel(
-      text: "Dạ em đã nhận được yêu cầu trên hệ thống BrokerViet rồi nha anh! Kỹ thuật viên đang chuẩn bị dụng cụ và sẽ di chuyển qua Landmark 81 đúng khung giờ 2:30 PM của anh ạ.",
+      text:
+          "Dạ em đã nhận được yêu cầu trên hệ thống BrokerViet rồi nha anh! Kỹ thuật viên đang chuẩn bị dụng cụ và sẽ di chuyển qua Landmark 81 đúng khung giờ 2:30 PM của anh ạ.",
       timestamp: "10:38 AM",
       isMe: false,
     ),
@@ -62,7 +67,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
   void _sendMessage() {
     if (_messageController.text.trim().isEmpty) return;
-    
+
     setState(() {
       _messages.add(
         ChatMessageModel(
@@ -106,7 +111,10 @@ class _ConversationScreenState extends State<ConversationScreen> {
               backgroundColor: const Color(0xFFE5EEFF),
               child: Text(
                 widget.providerName.substring(0, 1).toUpperCase(),
-                style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -117,13 +125,21 @@ class _ConversationScreenState extends State<ConversationScreen> {
                 children: [
                   Text(
                     widget.providerName,
-                    style: const TextStyle(color: darkText, fontSize: 15, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: darkText,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     widget.providerRole,
-                    style: const TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -131,12 +147,21 @@ class _ConversationScreenState extends State<ConversationScreen> {
           ],
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.phone_outlined, color: primaryColor), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.more_vert, color: bodyText), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.phone_outlined, color: primaryColor),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.more_vert, color: bodyText),
+            onPressed: () {},
+          ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: outlineVariant.withValues(alpha: 0.5), height: 1),
+          child: Container(
+            color: outlineVariant.withValues(alpha: 0.5),
+            height: 1,
+          ),
         ),
       ),
       body: Column(
@@ -148,12 +173,20 @@ class _ConversationScreenState extends State<ConversationScreen> {
               color: const Color(0xFFEFF4FF),
               child: Row(
                 children: [
-                  const Icon(Icons.build_circle_outlined, color: primaryColor, size: 18),
+                  const Icon(
+                    Icons.build_circle_outlined,
+                    color: primaryColor,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Đang trao đổi về: ${widget.serviceContext}',
-                      style: const TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                        color: primaryColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -176,15 +209,25 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
           // Bottom Interactive Action Text Bar Input Block
           Container(
-            padding: EdgeInsets.fromLTRB(12, 8, 12, MediaQuery.of(context).padding.bottom + 8),
+            padding: EdgeInsets.fromLTRB(
+              12,
+              8,
+              12,
+              MediaQuery.of(context).padding.bottom + 8,
+            ),
             decoration: BoxDecoration(
               color: Colors.white,
-              border: Border(top: BorderSide(color: outlineVariant.withValues(alpha: 0.5))),
+              border: Border(
+                top: BorderSide(color: outlineVariant.withValues(alpha: 0.5)),
+              ),
             ),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.add_circle_outline, color: primaryColor),
+                  icon: const Icon(
+                    Icons.add_circle_outline,
+                    color: primaryColor,
+                  ),
                   onPressed: () {},
                 ),
                 IconButton(
@@ -201,8 +244,14 @@ class _ConversationScreenState extends State<ConversationScreen> {
                     style: const TextStyle(fontSize: 14, color: darkText),
                     decoration: InputDecoration(
                       hintText: 'Nhập tin nhắn...',
-                      hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      hintStyle: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 13,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       filled: true,
                       fillColor: const Color(0xFFF1F3F6),
                       border: OutlineInputBorder(
@@ -230,7 +279,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
       alignment: message.isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: message.isMe ? primary : Colors.white,
@@ -240,14 +291,16 @@ class _ConversationScreenState extends State<ConversationScreen> {
             bottomLeft: Radius.circular(message.isMe ? 16 : 2),
             bottomRight: Radius.circular(message.isMe ? 2 : 16),
           ),
-          border: message.isMe ? null : Border.all(color: const Color(0xFFE2E4EB)),
+          border: message.isMe
+              ? null
+              : Border.all(color: const Color(0xFFE2E4EB)),
           boxShadow: [
             if (!message.isMe)
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
-              )
+              ),
           ],
         ),
         child: Column(

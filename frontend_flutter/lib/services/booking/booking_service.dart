@@ -1,50 +1,120 @@
-// lib/services/booking/booking_service.dart
-
-import '../../models/booking_model.dart';
+import 'package:broker_viet/models/booking_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BookingService {
-  // Simulate network/database latency
-  Future<List<BookingModel>> fetchBookings() async {
-    await Future.delayed(const Duration(milliseconds: 800));
-    return [
-      const BookingModel(
-        bookingId: 'BV-9831',
-        shopName: 'TechCare Pro Service',
-        serviceTitle: 'Vệ sinh PC chuyên sâu & Tối ưu hóa keo tản nhiệt',
-        imageUrl: 'https://images.unsplash.com/photo-1588508065123-287b28e013da?w=150',
-        variantDetails: 'Thermal Grizzly, Máy tính bàn Tiêu chuẩn',
-        date: '01 Tháng 6 2026',
-        originalCost: '350.000đ',
-        cost: '250.000đ',
-        status: BookingStatus.dangThucHien,
-      ),
-      const BookingModel(
-        bookingId: 'BV-9210',
-        shopName: 'An Phát Computer',
-        serviceTitle: 'Bàn phím cơ DareU EK87L V2 Black no LED',
-        imageUrl: 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=150',
-        variantDetails: 'Dream Switch, Màu Đen',
-        date: '25 Tháng 5 2026',
-        originalCost: '499.000đ',
-        cost: '289.000đ',
-        status: BookingStatus.daHoanThanh,
-      ),
-      const BookingModel(
-        bookingId: 'BV-1102',
-        shopName: 'Blood Lab Center',
-        serviceTitle: 'Xét nghiệm lâm sàng & Đánh giá chỉ số sinh học',
-        imageUrl: 'https://images.unsplash.com/photo-1579165466541-7183b6f6943a?w=150',
-        variantDetails: 'Gói Xét nghiệm Tiêu chuẩn Hỏa tốc',
-        date: '12 Tháng 5 2026',
-        originalCost: '600.000đ',
-        cost: '600.000đ',
-        status: BookingStatus.choDuyet,
-      ),
-    ];
+  final _client = Supabase.instance.client;
+
+  // ── CREATE ────────────────────────────────────────────────
+  Future<Map<String, dynamic>> createBooking({
+    required String serviceId,
+    required String customerId,
+    required String providerId,
+    required int totalPrice,
+    required DateTime scheduledAt,
+    String? serviceType,
+  }) async {
+    final session = Supabase.instance.client.auth.currentSession;
+    print('Session exists: ${session != null}');
+    print('User id: ${session?.user.id}');
+    print('Token exists: ${session?.accessToken.isNotEmpty}');
+    final response = await _client.functions.invoke(
+      'create-booking',
+      method: HttpMethod.post,
+      body: {
+        'service_id': serviceId,
+        'customer_id': customerId,
+        'provider_id': providerId,
+        'total_price': totalPrice,
+        'scheduled_at': scheduledAt.toIso8601String(),
+        if (serviceType != null) 'service_type': serviceType,
+      },
+    );
+
+    return response.data as Map<String, dynamic>;
   }
 
-  Future<bool> cancelBookingRequest(String bookingId) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return true; // Simulate successful response update from API
+  // ── GET ───────────────────────────────────────────────────
+  Future<Map<String, dynamic>> getBooking(String bookingId) async {
+    final response = await _client.functions.invoke(
+      'get-booking',
+      method: HttpMethod.get,
+      queryParameters: {'booking_id': bookingId},
+    );
+
+    return response.data as Map<String, dynamic>;
+  }
+
+  // ── LIST ──────────────────────────────────────────────────
+  Future<List<BookingModel>> listBookings({
+    String? customerId,
+    String? providerId,
+    String? status,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    print('BookingService: listBookings called with customerId: $customerId, status: $status');
+
+    try {
+      final response = await _client.functions.invoke(
+        'list-booking',
+        method: HttpMethod.get,
+        queryParameters: {
+          if (customerId != null) 'customer_id': customerId,
+          if (providerId != null) 'provider_id': providerId,
+          if (status != null) 'status': status,
+          'limit': limit.toString(),
+          'offset': offset.toString(),
+        },
+      );
+
+      print('BookingService: Success. Status code: ${response.status}');
+
+      final data = response.data as Map<String, dynamic>;
+      final List<dynamic> bookingsJson = data['bookings'] ?? [];
+
+      final List<BookingModel> result = bookingsJson.map((json) {
+        return BookingModel.fromJson(json as Map<String, dynamic>);
+      }).toList();
+
+      print('BookingService: Parsed ${result.length} bookings');
+      return result;
+    } catch (e) {
+      print('BookingService Error: $e');
+      rethrow;
+    }
+  }
+
+  // ── UPDATE ────────────────────────────────────────────────
+  Future<bool> updateBooking(
+    String bookingId, {
+    String? status,
+    DateTime? scheduledAt,
+    DateTime? completedAt,
+    int? totalPrice,
+    String? serviceType,
+  }) async {
+    await _client.functions.invoke(
+      'update-booking',
+      method: HttpMethod.patch,
+      queryParameters: {'booking_id': bookingId},
+      body: {
+        if (status != null) 'status': status,
+        if (scheduledAt != null) 'scheduled_at': scheduledAt.toIso8601String(),
+        if (completedAt != null) 'completed_at': completedAt.toIso8601String(),
+        if (totalPrice != null) 'total_price': totalPrice,
+        if (serviceType != null) 'service_type': serviceType,
+      },
+    );
+
+    return true;
+  }
+
+  // ── DELETE ────────────────────────────────────────────────
+  Future<void> deleteBooking(String bookingId) async {
+    await _client.functions.invoke(
+      'delete-booking',
+      method: HttpMethod.delete,
+      queryParameters: {'booking_id': bookingId},
+    );
   }
 }
