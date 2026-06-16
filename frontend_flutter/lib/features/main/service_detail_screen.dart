@@ -586,7 +586,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     // CHANGE: Get current logged-in user id for dynamic customer tracking
-                    final currentCustomerId = supabase.auth.currentUser?.id ?? '';
+                    final currentCustomerId =
+                        supabase.auth.currentUser?.id ?? '';
 
                     Navigator.push(
                       context,
@@ -594,16 +595,17 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         builder: (context) => BookingScreen(
                           // CHANGE: Cleaned up conflict block, mapped UI metadata dynamically
                           serviceTitle: _service?.title ?? 'Chưa có tiêu đề',
-                          providerName: _service?.providerUsername ?? 'Nhà cung cấp',
+                          providerName:
+                              _service?.providerUsername ?? 'Nhà cung cấp',
                           packageName: _selectedPriceIndex == 0
                               ? 'Chẩn đoán Cơ bản'
                               : 'Sửa chữa Chuyên sâu',
-                          
+
                           // CHANGE: Added dynamic relational references instead of hardcoded IDs
                           serviceId: _service?.id ?? '',
                           providerId: _service?.providerId ?? '',
                           customerId: currentCustomerId,
-                          
+
                           // CHANGE: Used safe parsed int value from model instead of regex replacement logic
                           totalPrice: _service?.priceValue.toInt() ?? 0,
                           scheduledAt: DateTime.now(),

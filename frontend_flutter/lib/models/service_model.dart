@@ -6,6 +6,7 @@ class ServiceModel {
   final String subtitle;
   final String providerId;
   final String? providerUsername;
+  final String? providerAvatarUrl;
   final String? categoryId;
   final String? categoryName;
   final String price;
@@ -20,6 +21,7 @@ class ServiceModel {
     required this.subtitle,
     required this.providerId,
     this.providerUsername,
+    this.providerAvatarUrl,
     this.categoryId,
     this.categoryName,
     required this.price,
@@ -45,6 +47,10 @@ class ServiceModel {
         ? profilesData['username']?.toString()
         : json['provider_username']?.toString();
 
+    final String? extractedAvatarUrl = profilesData is Map<String, dynamic>
+        ? profilesData['avatar_url']?.toString()
+        : json['provider_avatar_url']?.toString();
+
     final categoriesData = json['service_categories'];
     final String? extractedCategoryName = categoriesData is Map<String, dynamic>
         ? categoriesData['name']?.toString()
@@ -56,6 +62,7 @@ class ServiceModel {
       subtitle: json['description'] ?? '',
       providerId: (json['provider_id'] ?? '').toString(),
       providerUsername: extractedUsername,
+      providerAvatarUrl: extractedAvatarUrl,
       categoryId: json['service_cat_id']?.toString(),
       categoryName: extractedCategoryName,
       price: formatPrice(json['price']),
@@ -64,7 +71,7 @@ class ServiceModel {
       tags: extractedCategoryName != null
           ? [extractedCategoryName]
           : (json['category_name'] != null ? [json['category_name'].toString()] : []),
-      imageUrl: json['image_url']?.toString() ?? 'assets/no_image_placeholder.png',
+      imageUrl: json['image_url']?.toString() ?? 'assets/no_icon_placeholder.png',
     );
   }
 }

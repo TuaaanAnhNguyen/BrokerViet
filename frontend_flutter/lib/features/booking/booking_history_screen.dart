@@ -18,9 +18,6 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
   List<BookingModel> _bookings = [];
   bool _isLoading = true;
 
-  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
-      GlobalKey<RefreshIndicatorState>();
-
   final List<String> _statuses = [
     'Tất cả',
     'Chờ duyệt',
@@ -49,12 +46,16 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
         customerId: currentUserId,
       );
 
-      setState(() {
-        _bookings = data;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _bookings = data;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
       print("Lỗi tải danh sách booking: $e");
     }
   }
@@ -154,55 +155,47 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                   valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
                 ),
               )
-            : RefreshIndicator(
-                key: _refreshIndicatorKey,
-                color: primaryColor,
-                onRefresh: _loadInitialData,
-                child: TabBarView(
-                  children: _statuses.map((status) {
-                    // CHANGE: Find matching enum target for current tab
-                    final targetEnum = _getEnumFromTab(status);
+            : TabBarView(
+                children: _statuses.map((status) {
+                  final targetEnum = _getEnumFromTab(status);
+                  final filtered = targetEnum == null
+                      ? _bookings
+                      : _bookings.where((item) => item.status == targetEnum).toList();
 
-                    // CHANGE: Filter list directly against native BookingStatus enum values
-                    final filtered = targetEnum == null
-                        ? _bookings // 'Tất cả' tab pulls entire response array
-                        : _bookings
-                              .where((item) => item.status == targetEnum)
-                              .toList();
-
-                    if (filtered.isEmpty) {
-                      return ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
-                          SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.3,
+                  return RefreshIndicator(
+                    color: primaryColor,
+                    onRefresh: _loadInitialData,
+                    child: filtered.isEmpty
+                        ? CustomScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            slivers: [
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: Center(
+                                  child: Text(
+                                    'Không tìm thấy đơn hàng nào.',
+                                    style: const TextStyle(color: Color(0xFF434655)),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: filtered.length,
+                            padding: const EdgeInsets.only(top: 8, bottom: 24),
+                            itemBuilder: (context, index) {
+                              final item = filtered[index];
+                              return BookingCard(
+                                order: item,
+                                onCancel: () => _handleCancelRequest(item.bookingId),
+                                onRebook: () {},
+                                TrackProgress: () {},
+                              );
+                            },
                           ),
-                          const Center(
-                            child: Text(
-                              'Không tìm thấy đơn hàng nào.',
-                              style: TextStyle(color: Color(0xFF434655)),
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-
-                    return ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      itemCount: filtered.length,
-                      padding: const EdgeInsets.only(top: 8),
-                      itemBuilder: (context, index) {
-                        final item = filtered[index];
-                        return BookingCard(
-                          order: item,
-                          onCancel: () => _handleCancelRequest(item.bookingId),
-                          onRebook: () {},
-                          TrackProgress: () {},
-                        );
-                      },
-                    );
-                  }).toList(),
-                ),
+                  );
+                }).toList(),
               ),
       ),
     );

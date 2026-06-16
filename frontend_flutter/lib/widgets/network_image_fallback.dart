@@ -17,18 +17,26 @@ class NetworkImageWithFallback extends StatelessWidget {
     this.fit = BoxFit.cover,
   });
 
+  bool _isValidNetworkUrl(String url) {
+    final cleanUrl = url.trim().toLowerCase();
+    if (cleanUrl.isEmpty || cleanUrl == 'null') return false;
+    return cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://');
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (imageUrl.trim().isEmpty) {
+    final String trimmedUrl = imageUrl.trim();
+
+    if (trimmedUrl.startsWith('assets/')) {
+      return _buildAssetPlaceholder(customPath: trimmedUrl);
+    }
+
+    if (!_isValidNetworkUrl(trimmedUrl)) {
       return _buildAssetPlaceholder();
     }
 
-    if (imageUrl.startsWith('assets/')) {
-      return _buildAssetPlaceholder(customPath: imageUrl);
-    }
-
     return CachedNetworkImage(
-      imageUrl: imageUrl,
+      imageUrl: trimmedUrl,
       width: width,
       height: height,
       fit: fit,

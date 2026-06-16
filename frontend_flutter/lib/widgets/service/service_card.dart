@@ -42,15 +42,10 @@ class ServiceCard extends StatelessWidget {
               child: SizedBox(
                 width: 110,
                 height: 110,
-                child: service.imageUrl != null && service.imageUrl!.isNotEmpty
-                    ? NetworkImageWithFallback(
-                        imageUrl: service.imageUrl!,
-                        fit: BoxFit.cover,
-                      )
-                    : Image.asset(
-                        'assets/no_icon_placeholder.png',
-                        fit: BoxFit.cover,
-                      ),
+                child: NetworkImageWithFallback(
+                  imageUrl: service.imageUrl ?? '',
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             
