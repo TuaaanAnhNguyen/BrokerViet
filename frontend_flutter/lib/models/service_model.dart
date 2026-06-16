@@ -46,7 +46,7 @@ class ServiceModel {
       price: formatPrice(json['price']),
       rating: (json['rating'] ?? 5.0).toDouble(),
       tags: json['category_name'] != null ? [json['category_name'].toString()] : [],
-      imageUrl: json['image_url']?.toString(),
+      imageUrl: json['image_url']?.toString() ?? 'assets/no_image_placeholder.png',
     );
   }
 }

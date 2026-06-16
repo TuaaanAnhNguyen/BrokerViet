@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../widgets/avatar_builder.dart'; // ◄ 1. Import your avatar widget file
-import '../../services/auth/auth_service.dart';  // ◄ Make sure to import your AuthService/State file path
+import '../../services/auth/auth_service.dart'; // ◄ Make sure to import your AuthService/State file path
 
 class AccountSettingScreen extends StatelessWidget {
   const AccountSettingScreen({super.key});
@@ -19,17 +19,28 @@ class AccountSettingScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: primaryColor),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            size: 18,
+            color: primaryColor,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         titleSpacing: 0,
         title: const Text(
           'Thiết lập tài khoản',
-          style: TextStyle(color: darkText, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: darkText,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: outlineVariant.withValues(alpha: 0.5), height: 1),
+          child: Container(
+            color: outlineVariant.withValues(alpha: 0.5),
+            height: 1,
+          ),
         ),
       ),
       // 2. Wrap the body with a BlocBuilder to extract the current user data
@@ -41,7 +52,9 @@ class AccountSettingScreen extends StatelessWidget {
 
           if (state is AuthSuccess) {
             avatarPath = state.avatarPath;
-            emailDisplay = state.email.isNotEmpty ? state.email : 'Chưa cập nhật email';
+            emailDisplay = state.email.isNotEmpty
+                ? state.email
+                : 'Chưa cập nhật email';
             // If phone isn't tracked in AuthSuccess, you can format your display string dynamically
           }
 
@@ -55,17 +68,27 @@ class AccountSettingScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Column(
                   children: [
-                    buildAvatar(avatarPath), // ◄ 4. Injected your widget here dynamically!
+                    buildAvatar(
+                      avatarPath,
+                    ), // ◄ 4. Injected your widget here dynamically!
                     const SizedBox(height: 12),
                     if (state is AuthSuccess) ...[
                       Text(
                         state.name,
-                        style: const TextStyle(color: darkText, fontSize: 18, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: darkText,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         state.memberTier,
-                        style: const TextStyle(color: primaryColor, fontSize: 13, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          color: primaryColor,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ],
@@ -98,7 +121,8 @@ class AccountSettingScreen extends StatelessWidget {
               _buildSettingTile(
                 icon: Icons.email_outlined,
                 title: 'Thay đổi địa chỉ Email',
-                subtitle: emailDisplay, // ◄ Render true active email state dynamically
+                subtitle:
+                    emailDisplay, // ◄ Render true active email state dynamically
                 onTap: () => _showChangeEmailDialog(context),
               ),
               _buildSettingTile(
@@ -134,13 +158,28 @@ class AccountSettingScreen extends StatelessWidget {
               Container(
                 color: Colors.white,
                 child: ListTile(
-                  leading: Icon(Icons.delete_forever_rounded, color: Colors.red.shade700, size: 22),
+                  leading: Icon(
+                    Icons.delete_forever_rounded,
+                    color: Colors.red.shade700,
+                    size: 22,
+                  ),
                   title: Text(
                     'Yêu cầu xóa tài khoản',
-                    style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 15),
+                    style: TextStyle(
+                      color: Colors.red.shade700,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                   ),
-                  subtitle: const Text('Xóa vĩnh viễn dữ liệu profile và lịch sử giao dịch', style: TextStyle(fontSize: 12)),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFFC3C6D7)),
+                  subtitle: const Text(
+                    'Xóa vĩnh viễn dữ liệu profile và lịch sử giao dịch',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 14,
+                    color: Color(0xFFC3C6D7),
+                  ),
                   onTap: () => _showDeleteAccountPrompt(context),
                 ),
               ),
@@ -177,13 +216,31 @@ class AccountSettingScreen extends StatelessWidget {
     return Container(
       color: Colors.white,
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFF1F3F6), width: 0.5)),
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFF1F3F6), width: 0.5),
+        ),
       ),
       child: ListTile(
         leading: Icon(icon, color: const Color(0xFF004AC6), size: 22),
-        title: Text(title, style: const TextStyle(color: Color(0xFF0B1C30), fontSize: 15, fontWeight: FontWeight.w500)),
-        subtitle: Text(subtitle, style: const TextStyle(color: Color(0xFF7E84A2), fontSize: 12)),
-        trailing: trailing ?? const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFFC3C6D7)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF0B1C30),
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(color: Color(0xFF7E84A2), fontSize: 12),
+        ),
+        trailing:
+            trailing ??
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 14,
+              color: Color(0xFFC3C6D7),
+            ),
         onTap: trailing == null ? onTap : null,
       ),
     );
@@ -193,7 +250,10 @@ class AccountSettingScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Đổi mật khẩu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text(
+          'Đổi mật khẩu',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -205,11 +265,19 @@ class AccountSettingScreen extends StatelessWidget {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004AC6)),
-            child: const Text('Cập nhật', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF004AC6),
+            ),
+            child: const Text(
+              'Cập nhật',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -220,7 +288,10 @@ class AccountSettingScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Thay đổi Email', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text(
+          'Thay đổi Email',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -229,14 +300,19 @@ class AccountSettingScreen extends StatelessWidget {
             const Text(
               'Hệ thống sẽ gửi một liên kết xác nhận mã OTP về hòm thư này để hoàn tất thay đổi.',
               style: TextStyle(color: Colors.black45, fontSize: 11),
-            )
+            ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004AC6)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF004AC6),
+            ),
             child: const Text('Gửi mã', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -248,16 +324,31 @@ class AccountSettingScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Xóa tài khoản vĩnh viễn?', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold)),
+        title: Text(
+          'Xóa tài khoản vĩnh viễn?',
+          style: TextStyle(
+            color: Colors.red.shade700,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         content: const Text(
           'Hành động này không thể hoàn tác. Toàn bộ thông tin đặt lịch dịch vụ, ví liên kết và lịch sử trò chuyện của bạn sẽ bị gỡ sạch khỏi hệ thống BrokerViet.',
           style: TextStyle(fontSize: 13, height: 1.3),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy bỏ')),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Tôi xác nhận xóa', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold)),
+            child: const Text('Hủy bỏ'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Tôi xác nhận xóa',
+              style: TextStyle(
+                color: Colors.red.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -271,10 +362,16 @@ class AccountSettingScreen extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
         filled: true,
         fillColor: const Color(0xFFF1F3F6),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide.none,
+        ),
       ),
     );
   }

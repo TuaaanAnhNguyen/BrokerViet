@@ -47,13 +47,9 @@ class ServiceCard extends StatelessWidget {
                         imageUrl: service.imageUrl!,
                         fit: BoxFit.cover,
                       )
-                    : Container(
-                        color: const Color(0xFFE5EEFF),
-                        child: const Icon(
-                          Icons.image_not_supported_rounded,
-                          color: Color(0xFF004AC6),
-                          size: 28,
-                        ),
+                    : Image.asset(
+                        'assets/no_icon_placeholder.png',
+                        fit: BoxFit.cover,
                       ),
               ),
             ),
