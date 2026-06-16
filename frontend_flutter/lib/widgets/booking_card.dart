@@ -99,7 +99,6 @@ class BookingCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // FIXED IMAGE WRAPPER STRUCTURE HERE
               Container(
                 width: 76,
                 height: 76,
@@ -110,7 +109,7 @@ class BookingCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(7), // Slightly less than container border to prevent overlay gaps
+                  borderRadius: BorderRadius.circular(7),
                   child: NetworkImageWithFallback(
                     imageUrl: order.imageUrl,
                     width: 76,

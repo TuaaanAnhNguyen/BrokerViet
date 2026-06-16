@@ -5,6 +5,7 @@ import '../../services/booking/booking_service.dart';
 
 class BookingScreen extends StatefulWidget {
   final String serviceId;
+  final String? providerName;
   final String serviceTitle;   // added: was referenced in dialog but missing
   final String packageName;    // added: was referenced in bill breakdown but missing
   final String customerId;
@@ -16,6 +17,7 @@ class BookingScreen extends StatefulWidget {
   const BookingScreen({
     super.key,
     required this.serviceId,
+    this.providerName,
     required this.serviceTitle,
     required this.packageName,
     required this.customerId,

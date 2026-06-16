@@ -1,6 +1,7 @@
 // lib/widgets/network_image_fallback.dart
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class NetworkImageWithFallback extends StatelessWidget {
   final String imageUrl;
@@ -16,60 +17,68 @@ class NetworkImageWithFallback extends StatelessWidget {
     this.fit = BoxFit.cover,
   });
 
+  bool _isValidNetworkUrl(String url) {
+    final cleanUrl = url.trim().toLowerCase();
+    if (cleanUrl.isEmpty || cleanUrl == 'null') return false;
+    return cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://');
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Check if the source is a local asset path instead of a web URL
-    if (imageUrl.startsWith('assets/')) {
-      return Image.asset(
-        imageUrl,
-        width: width,
-        height: height,
-        fit: fit,
-        errorBuilder: (context, error, stackTrace) => _buildErrorPlaceholder(),
-      );
+    final String trimmedUrl = imageUrl.trim();
+
+    if (trimmedUrl.startsWith('assets/')) {
+      return _buildAssetPlaceholder(customPath: trimmedUrl);
     }
 
-    // Otherwise, treat it as a standard network request
-    return Image.network(
-      imageUrl,
+    if (!_isValidNetworkUrl(trimmedUrl)) {
+      return _buildAssetPlaceholder();
+    }
+
+    return CachedNetworkImage(
+      imageUrl: trimmedUrl,
       width: width,
       height: height,
       fit: fit,
-      errorBuilder: (context, error, stackTrace) => _buildErrorPlaceholder(),
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
+      placeholder: (context, url) => Container(
+        width: width,
+        height: height,
+        color: const Color(0xFFF8F9FF),
+        child: const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Color(0xFF004AC6),
+            ),
+          ),
+        ),
+      ),
+      errorWidget: (context, url, error) => _buildAssetPlaceholder(),
+    );
+  }
+
+  Widget _buildAssetPlaceholder({String? customPath}) {
+    return Image.asset(
+      customPath ?? 'assets/no_icon_placeholder.png',
+      width: width,
+      height: height,
+      fit: fit,
+      errorBuilder: (context, error, stackTrace) {
         return Container(
           width: width,
           height: height,
-          color: const Color(0xFFF8F9FF),
+          color: const Color(0xFFE5EEFF),
           child: const Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2, 
-                color: Color(0xFF004AC6),
-              ),
+            child: Icon(
+              Icons.image_not_supported_rounded,
+              color: Color(0xFF004AC6),
+              size: 24,
             ),
           ),
         );
       },
-    );
-  }
-
-  // Extracted your original error UI to reuse across both asset and network failures
-  Widget _buildErrorPlaceholder() {
-    return Container(
-      width: width,
-      height: height,
-      color: const Color(0xFFE5EEFF),
-      child: const Center(
-        child: Icon(
-          Icons.image_not_supported_rounded, 
-          color: Color(0xFF004AC6),
-          size: 24,
-        ),
-      ),
     );
   }
 }

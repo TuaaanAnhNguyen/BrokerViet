@@ -99,7 +99,28 @@ class ServiceMarketplaceService {
         }
       }).toList();
     } catch (e) {
-      print('>>> Lỗi khi gọi Supabase để fetch dữ liệu từ bảng service_categories: $e');
+      print(
+        '>>> Lỗi khi gọi Supabase để fetch dữ liệu từ bảng service_categories: $e',
+      );
+      rethrow;
+    }
+  }
+
+  Future<ServiceModel> fetchServiceDetail(String serviceId) async {
+    try {
+      final response = await _supabase.rpc(
+        'get_service_detail',
+        params: {'p_service_id': serviceId},
+      );
+
+      if (response == null || (response is List && response.isEmpty)) {
+        throw Exception('Không tìm thấy service với ID: $serviceId');
+      }
+
+      final item = (response as List).first as Map<String, dynamic>;
+      return ServiceModel.fromJson(item);
+    } catch (e) {
+      print('>>> Lỗi khi gọi RPC get_service_detail: $e');
       rethrow;
     }
   }

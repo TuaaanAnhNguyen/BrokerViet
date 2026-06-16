@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import './network_image_fallback.dart';
 
 Widget buildAvatar(String avatarPath, {double radius = 40}) {
-  if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) {
+  if (avatarPath.isNotEmpty && 
+      (avatarPath.startsWith('http://') || avatarPath.startsWith('https://'))) {
     return CircleAvatar(
       radius: radius,
       backgroundColor: const Color(0xFFEFF4FF),
@@ -20,8 +21,10 @@ Widget buildAvatar(String avatarPath, {double radius = 40}) {
     );
   }
 
+  final String validAssetPath = avatarPath.trim().isEmpty ? 'assets/default_profile.png' : avatarPath;
+
   return CircleAvatar(
     radius: radius,
-    backgroundImage: const AssetImage('assets/default_profile.png'),
+    backgroundImage: AssetImage(validAssetPath),
   );
 }
