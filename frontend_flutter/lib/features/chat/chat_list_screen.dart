@@ -26,20 +26,23 @@ class ChatListScreen extends StatelessWidget {
     ChatSummaryModel(
       providerName: 'TechCare Pro Service',
       providerRole: 'Đơn vị sửa chữa máy tính',
-      lastMessage: 'Dạ vâng, anh mang máy qua lúc 2:30 chiều nay là kỹ thuật viên xử lý luôn được ạ.',
+      lastMessage:
+          'Dạ vâng, anh mang máy qua lúc 2:30 chiều nay là kỹ thuật viên xử lý luôn được ạ.',
       time: '10:42 AM',
       unreadCount: 2,
     ),
     ChatSummaryModel(
       providerName: 'An Phát Computer',
       providerRole: 'Nhà phân phối linh kiện',
-      lastMessage: 'Sản phẩm bàn phím cơ của anh đã có hàng sẵn tại chi nhánh rồi nhé ạ.',
+      lastMessage:
+          'Sản phẩm bàn phím cơ của anh đã có hàng sẵn tại chi nhánh rồi nhé ạ.',
       time: 'Hôm qua',
     ),
     ChatSummaryModel(
       providerName: 'Blood Lab Center',
       providerRole: 'Trung tâm xét nghiệm y khoa',
-      lastMessage: 'Kết quả đánh giá chỉ số xét nghiệm lâm sàng của anh đã được cập nhật trên hệ thống.',
+      lastMessage:
+          'Kết quả đánh giá chỉ số xét nghiệm lâm sàng của anh đã được cập nhật trên hệ thống.',
       time: '25 Th05',
     ),
   ];
@@ -60,12 +63,19 @@ class ChatListScreen extends StatelessWidget {
         elevation: 0,
         title: const Text(
           'Tin nhắn',
-          style: TextStyle(color: darkText, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: darkText,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: outlineVariant.withValues(alpha: 0.5), height: 1),
+          child: Container(
+            color: outlineVariant.withValues(alpha: 0.5),
+            height: 1,
+          ),
         ),
       ),
       body: _mockChats.isEmpty
@@ -77,7 +87,11 @@ class ChatListScreen extends StatelessWidget {
             )
           : ListView.separated(
               itemCount: _mockChats.length,
-              separatorBuilder: (context, index) => Divider(height: 1, indent: 76, color: outlineVariant.withValues(alpha: 0.3)),
+              separatorBuilder: (context, index) => Divider(
+                height: 1,
+                indent: 76,
+                color: outlineVariant.withValues(alpha: 0.3),
+              ),
               itemBuilder: (context, index) {
                 final chat = _mockChats[index];
                 final hasUnread = chat.unreadCount > 0;
@@ -91,13 +105,18 @@ class ChatListScreen extends StatelessWidget {
                         builder: (context) => ConversationScreen(
                           providerName: chat.providerName,
                           providerRole: chat.providerRole,
-                          serviceContext: index == 0 ? "Deep PC Cleaning" : null, // Mocks context tagging
+                          serviceContext: index == 0
+                              ? "Deep PC Cleaning"
+                              : null, // Mocks context tagging
                         ),
                       ),
                     );
                   },
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: Row(
                       children: [
                         // Left Profile Circle Icon
@@ -106,7 +125,11 @@ class ChatListScreen extends StatelessWidget {
                           backgroundColor: const Color(0xFFEFF4FF),
                           child: Text(
                             chat.providerName.substring(0, 1).toUpperCase(),
-                            style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
+                            style: const TextStyle(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -119,7 +142,9 @@ class ChatListScreen extends StatelessWidget {
                               Text(
                                 chat.providerName,
                                 style: TextStyle(
-                                  fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
+                                  fontWeight: hasUnread
+                                      ? FontWeight.bold
+                                      : FontWeight.w600,
                                   fontSize: 15,
                                   color: darkText,
                                 ),
@@ -132,9 +157,13 @@ class ChatListScreen extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  color: hasUnread ? darkText.withValues(alpha: 0.85) : bodyText,
+                                  color: hasUnread
+                                      ? darkText.withValues(alpha: 0.85)
+                                      : bodyText,
                                   fontSize: 13,
-                                  fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
+                                  fontWeight: hasUnread
+                                      ? FontWeight.w500
+                                      : FontWeight.normal,
                                 ),
                               ),
                             ],
@@ -151,8 +180,12 @@ class ChatListScreen extends StatelessWidget {
                               chat.time,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: hasUnread ? primaryColor : bodyText.withValues(alpha: 0.6),
-                                fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
+                                color: hasUnread
+                                    ? primaryColor
+                                    : bodyText.withValues(alpha: 0.6),
+                                fontWeight: hasUnread
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -170,12 +203,18 @@ class ChatListScreen extends StatelessWidget {
                                 child: Center(
                                   child: Text(
                                     chat.unreadCount.toString(),
-                                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               )
                             else
-                              const SizedBox(height: 18), // Visual spacer layout anchor
+                              const SizedBox(
+                                height: 18,
+                              ), // Visual spacer layout anchor
                           ],
                         ),
                       ],

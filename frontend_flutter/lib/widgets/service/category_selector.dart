@@ -26,8 +26,8 @@ class CategorySelector extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: _buildItem(0, isHorizontalTile: true),
       );
-    } 
-    
+    }
+
     if (count == 2) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -39,8 +39,8 @@ class CategorySelector extends StatelessWidget {
           ],
         ),
       );
-    } 
-    
+    }
+
     if (count == 3) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -59,8 +59,8 @@ class CategorySelector extends StatelessWidget {
           ],
         ),
       );
-    } 
-    
+    }
+
     if (count == 4) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -106,7 +106,11 @@ class CategorySelector extends StatelessWidget {
     );
   }
 
-  Widget _buildItem(int index, {bool isHorizontalTile = false, bool forceFixedSquare = false}) {
+  Widget _buildItem(
+    int index, {
+    bool isHorizontalTile = false,
+    bool forceFixedSquare = false,
+  }) {
     final isSelected = activeIndex == index;
     final item = categories[index];
     final iconData = item['icon'] as IconData;
@@ -130,7 +134,11 @@ class CategorySelector extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(iconData, size: 26, color: isSelected ? activeContent : inactiveContent),
+              Icon(
+                iconData,
+                size: 26,
+                color: isSelected ? activeContent : inactiveContent,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -156,11 +164,29 @@ class CategorySelector extends StatelessWidget {
           ? SizedBox(
               height: 72,
               width: 80,
-              child: _buildBlockContent(iconData, label, isSelected, activeBg, inactiveBg, activeContent, inactiveContent, isFixedSlider: true),
+              child: _buildBlockContent(
+                iconData,
+                label,
+                isSelected,
+                activeBg,
+                inactiveBg,
+                activeContent,
+                inactiveContent,
+                isFixedSlider: true,
+              ),
             )
           : AspectRatio(
               aspectRatio: 1.2,
-              child: _buildBlockContent(iconData, label, isSelected, activeBg, inactiveBg, activeContent, inactiveContent, isFixedSlider: false),
+              child: _buildBlockContent(
+                iconData,
+                label,
+                isSelected,
+                activeBg,
+                inactiveBg,
+                activeContent,
+                inactiveContent,
+                isFixedSlider: false,
+              ),
             ),
     );
   }
@@ -199,7 +225,9 @@ class CategorySelector extends StatelessWidget {
                 size: iconSize,
                 color: isSelected ? activeContent : inactiveContent,
               ),
-              SizedBox(height: isFixedSlider ? 6 : constraints.maxHeight * 0.08),
+              SizedBox(
+                height: isFixedSlider ? 6 : constraints.maxHeight * 0.08,
+              ),
               Text(
                 label,
                 textAlign: TextAlign.center,

@@ -554,11 +554,13 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                       MaterialPageRoute(
                         builder: (context) => BookingScreen(
                           serviceTitle: 'Chẩn đoán & Sửa chữa Toàn diện',
-                          providerName: 'TechPro VN',
+                          customerId: 'customer_456',
+                          providerId: 'provider_789',
+                          serviceId: 'service_123',
+                          // providerName: 'TechPro VN',
                           packageName: selectedPackage,
-                          price: selectedPrice,
-                          date: '',
-                          time: '',
+                          totalPrice: int.parse(selectedPrice.replaceAll(' VND', '').replaceAll('.', '')),
+                          scheduledAt: DateTime.now(),
                         ),
                       ),
                     );

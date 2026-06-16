@@ -18,26 +18,24 @@ class NetworkImageWithFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Check if the source is a local asset path instead of a web URL
+    if (imageUrl.startsWith('assets/')) {
+      return Image.asset(
+        imageUrl,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) => _buildErrorPlaceholder(),
+      );
+    }
+
+    // Otherwise, treat it as a standard network request
     return Image.network(
       imageUrl,
       width: width,
       height: height,
       fit: fit,
-      errorBuilder: (context, error, stackTrace) {
-        return Container(
-          width: width,
-          height: height,
-          color: const Color(0xFFE5EEFF),
-          // Thay đổi sang icon báo lỗi thiết bị/dịch vụ hợp lý hơn
-          child: const Center(
-            child: Icon(
-              Icons.image_not_supported_rounded, 
-              color: Color(0xFF004AC6),
-              size: 24,
-            ),
-          ),
-        );
-      },
+      errorBuilder: (context, error, stackTrace) => _buildErrorPlaceholder(),
       loadingBuilder: (context, child, loadingProgress) {
         if (loadingProgress == null) return child;
         return Container(
@@ -48,11 +46,30 @@ class NetworkImageWithFallback extends StatelessWidget {
             child: SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF004AC6)),
+              child: CircularProgressIndicator(
+                strokeWidth: 2, 
+                color: Color(0xFF004AC6),
+              ),
             ),
           ),
         );
       },
+    );
+  }
+
+  // Extracted your original error UI to reuse across both asset and network failures
+  Widget _buildErrorPlaceholder() {
+    return Container(
+      width: width,
+      height: height,
+      color: const Color(0xFFE5EEFF),
+      child: const Center(
+        child: Icon(
+          Icons.image_not_supported_rounded, 
+          color: Color(0xFF004AC6),
+          size: 24,
+        ),
+      ),
     );
   }
 }
