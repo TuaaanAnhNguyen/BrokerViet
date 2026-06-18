@@ -1,29 +1,18 @@
 // lib/features/chat/conversation_screen.dart
 
 import 'package:flutter/material.dart';
-
-class ChatMessageModel {
-  final String text;
-  final String timestamp;
-  final bool isMe;
-
-  const ChatMessageModel({
-    required this.text,
-    required this.timestamp,
-    required this.isMe,
-  });
-}
+import '../../services/chat/chat_service.dart';
 
 class ConversationScreen extends StatefulWidget {
+  final String chatroomId;
   final String providerName;
   final String providerRole;
-  final String? serviceContext;
 
   const ConversationScreen({
     super.key,
+    required this.chatroomId,
     required this.providerName,
     required this.providerRole,
-    this.serviceContext,
   });
 
   @override
@@ -32,57 +21,61 @@ class ConversationScreen extends StatefulWidget {
 
 class _ConversationScreenState extends State<ConversationScreen> {
   final TextEditingController _messageController = TextEditingController();
-  final List<ChatMessageModel> _messages = [
-    const ChatMessageModel(
-      text:
-          "Xin chào! Tôi có thể giúp gì cho bạn về dịch vụ vệ sinh máy lạnh ạ?",
-      timestamp: "10:30 AM",
-      isMe: false,
-    ),
-    const ChatMessageModel(
-      text:
-          "Chào anh, phòng mình xài máy lạnh treo tường Daikin 1.5 HP, dạo này bật tầm 30 phút mới thấy mát với hơi có mùi ẩm á.",
-      timestamp: "10:32 AM",
-      isMe: true,
-    ),
-    const ChatMessageModel(
-      text:
-          "Dạ hiện tượng này thường do lưới lọc bị bám bụi dày dặn hoặc máng nước có chút nhớt tích tụ bẩn á anh. Gói 'Deep Cleaning' bên em sẽ xử lý triệt để xịt rửa dàn lạnh, dàn nóng và thông máng thoát nước luôn ạ.",
-      timestamp: "10:35 AM",
-      isMe: false,
-    ),
-    const ChatMessageModel(
-      text:
-          "Dạ vâng, em vừa bấm đặt lịch trên app vào lúc 2:30 PM chiều nay luôn rồi á, không biết bên mình sắp xếp kỹ thuật viên qua kịp không?",
-      timestamp: "10:36 AM",
-      isMe: true,
-    ),
-    const ChatMessageModel(
-      text:
-          "Dạ em đã nhận được yêu cầu trên hệ thống BrokerViet rồi nha anh! Kỹ thuật viên đang chuẩn bị dụng cụ và sẽ di chuyển qua Landmark 81 đúng khung giờ 2:30 PM của anh ạ.",
-      timestamp: "10:38 AM",
-      isMe: false,
-    ),
-  ];
+  final ScrollController _scrollController = ScrollController();
+  final ChatService _chatService = ChatService();
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+  late final Stream<List<Map<String, dynamic>>> _messageStream;
 
-    setState(() {
-      _messages.add(
-        ChatMessageModel(
-          text: _messageController.text.trim(),
-          timestamp: "10:40 AM",
-          isMe: true,
-        ),
-      );
-    });
+  @override
+  void initState() {
+    super.initState();
+    _messageStream = _chatService.streamMessages(widget.chatroomId);
+  }
+
+  void _sendMessage() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
     _messageController.clear();
+
+    try {
+      await _chatService.sendMessage(widget.chatroomId, text);
+      _scrollToBottom();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Không thể gửi tin nhắn: $e')));
+      }
+    }
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  String _parseMessageTime(String? isoString) {
+    if (isoString == null) return '';
+    try {
+      final dateTime = DateTime.parse(isoString).toLocal();
+      final hour = dateTime.hour.toString().padLeft(2, '0');
+      final minute = dateTime.minute.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    } catch (_) {
+      return '';
+    }
   }
 
   @override
   void dispose() {
     _messageController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -110,7 +103,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
               radius: 18,
               backgroundColor: const Color(0xFFE5EEFF),
               child: Text(
-                widget.providerName.substring(0, 1).toUpperCase(),
+                widget.providerName.isNotEmpty
+                    ? widget.providerName.substring(0, 1).toUpperCase()
+                    : 'B',
                 style: const TextStyle(
                   color: primaryColor,
                   fontWeight: FontWeight.bold,
@@ -166,48 +161,58 @@ class _ConversationScreenState extends State<ConversationScreen> {
       ),
       body: Column(
         children: [
-          // Optional Context Info Banner above conversation flow
-          if (widget.serviceContext != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              color: const Color(0xFFEFF4FF),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.build_circle_outlined,
-                    color: primaryColor,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Đang trao đổi về: ${widget.serviceContext}',
-                      style: const TextStyle(
-                        color: primaryColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Message Bubble List Stream Area
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return _buildChatBubble(message, primaryColor, darkText);
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _messageStream,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: primaryColor),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Đã có lỗi xảy ra: ${snapshot.error}'),
+                  );
+                }
+
+                final messages = snapshot.data ?? [];
+
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => _scrollToBottom(),
+                );
+
+                if (messages.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'Hãy gửi lời chào đầu tiên!',
+                      style: TextStyle(color: bodyText),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final msg = messages[index];
+                    final bool isMe =
+                        msg['sender_id'] == _chatService.currentUserId;
+
+                    return _buildChatBubble(
+                      msg['content'] ?? '',
+                      _parseMessageTime(msg['sent_at']),
+                      isMe,
+                      primaryColor,
+                      darkText,
+                    );
+                  },
+                );
               },
             ),
           ),
 
-          // Bottom Interactive Action Text Bar Input Block
           Container(
             padding: EdgeInsets.fromLTRB(
               12,
@@ -274,9 +279,15 @@ class _ConversationScreenState extends State<ConversationScreen> {
     );
   }
 
-  Widget _buildChatBubble(ChatMessageModel message, Color primary, Color dark) {
+  Widget _buildChatBubble(
+    String text,
+    String time,
+    bool isMe,
+    Color primary,
+    Color dark,
+  ) {
     return Align(
-      alignment: message.isMe ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         constraints: BoxConstraints(
@@ -284,18 +295,16 @@ class _ConversationScreenState extends State<ConversationScreen> {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: message.isMe ? primary : Colors.white,
+          color: isMe ? primary : Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(message.isMe ? 16 : 2),
-            bottomRight: Radius.circular(message.isMe ? 2 : 16),
+            bottomLeft: Radius.circular(isMe ? 16 : 2),
+            bottomRight: Radius.circular(isMe ? 2 : 16),
           ),
-          border: message.isMe
-              ? null
-              : Border.all(color: const Color(0xFFE2E4EB)),
+          border: isMe ? null : Border.all(color: const Color(0xFFE2E4EB)),
           boxShadow: [
-            if (!message.isMe)
+            if (!isMe)
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 4,
@@ -308,9 +317,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              message.text,
+              text,
               style: TextStyle(
-                color: message.isMe ? Colors.white : dark,
+                color: isMe ? Colors.white : dark,
                 fontSize: 14,
                 height: 1.3,
               ),
@@ -319,9 +328,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
             Align(
               alignment: Alignment.bottomRight,
               child: Text(
-                message.timestamp,
+                time,
                 style: TextStyle(
-                  color: message.isMe ? Colors.white70 : Colors.black38,
+                  color: isMe ? Colors.white70 : Colors.black38,
                   fontSize: 10,
                 ),
               ),

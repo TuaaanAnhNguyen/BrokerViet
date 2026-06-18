@@ -21,7 +21,7 @@ class MainNavigationShell extends StatefulWidget {
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentIndex = 0;
 
-  final List<Widget> _customerTabs = const [
+  final List<Widget> _customerTabs = [
     ServiceMarketplaceScreen(),
     BookingHistoryScreen(),
     ChatListScreen(),
