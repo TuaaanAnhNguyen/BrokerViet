@@ -7,9 +7,11 @@ import 'features/auth/login_screen.dart';
 import 'services/auth/auth_service.dart';
 import 'features/main/main_navigation_shell.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('vi', null);
 
   await dotenv.load(fileName: '.env');
 

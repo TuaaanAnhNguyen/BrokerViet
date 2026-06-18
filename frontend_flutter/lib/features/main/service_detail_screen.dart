@@ -1,3 +1,4 @@
+import 'package:broker_viet/widgets/avatar_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // CHANGE: Imported Supabase client
 import '../../widgets/network_image_fallback.dart';
@@ -273,14 +274,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: const NetworkImageWithFallback(
-              imageUrl: '',
-              width: 48,
-              height: 48,
-              fit: BoxFit.cover,
-            ),
+          buildAvatar(
+            _service?.providerAvatarUrl ?? '', 
+            radius: 24,
           ),
           const SizedBox(width: 12),
           Expanded(
