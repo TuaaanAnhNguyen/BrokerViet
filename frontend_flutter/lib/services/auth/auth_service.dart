@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
@@ -41,6 +42,11 @@ class SignUpRequested extends AuthEvent {
   final String phone;
   final String password;
   SignUpRequested(this.username, this.phone, this.password);
+}
+
+class UpdateAvatarRequested extends AuthEvent {
+  final String imagePath;
+  UpdateAvatarRequested(this.imagePath);
 }
 
 class LogoutRequested extends AuthEvent {}
@@ -176,6 +182,48 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
         await _supabase.auth.signOut();
       } catch (_) {}
       emit(AuthInitial());
+    });
+
+    on<UpdateAvatarRequested>((event, emit) async {
+      final currentState = state;
+      if (currentState is! AuthSuccess) return;
+
+      try {
+        final file = File(event.imagePath);
+        final fileExt = event.imagePath.split('.').last;
+        final fileName = '${currentState.uid}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+        final filePath = fileName; // directly in bucket or under a folder
+
+        // 1. Upload to Storage
+        await _supabase.storage.from('profile_avatar').upload(
+              filePath,
+              file,
+              fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+            );
+
+        // 2. Get Public URL
+        final String publicUrl =
+            _supabase.storage.from('profile_avatar').getPublicUrl(filePath);
+
+        // 3. Update profiles table
+        await _supabase
+            .from('profiles')
+            .update({'avatar_url': publicUrl})
+            .eq('user_id', currentState.uid);
+
+        // 4. Emit updated state
+        emit(AuthSuccess(
+          uid: currentState.uid,
+          name: currentState.name,
+          email: currentState.email,
+          avatarPath: publicUrl,
+          memberTier: currentState.memberTier,
+        ));
+      } catch (e) {
+        // Log error and keep current state
+        print('Error updating avatar: $e');
+        emit(currentState);
+      }
     });
   }
 }
