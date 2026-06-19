@@ -1,9 +1,12 @@
 // lib/features/main/main_navigation_shell.dart
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../services/auth/auth_service.dart';
+import '../../services/notification/notification_service.dart';
+import '../../models/notification_model.dart';
 import '../../widgets/avatar_builder.dart';
 import 'service_marketplace_screen.dart';
 import '../booking/booking_history_screen.dart';
@@ -20,12 +23,77 @@ class MainNavigationShell extends StatefulWidget {
 
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentIndex = 0;
+  final NotificationService _notificationService = NotificationService();
+  StreamSubscription<List<NotificationModel>>? _notificationSubscription;
+  int _lastNotificationCount = -1;
 
   final List<Widget> _customerTabs = [
     ServiceMarketplaceScreen(),
     BookingHistoryScreen(),
     ChatListScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _setupNotificationListener();
+  }
+
+  void _setupNotificationListener() {
+    _notificationSubscription = _notificationService.streamNotifications().listen((notifications) {
+      if (_lastNotificationCount != -1 && notifications.length > _lastNotificationCount) {
+        final newNotification = notifications.first;
+        if (!newNotification.isRead) {
+          _showNewNotificationSnackBar(newNotification);
+        }
+      }
+      setState(() {
+        _lastNotificationCount = notifications.length;
+      });
+    });
+  }
+
+  void _showNewNotificationSnackBar(NotificationModel notification) {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              notification.title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              notification.content,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'Xem',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NotificationScreen(),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _notificationSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,17 +133,54 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             ),
           ),
           actions: [
-            IconButton(
-              icon: const Icon(
-                Icons.notifications_none_outlined,
-                color: darkText,
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationScreen(),
-                  ),
+            StreamBuilder<List<NotificationModel>>(
+              stream: _notificationService.streamNotifications(),
+              builder: (context, snapshot) {
+                final unreadCount = snapshot.data?.where((n) => !n.isRead).length ?? 0;
+                
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.notifications_none_outlined,
+                        color: darkText,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NotificationScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            unreadCount > 9 ? '9+' : unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
                 );
               },
             ),
