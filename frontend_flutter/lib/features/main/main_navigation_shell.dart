@@ -25,7 +25,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentIndex = 0;
   final NotificationService _notificationService = NotificationService();
   StreamSubscription<List<NotificationModel>>? _notificationSubscription;
-  int _lastNotificationCount = -1;
+  List<NotificationModel>? _lastNotifications;
 
   final List<Widget> _customerTabs = [
     ServiceMarketplaceScreen(),
@@ -41,20 +41,32 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   void _setupNotificationListener() {
     _notificationSubscription = _notificationService.streamNotifications().listen((notifications) {
-      if (_lastNotificationCount != -1 && notifications.length > _lastNotificationCount) {
-        final newNotification = notifications.first;
-        if (!newNotification.isRead) {
-          _showNewNotificationSnackBar(newNotification);
+      if (_lastNotifications != null) {
+        // Find notifications that are new (not in previous list)
+        final newNotifications = notifications.where((n) => 
+          !_lastNotifications!.any((old) => old.notificationId == n.notificationId)
+        ).toList();
+
+        for (var notification in newNotifications) {
+          if (!notification.isRead) {
+            _showNewNotificationSnackBar(notification);
+          }
         }
       }
-      setState(() {
-        _lastNotificationCount = notifications.length;
-      });
+      
+      if (mounted) {
+        setState(() {
+          _lastNotifications = notifications;
+        });
+      }
     });
   }
 
   void _showNewNotificationSnackBar(NotificationModel notification) {
     if (!mounted) return;
+    
+    // Clear current snackbars to show the latest one immediately
+    ScaffoldMessenger.of(context).clearSnackBars();
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -62,20 +74,35 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              notification.title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                const Icon(Icons.notifications_active, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    notification.title,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 2),
             Text(
               notification.content,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12),
             ),
           ],
         ),
+        backgroundColor: const Color(0xFF004AC6),
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        duration: const Duration(seconds: 4),
         action: SnackBarAction(
-          label: 'Xem',
+          label: 'XEM',
+          textColor: Colors.white,
           onPressed: () {
             Navigator.push(
               context,
@@ -110,12 +137,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     const Color bodyText = Color(0xFF434655);
     const Color outlineVariant = Color(0xFFC3C6D7);
 
-    // Sử dụng BlocListener bọc ngoài cùng Scaffold để xử lý luồng bay của giao diện
     return BlocListener<AuthService, AuthState>(
       listener: (context, state) {
-        // Nếu trạng thái bị chuyển về Initial hoặc thất bại (tức là đã SignOut hoặc mất session)
         if (state is AuthInitial || state is AuthFailure) {
-          // Ép toàn bộ Navigator xóa sạch các page cũ đang đè và reset trạng thái giao diện về ban đầu
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       },
