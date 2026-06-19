@@ -1,9 +1,11 @@
 // lib/services/chat/chat_service.dart
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../notification/notification_service.dart';
 
 class ChatService {
   final SupabaseClient _client = Supabase.instance.client;
+  final NotificationService _notificationService = NotificationService();
 
   String get currentUserId => _client.auth.currentUser?.id ?? '';
 
@@ -137,12 +139,42 @@ class ChatService {
     final cleanText = text.trim();
     if (cleanText.isEmpty) return;
 
+    // 1. Send the message
     await _client.from('messages').insert({
       'chatroom_id': chatroomId,
       'sender_id': currentUserId,
       'content': cleanText,
       'sent_at': DateTime.now().toUtc().toIso8601String(),
     });
+
+    // 2. Create a notification for the recipient
+    try {
+      final roomRes = await _client
+          .from('chatrooms')
+          .select('customer_id, provider_id')
+          .eq('chatroom_id', chatroomId)
+          .single();
+      
+      final customerId = roomRes['customer_id'] as String;
+      final providerId = roomRes['provider_id'] as String;
+      final recipientId = (currentUserId == customerId) ? providerId : customerId;
+
+      final senderProfile = await _client
+          .from('profiles')
+          .select('username')
+          .eq('user_id', currentUserId)
+          .maybeSingle();
+      
+      final senderName = senderProfile?['username'] ?? 'Người dùng';
+
+      await _notificationService.createNotification(
+        userId: recipientId,
+        title: 'Tin nhắn mới từ $senderName',
+        content: cleanText,
+      );
+    } catch (e) {
+      print('Error sending message notification: $e');
+    }
   }
 
   // String _parseTimestamp(String isoString) {

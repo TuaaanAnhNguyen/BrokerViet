@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../widgets/payment/vietqr_payment.dart';
+import '../../services/notification/notification_service.dart';
 
 class PaymentCheckoutScreen extends StatefulWidget {
   final String bookingId;
@@ -26,6 +27,7 @@ class PaymentCheckoutScreen extends StatefulWidget {
 
 class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
   final _supabase = Supabase.instance.client;
+  final _notificationService = NotificationService();
   bool _isPaid = false;
 
   @override
@@ -126,6 +128,15 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
           .from('payments')
           .update({'status': 'completed'})
           .eq('payment_memo', widget.paymentMemo);
+          
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId != null) {
+        await _notificationService.createNotification(
+          userId: userId,
+          title: 'Thanh toán thành công',
+          content: 'Đơn hàng #${widget.bookingId.substring(0, 8)} đã được xác nhận thanh toán.',
+        );
+      }
           
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Simulated successful bank transfer update!')),

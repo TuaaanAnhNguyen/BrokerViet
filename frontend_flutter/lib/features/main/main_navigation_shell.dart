@@ -1,9 +1,12 @@
 // lib/features/main/main_navigation_shell.dart
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../services/auth/auth_service.dart';
+import '../../services/notification/notification_service.dart';
+import '../../models/notification_model.dart';
 import '../../widgets/avatar_builder.dart';
 import 'service_marketplace_screen.dart';
 import '../booking/booking_history_screen.dart';
@@ -20,12 +23,104 @@ class MainNavigationShell extends StatefulWidget {
 
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentIndex = 0;
+  final NotificationService _notificationService = NotificationService();
+  StreamSubscription<List<NotificationModel>>? _notificationSubscription;
+  List<NotificationModel>? _lastNotifications;
 
   final List<Widget> _customerTabs = [
     ServiceMarketplaceScreen(),
     BookingHistoryScreen(),
     ChatListScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _setupNotificationListener();
+  }
+
+  void _setupNotificationListener() {
+    _notificationSubscription = _notificationService.streamNotifications().listen((notifications) {
+      if (_lastNotifications != null) {
+        // Find notifications that are new (not in previous list)
+        final newNotifications = notifications.where((n) => 
+          !_lastNotifications!.any((old) => old.notificationId == n.notificationId)
+        ).toList();
+
+        for (var notification in newNotifications) {
+          if (!notification.isRead) {
+            _showNewNotificationSnackBar(notification);
+          }
+        }
+      }
+      
+      if (mounted) {
+        setState(() {
+          _lastNotifications = notifications;
+        });
+      }
+    });
+  }
+
+  void _showNewNotificationSnackBar(NotificationModel notification) {
+    if (!mounted) return;
+    
+    // Clear current snackbars to show the latest one immediately
+    ScaffoldMessenger.of(context).clearSnackBars();
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.notifications_active, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    notification.title,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              notification.content,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF004AC6),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'XEM',
+          textColor: Colors.white,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NotificationScreen(),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _notificationSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,12 +137,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     const Color bodyText = Color(0xFF434655);
     const Color outlineVariant = Color(0xFFC3C6D7);
 
-    // Sử dụng BlocListener bọc ngoài cùng Scaffold để xử lý luồng bay của giao diện
     return BlocListener<AuthService, AuthState>(
       listener: (context, state) {
-        // Nếu trạng thái bị chuyển về Initial hoặc thất bại (tức là đã SignOut hoặc mất session)
         if (state is AuthInitial || state is AuthFailure) {
-          // Ép toàn bộ Navigator xóa sạch các page cũ đang đè và reset trạng thái giao diện về ban đầu
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       },
@@ -65,17 +157,54 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             ),
           ),
           actions: [
-            IconButton(
-              icon: const Icon(
-                Icons.notifications_none_outlined,
-                color: darkText,
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationScreen(),
-                  ),
+            StreamBuilder<List<NotificationModel>>(
+              stream: _notificationService.streamNotifications(),
+              builder: (context, snapshot) {
+                final unreadCount = snapshot.data?.where((n) => !n.isRead).length ?? 0;
+                
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.notifications_none_outlined,
+                        color: darkText,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NotificationScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            unreadCount > 9 ? '9+' : unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
                 );
               },
             ),
