@@ -3,11 +3,46 @@
 import 'package:flutter/material.dart';
 import '../../services/chat/chat_service.dart';
 import 'conversation_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../widgets/avatar_builder.dart';
 
-class ChatListScreen extends StatelessWidget {
-  ChatListScreen({super.key});
+class ChatListScreen extends StatefulWidget {
+  const ChatListScreen({super.key});
 
+  @override
+  State<ChatListScreen> createState() => _ChatListScreenState();
+}
+
+class _ChatListScreenState extends State<ChatListScreen> {
   final ChatService _chatService = ChatService();
+  RealtimeChannel? _chatSubscription;
+  late Future<List<Map<String, dynamic>>> _chatRoomsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshChats();
+
+    _chatSubscription = _chatService.subscribeToChatChanges(() {
+      if (mounted) {
+        _refreshChats();
+      }
+    });
+  }
+
+  void _refreshChats() {
+    setState(() {
+      _chatRoomsFuture = _chatService.fetchChatRooms();
+    });
+  }
+
+  @override
+  void dispose() {
+    if (_chatSubscription != null) {
+      Supabase.instance.client.removeChannel(_chatSubscription!);
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,35 +50,33 @@ class ChatListScreen extends StatelessWidget {
     const Color surfaceColor = Color(0xFFF8F9FF);
     const Color darkText = Color(0xFF0B1C30);
     const Color bodyText = Color(0xFF434655);
-    const Color outlineVariant = Color(0xFFC3C6D7);
 
     return Scaffold(
       backgroundColor: surfaceColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
         title: const Text(
           'Tin nhắn',
           style: TextStyle(
             color: darkText,
-            fontSize: 18,
             fontWeight: FontWeight.bold,
+            fontSize: 18,
           ),
         ),
-        centerTitle: false,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: outlineVariant.withValues(alpha: 0.5),
-            height: 1,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: primaryColor),
+            onPressed: _refreshChats,
           ),
-        ),
+        ],
       ),
-      body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: _chatService.streamChatRooms(),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _chatRoomsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: primaryColor));
+            return const Center(
+              child: CircularProgressIndicator(color: primaryColor),
+            );
           }
           if (snapshot.hasError) {
             return Center(child: Text('Đã xảy ra lỗi: ${snapshot.error}'));
@@ -61,45 +94,40 @@ class ChatListScreen extends StatelessWidget {
 
           return ListView.separated(
             itemCount: chatRooms.length,
-            separatorBuilder: (context, index) => Divider(
-              height: 1,
-              indent: 76,
-              color: outlineVariant.withValues(alpha: 0.3),
-            ),
+            separatorBuilder: (context, index) =>
+                const Divider(height: 1, indent: 76),
             itemBuilder: (context, index) {
               final room = chatRooms[index];
-              final int unreadCount = room['unread_count'] ?? 0;
-              final hasUnread = unreadCount > 0;
-              final String targetName = room['target_name'];
+              final String targetName = room['target_name'] ?? '';
+              final String? avatarUrl = room['avatar_url'];
 
               return InkWell(
-                onTap: () {
-                  Navigator.push(
+                onTap: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ConversationScreen(
                         chatroomId: room['chatroom_id'],
                         providerName: targetName,
-                        providerRole: room['target_role'],
+                        providerRole: room['target_role'] ?? '',
+                        avatarUrl: avatarUrl,
                       ),
                     ),
                   );
+                  _refreshChats();
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
-                      CircleAvatar(
+                      buildAvatar(
+                        (avatarUrl == null || avatarUrl == 'null')
+                            ? ''
+                            : avatarUrl,
                         radius: 24,
-                        backgroundColor: const Color(0xFFEFF4FF),
-                        child: Text(
-                          targetName.isNotEmpty ? targetName.substring(0, 1).toUpperCase() : 'B',
-                          style: const TextStyle(
-                            color: primaryColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -108,67 +136,28 @@ class ChatListScreen extends StatelessWidget {
                           children: [
                             Text(
                               targetName,
-                              style: TextStyle(
-                                fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
-                                fontSize: 15,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
                                 color: darkText,
+                                fontSize: 15,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               room['last_message'] ?? '',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: hasUnread ? darkText.withValues(alpha: 0.85) : bodyText,
+                              style: const TextStyle(
+                                color: bodyText,
                                 fontSize: 13,
-                                fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            room['time'] ?? '',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: hasUnread ? primaryColor : bodyText.withValues(alpha: 0.6),
-                              fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          if (hasUnread)
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: const BoxDecoration(
-                                color: primaryColor,
-                                shape: BoxShape.circle,
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 18,
-                                minHeight: 18,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  unreadCount.toString(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            )
-                          else
-                            const SizedBox(height: 18),
-                        ],
+                      Text(
+                        room['time'] ?? '',
+                        style: const TextStyle(fontSize: 11, color: bodyText),
                       ),
                     ],
                   ),
