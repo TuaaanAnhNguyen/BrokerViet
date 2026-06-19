@@ -87,7 +87,17 @@ BrokerViet
 │  │  │  │     ├─ errors-1781108389885.log
 │  │  │  │     ├─ errors-1781108389893.log
 │  │  │  │     ├─ errors-1781110576626.log
-│  │  │  │     └─ errors-1781110576641.log
+│  │  │  │     ├─ errors-1781110576641.log
+│  │  │  │     ├─ errors-1781157547997.log
+│  │  │  │     ├─ errors-1781157548010.log
+│  │  │  │     ├─ errors-1781158066479.log
+│  │  │  │     ├─ errors-1781158066493.log
+│  │  │  │     ├─ errors-1781160709209.log
+│  │  │  │     ├─ errors-1781160709218.log
+│  │  │  │     ├─ errors-1781169032369.log
+│  │  │  │     ├─ errors-1781169032391.log
+│  │  │  │     ├─ errors-1781505869064.log
+│  │  │  │     └─ errors-1781505869082.log
 │  │  │  ├─ noVersion
 │  │  │  │  └─ buildLogic.lock
 │  │  │  └─ vcs-1
@@ -105,7 +115,17 @@ BrokerViet
 │  │  │  │  ├─ errors-1781108389885.log
 │  │  │  │  ├─ errors-1781108389893.log
 │  │  │  │  ├─ errors-1781110576626.log
-│  │  │  │  └─ errors-1781110576641.log
+│  │  │  │  ├─ errors-1781110576641.log
+│  │  │  │  ├─ errors-1781157547997.log
+│  │  │  │  ├─ errors-1781157548010.log
+│  │  │  │  ├─ errors-1781158066479.log
+│  │  │  │  ├─ errors-1781158066493.log
+│  │  │  │  ├─ errors-1781160709209.log
+│  │  │  │  ├─ errors-1781160709218.log
+│  │  │  │  ├─ errors-1781169032369.log
+│  │  │  │  ├─ errors-1781169032390.log
+│  │  │  │  ├─ errors-1781505869064.log
+│  │  │  │  └─ errors-1781505869082.log
 │  │  │  └─ sessions
 │  │  ├─ app
 │  │  │  ├─ build.gradle.kts
@@ -157,7 +177,8 @@ BrokerViet
 │  │  ├─ local.properties
 │  │  └─ settings.gradle.kts
 │  ├─ assets
-│  │  └─ default_profile.png
+│  │  ├─ default_profile.png
+│  │  └─ no_icon_placeholder.png
 │  ├─ broker_viet.iml
 │  ├─ ios
 │  │  ├─ Flutter
@@ -235,9 +256,9 @@ BrokerViet
 │  │  │  ├─ main
 │  │  │  │  ├─ main_navigation_shell.dart
 │  │  │  │  ├─ notification_screen.dart
+│  │  │  │  ├─ search_screen.dart
 │  │  │  │  ├─ service_detail_screen.dart
 │  │  │  │  └─ service_marketplace_screen.dart
-│  │  │  ├─ marketplace
 │  │  │  └─ profile
 │  │  │     ├─ account_setting.dart
 │  │  │     ├─ profile_menu_screen.dart
@@ -246,17 +267,17 @@ BrokerViet
 │  │  ├─ models
 │  │  │  ├─ booking_model.dart
 │  │  │  ├─ notification_model.dart
+│  │  │  ├─ service_category_model.dart
 │  │  │  ├─ service_model.dart
 │  │  │  └─ user_model.dart
-│  │  ├─ repositories
 │  │  ├─ services
 │  │  │  ├─ auth
 │  │  │  │  └─ auth_service.dart
 │  │  │  ├─ booking
-│  │  │  │  └─ booking_service.dart
-│  │  │  ├─ marketplace
-│  │  │  │  └─ service_marketplace_service.dart
-│  │  │  └─ message
+│  │  │  │  ├─ booking_service.dart
+│  │  │  │  └─ booking_submission_service.dart
+│  │  │  └─ marketplace
+│  │  │     └─ service_marketplace_service.dart
 │  │  └─ widgets
 │  │     ├─ auth
 │  │     │  ├─ auth_header.dart

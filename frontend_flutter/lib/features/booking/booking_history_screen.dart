@@ -33,28 +33,47 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
   }
 
   Future<void> _loadInitialData() async {
-  try {
-    // Lấy userId từ phiên đăng nhập hiện tại của Supabase
-    final currentUserId = Supabase.instance.client.auth.currentSession?.user.id;
+    try {
+      final currentUserId =
+          Supabase.instance.client.auth.currentSession?.user.id;
 
-    if (currentUserId == null) {
-      // Nếu chưa đăng nhập thì không thể lấy lịch sử
-      setState(() => _isLoading = false);
-      return;
+      if (currentUserId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final data = await _bookingService.listBookings(
+        customerId: currentUserId,
+      );
+
+      if (mounted) {
+        setState(() {
+          _bookings = data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      print("Lỗi tải danh sách booking: $e");
     }
-
-    // Truyền customerId vào hàm listBookings
-    final data = await _bookingService.listBookings(customerId: currentUserId);
-    
-    setState(() {
-      _bookings = data;
-      _isLoading = false;
-    });
-  } catch (e) {
-    setState(() => _isLoading = false);
-    print("Lỗi tải danh sách booking: $e");
   }
-}
+
+  BookingStatus? _getEnumFromTab(String tabLabel) {
+    switch (tabLabel) {
+      case 'Chờ duyệt':
+        return BookingStatus.choDuyet;
+      case 'Đang thực hiện':
+        return BookingStatus.dangThucHien;
+      case 'Đã hoàn thành':
+        return BookingStatus.daHoanThanh;
+      case 'Đã hủy':
+        return BookingStatus.daHuy;
+      default:
+        return null;
+    }
+  }
 
   void _handleCancelRequest(String bookingId) async {
     try {
@@ -79,9 +98,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
     }
   }
 
@@ -132,45 +151,49 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
         ),
         body: _isLoading
             ? const Center(
-                child: CircularProgressIndicator(color: primaryColor),
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                ),
               )
             : TabBarView(
-                children: _statuses.map((tabStatus) {
-                  final filtered = tabStatus == 'Tất cả'
+                children: _statuses.map((status) {
+                  final targetEnum = _getEnumFromTab(status);
+                  final filtered = targetEnum == null
                       ? _bookings
-                      : _bookings
-                            .where(
-                              (item) =>
-                                  item.status.value.toLowerCase() ==
-                                  tabStatus.toLowerCase(),
-                            )
-                            .toList();
+                      : _bookings.where((item) => item.status == targetEnum).toList();
 
-                  if (filtered.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'Không tìm thấy đơn hàng nào.',
-                        style: TextStyle(color: Color(0xFF434655)),
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    itemCount: filtered.length,
-                    padding: const EdgeInsets.only(top: 8),
-                    itemBuilder: (context, index) {
-                      final item = filtered[index];
-                      return BookingCard(
-                        order: item,
-                        onCancel: () => _handleCancelRequest(item.bookingId),
-                        onRebook: () {
-                          // Route navigation pushing back towards marketplace screen details
-                        },
-                        TrackProgress: () {
-                          // Navigate to detailed visual stepper processing screen tracking state
-                        },
-                      );
-                    },
+                  return RefreshIndicator(
+                    color: primaryColor,
+                    onRefresh: _loadInitialData,
+                    child: filtered.isEmpty
+                        ? CustomScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            slivers: [
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: Center(
+                                  child: Text(
+                                    'Không tìm thấy đơn hàng nào.',
+                                    style: const TextStyle(color: Color(0xFF434655)),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: filtered.length,
+                            padding: const EdgeInsets.only(top: 8, bottom: 24),
+                            itemBuilder: (context, index) {
+                              final item = filtered[index];
+                              return BookingCard(
+                                order: item,
+                                onCancel: () => _handleCancelRequest(item.bookingId),
+                                onRebook: () {},
+                                TrackProgress: () {},
+                              );
+                            },
+                          ),
                   );
                 }).toList(),
               ),

@@ -13,17 +13,19 @@ class ServiceMarketplaceScreen extends StatefulWidget {
   const ServiceMarketplaceScreen({super.key});
 
   @override
-  State<ServiceMarketplaceScreen> createState() => _ServiceMarketplaceScreenState();
+  State<ServiceMarketplaceScreen> createState() =>
+      _ServiceMarketplaceScreenState();
 }
 
 class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
-  final ServiceMarketplaceService _marketplaceService = ServiceMarketplaceService();
+  final ServiceMarketplaceService _marketplaceService =
+      ServiceMarketplaceService();
   final TextEditingController _searchController = TextEditingController();
-  
+
   int _activeCategoryIndex = 0;
   List<ServiceModel> _services = [];
   bool _isLoading = false;
-
+  String _sortOrder = 'none';
   List<Map<String, dynamic>> _categories = [
     {'label': 'Tất cả', 'icon': Icons.grid_view_rounded, 'id': null},
   ];
@@ -47,22 +49,21 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
   }
 
   Future<void> _initData() async {
-    Future.wait([
-      _loadCategories(),
-      _loadServices(),
-    ]);
+    Future.wait([_loadCategories(), _loadServices()]);
   }
 
   Future<void> _loadCategories() async {
     try {
       print('>>> Bắt đầu gửi yêu cầu lấy danh mục từ DB...');
-      
+
       final categoriesFromDb = await _marketplaceService
           .fetchServiceCategories()
           .timeout(const Duration(seconds: 10));
-      
-      print('>>> Kết quả trả về từ Service: ${categoriesFromDb.length} danh mục.');
-      
+
+      print(
+        '>>> Kết quả trả về từ Service: ${categoriesFromDb.length} danh mục.',
+      );
+
       if (categoriesFromDb.isNotEmpty) {
         final List<Map<String, dynamic>> loadedCategories = [
           {'label': 'Tất cả', 'icon': Icons.grid_view_rounded, 'id': null},
@@ -72,9 +73,11 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
           final String name = cat.name;
           IconData icon = Icons.work_outline;
 
-          if (name.toLowerCase().contains('sửa') || name.toLowerCase().contains('repair')) {
+          if (name.toLowerCase().contains('sửa') ||
+              name.toLowerCase().contains('repair')) {
             icon = Icons.computer_rounded;
-          } else if (name.toLowerCase().contains('thuê') || name.toLowerCase().contains('rental')) {
+          } else if (name.toLowerCase().contains('thuê') ||
+              name.toLowerCase().contains('rental')) {
             icon = Icons.precision_manufacturing_rounded;
           }
 
@@ -89,7 +92,9 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
           setState(() {
             _categories = loadedCategories;
           });
-          print('>>> Đã cập nhật trạng thái UI với ${_categories.length} danh mục (bao gồm nút Tất cả).');
+          print(
+            '>>> Đã cập nhật trạng thái UI với ${_categories.length} danh mục (bao gồm nút Tất cả).',
+          );
         }
       } else {
         print('>>> Database trả về danh sách danh mục rỗng.');
@@ -104,21 +109,23 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
     setState(() => _isLoading = true);
     try {
       print('>>> Bắt đầu tải danh sách dịch vụ...');
-      final activeCat = _activeCategoryIndex < _categories.length 
-          ? _categories[_activeCategoryIndex] 
+      final activeCat = _activeCategoryIndex < _categories.length
+          ? _categories[_activeCategoryIndex]
           : {'id': null};
-      
-      final String? categoryId = _activeCategoryIndex == 0 
-          ? null 
+
+      final String? categoryId = _activeCategoryIndex == 0
+          ? null
           : activeCat['id']?.toString();
 
       final results = await _marketplaceService
           .searchServices(
             categoryId: categoryId,
-            search: _searchController.text.isEmpty ? null : _searchController.text,
+            search: _searchController.text.isEmpty
+                ? null
+                : _searchController.text,
           )
           .timeout(const Duration(seconds: 10));
-      
+
       if (mounted) {
         setState(() {
           _services = results;
@@ -134,10 +141,20 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
     }
   }
 
+  List<ServiceModel> _getSortedServices() {
+    final sorted = List<ServiceModel>.from(_services);
+    if (_sortOrder == 'asc') {
+      sorted.sort((a, b) => a.priceValue.compareTo(b.priceValue));
+    } else if (_sortOrder == 'desc') {
+      sorted.sort((a, b) => b.priceValue.compareTo(a.priceValue));
+    }
+    return sorted;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final currentCategoryLabel = _activeCategoryIndex < _categories.length 
-        ? _categories[_activeCategoryIndex]['label'] 
+    final currentCategoryLabel = _activeCategoryIndex < _categories.length
+        ? _categories[_activeCategoryIndex]['label']
         : '';
 
     return Scaffold(
@@ -156,7 +173,7 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             const SizedBox(height: 24),
             _buildSectionHeader('Danh mục dịch vụ'),
             const SizedBox(height: 12),
-            
+
             CategorySelector(
               activeIndex: _activeCategoryIndex,
               categories: _categories,
@@ -168,12 +185,14 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             const SizedBox(height: 24),
             _buildNearbyProvidersSection(),
             const SizedBox(height: 24),
-            _buildSectionHeader(
-              _activeCategoryIndex == 0 ? 'Dịch vụ phổ biến' : 'Dịch vụ $currentCategoryLabel',
+            _buildServicesSectionHeader(
+              _activeCategoryIndex == 0
+                  ? 'Dịch vụ phổ biến'
+                  : 'Dịch vụ $currentCategoryLabel',
             ),
             const SizedBox(height: 12),
-            
-            _buildServicesList(_services),
+
+            _buildServicesList(_getSortedServices()),
           ],
         ),
       ),
@@ -197,7 +216,10 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             readOnly: true,
             decoration: InputDecoration(
               hintText: 'Tìm kiếm dịch vụ, sửa chữa, thuê thiết bị...',
-              hintStyle: const TextStyle(color: Color(0xFF737686), fontSize: 14),
+              hintStyle: const TextStyle(
+                color: Color(0xFF737686),
+                fontSize: 14,
+              ),
               prefixIcon: const Icon(Icons.search, color: Color(0xFF737686)),
               filled: true,
               fillColor: const Color(0xFFE5EEFF),
@@ -219,8 +241,8 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
       child: Text(
         title,
         style: const TextStyle(
-          fontSize: 18, 
-          fontWeight: FontWeight.bold, 
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
           color: Color(0xFF0B1C30),
         ),
       ),
@@ -238,13 +260,20 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             children: [
               const Text(
                 'Đơn vị cung cấp gần bạn',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30)),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0B1C30),
+                ),
               ),
               TextButton(
                 onPressed: () {},
                 child: const Text(
                   'Xem tất cả',
-                  style: TextStyle(color: Color(0xFF004AC6), fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Color(0xFF004AC6),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -306,10 +335,76 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             service: services[index],
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ServiceDetailScreen()),
+              MaterialPageRoute(
+                builder: (context) =>
+                    ServiceDetailScreen(serviceId: services[index].id),
+              ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildServicesSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0B1C30),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                if (_sortOrder == 'none' || _sortOrder == 'desc') {
+                  _sortOrder = 'asc';
+                } else {
+                  _sortOrder = 'desc';
+                }
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: _sortOrder != 'none'
+                    ? const Color(0xFF004AC6)
+                    : const Color(0xFFE5EEFF),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _sortOrder == 'desc'
+                        ? Icons.arrow_downward_rounded
+                        : Icons.arrow_upward_rounded,
+                    size: 14,
+                    color: _sortOrder != 'none'
+                        ? Colors.white
+                        : const Color(0xFF004AC6),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _sortOrder == 'desc' ? 'Giá cao' : 'Giá thấp',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _sortOrder != 'none'
+                          ? Colors.white
+                          : const Color(0xFF004AC6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
