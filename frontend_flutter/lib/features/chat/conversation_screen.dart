@@ -2,17 +2,20 @@
 
 import 'package:flutter/material.dart';
 import '../../services/chat/chat_service.dart';
+import '../../widgets/avatar_builder.dart';
 
 class ConversationScreen extends StatefulWidget {
   final String chatroomId;
   final String providerName;
   final String providerRole;
+  final String? avatarUrl;
 
   const ConversationScreen({
     super.key,
     required this.chatroomId,
     required this.providerName,
     required this.providerRole,
+    this.avatarUrl,
   });
 
   @override
@@ -99,18 +102,11 @@ class _ConversationScreenState extends State<ConversationScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            CircleAvatar(
+            buildAvatar(
+              (widget.avatarUrl == null || widget.avatarUrl == 'null')
+                  ? ''
+                  : widget.avatarUrl!,
               radius: 18,
-              backgroundColor: const Color(0xFFE5EEFF),
-              child: Text(
-                widget.providerName.isNotEmpty
-                    ? widget.providerName.substring(0, 1).toUpperCase()
-                    : 'B',
-                style: const TextStyle(
-                  color: primaryColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
             ),
             const SizedBox(width: 10),
             Expanded(
