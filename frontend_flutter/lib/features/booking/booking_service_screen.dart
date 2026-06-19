@@ -209,14 +209,12 @@ class _BookingScreenState extends State<BookingScreen> {
         onTap: () => FocusScope.of(context).unfocus(),
         child: Column(
           children: [
-            // Scrollable Main Content Form Group
             Expanded(
               child: Form(
                 key: _formKey,
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    // 1. Dynamic Summary Block
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -277,7 +275,6 @@ class _BookingScreenState extends State<BookingScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // 2. Clean Appointment Slot View (Replaces redundant manual selectors)
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -308,7 +305,6 @@ class _BookingScreenState extends State<BookingScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // 3. Location Input Block
                     const Text(
                       'Địa điểm làm việc',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText),
@@ -351,7 +347,6 @@ class _BookingScreenState extends State<BookingScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // 4. Instruction Notes Area
                     const Text(
                       'Ghi chú cho kỹ thuật viên',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText),
@@ -378,7 +373,6 @@ class _BookingScreenState extends State<BookingScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // 5. Payment Selection Grid Rows
                     const Text(
                       'Phương thức thanh toán',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText),
@@ -394,7 +388,6 @@ class _BookingScreenState extends State<BookingScreen> {
                         'Thanh toán sau khi hoàn thành sửa chữa', primaryColor, outlineVariant),
                     const SizedBox(height: 20),
 
-                    // 6. Cost Breakdown Invoice Detail Card
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -431,7 +424,6 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
             ),
 
-            // 7. Standardized Solid Action Checkout Bar Footer (No more overlapping text!)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(

@@ -24,61 +24,105 @@ class ChatService {
 
     if (existingRoom != null) {
       final chatroomId = existingRoom['chatroom_id'] as String;
-      
+
       return chatroomId;
     }
 
-    final newRoomRes = await _client.from('chatrooms').insert({
-      'customer_id': customerId,
-      'provider_id': providerId,
-    }).select('chatroom_id').single();
+    final newRoomRes = await _client
+        .from('chatrooms')
+        .insert({'customer_id': customerId, 'provider_id': providerId})
+        .select('chatroom_id')
+        .single();
 
     return newRoomRes['chatroom_id'] as String;
   }
 
-  Stream<List<Map<String, dynamic>>> streamChatRooms() {
-    return _client
-        .from('chatrooms')
-        .stream(primaryKey: ['chatroom_id'])
-        .asyncMap((rooms) async {
-          final hydratedRooms = <Map<String, dynamic>>[];
+  Future<List<Map<String, dynamic>>> fetchChatRooms() async {
+    final uid = currentUserId;
+    if (uid.isEmpty) return [];
 
-          for (var room in rooms) {
-            final String customerId = room['customer_id'] ?? '';
-            final String providerId = room['provider_id'] ?? '';
-            final String chatroomId = room['chatroom_id'];
+    try {
+      final List<dynamic> rooms = await _client
+          .from('chatrooms')
+          .select()
+          .or('customer_id.eq.$uid,provider_id.eq.$uid');
 
-            final bool isCustomer = customerId == currentUserId;
-            final String targetUserId = isCustomer ? providerId : customerId;
+      final hydratedRooms = <Map<String, dynamic>>[];
 
-            final profileRes = await _client
-                .from('profiles')
-                .select('username, role, avatar_url')
-                .eq('user_id', targetUserId)
-                .maybeSingle();
+      for (var room in rooms) {
+        final String customerId = room['customer_id'] ?? '';
+        final String providerId = room['provider_id'] ?? '';
+        final String chatroomId = room['chatroom_id'];
 
-            final lastMsgRes = await _client
-                .from('messages')
-                .select('content, sent_at')
-                .eq('chatroom_id', chatroomId)
-                .order('sent_at', ascending: false)
-                .limit(1)
-                .maybeSingle();
+        final bool isCustomer = customerId == uid;
+        final String targetUserId = isCustomer ? providerId : customerId;
 
-            hydratedRooms.add({
-              'chatroom_id': chatroomId,
-              'target_name': profileRes?['username'] ?? 'Người dùng BrokerViet',
-              'target_role': profileRes?['role'] ?? 'Thành viên',
-              'avatar_url': profileRes?['avatar_url'],
-              'last_message': lastMsgRes?['content'] ?? 'Chưa có tin nhắn nào.',
-              'time': lastMsgRes?['sent_at'] != null 
-                  ? _parseTimestamp(lastMsgRes!['sent_at']) 
-                  : '',
-              'unread_count': 0,
-            });
-          }
-          return hydratedRooms;
+        if (targetUserId.isEmpty) continue;
+
+        // Đọc thông tin đối phương
+        final profileRes = await _client
+            .from('profiles')
+            .select('username, role, avatar_url')
+            .eq('user_id', targetUserId)
+            .maybeSingle();
+
+        // Đọc tin nhắn cuối cùng
+        final lastMsgRes = await _client
+            .from('messages')
+            .select('content, sent_at')
+            .eq('chatroom_id', chatroomId)
+            .order('sent_at', ascending: false)
+            .limit(1)
+            .maybeSingle();
+
+        hydratedRooms.add({
+          'chatroom_id': chatroomId,
+          'target_name': profileRes?['username'] ?? 'Người dùng BrokerViet',
+          'target_role': profileRes?['role'] ?? 'Thành viên',
+          'avatar_url': profileRes?['avatar_url'],
+          'last_message': lastMsgRes?['content'] ?? 'Chưa có tin nhắn nào.',
+          'time': lastMsgRes?['sent_at'] != null
+              ? _parseTimestamp(lastMsgRes!['sent_at'])
+              : '',
+          'unread_count': 0,
         });
+      }
+      return hydratedRooms;
+    } catch (e) {
+      print("Lỗi Fetch Phòng Chat: $e");
+      return [];
+    }
+  }
+
+  // Tạo một Realtime Channel để SUBSCRIBE biến động tin nhắn mới công khai
+  RealtimeChannel subscribeToChatChanges(Function onUpdate) {
+    final uid = currentUserId;
+
+    // Đăng ký kênh lắng nghe sự kiện INSERT tin nhắn mới trên toàn hệ thống
+    final channel = _client.channel('public:messages');
+
+    channel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'messages',
+          callback: (payload) {
+            // Mỗi khi có tin nhắn mới chạy vào DB, báo cho màn hình UI biết để Fetch lại data mới nhất
+            onUpdate();
+          },
+        )
+        .subscribe();
+
+    return channel;
+  }
+
+  String _parseTimestamp(String isoString) {
+    try {
+      final dateTime = DateTime.parse(isoString).toLocal();
+      return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return '';
+    }
   }
 
   Stream<List<Map<String, dynamic>>> streamMessages(String chatroomId) {
@@ -101,14 +145,14 @@ class ChatService {
     });
   }
 
-  String _parseTimestamp(String isoString) {
-    try {
-      final dateTime = DateTime.parse(isoString).toLocal();
-      final hour = dateTime.hour.toString().padLeft(2, '0');
-      final minute = dateTime.minute.toString().padLeft(2, '0');
-      return '$hour:$minute';
-    } catch (_) {
-      return '';
-    }
-  }
+  // String _parseTimestamp(String isoString) {
+  //   try {
+  //     final dateTime = DateTime.parse(isoString).toLocal();
+  //     final hour = dateTime.hour.toString().padLeft(2, '0');
+  //     final minute = dateTime.minute.toString().padLeft(2, '0');
+  //     return '$hour:$minute';
+  //   } catch (_) {
+  //     return '';
+  //   }
+  // }
 }
