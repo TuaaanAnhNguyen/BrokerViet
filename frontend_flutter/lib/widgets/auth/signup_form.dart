@@ -17,6 +17,9 @@ class _SignUpFormState extends State<SignUpForm> {
   late final TextEditingController _usernameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _passwordController;
+  late final TextEditingController _retryPasswordController;
+
+  String? _serverPhoneError;
 
   @override
   void initState() {
@@ -24,6 +27,7 @@ class _SignUpFormState extends State<SignUpForm> {
     _usernameController = TextEditingController();
     _phoneController = TextEditingController();
     _passwordController = TextEditingController();
+    _retryPasswordController = TextEditingController();
   }
 
   @override
@@ -31,10 +35,15 @@ class _SignUpFormState extends State<SignUpForm> {
     _usernameController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
+    _retryPasswordController.dispose();
     super.dispose();
   }
 
   void _submitSignUp() {
+    setState(() {
+      _serverPhoneError = null;
+    });
+
     if (_formKey.currentState!.validate()) {
       FocusManager.instance.primaryFocus?.unfocus();
       context.read<AuthService>().add(
@@ -69,9 +78,12 @@ class _SignUpFormState extends State<SignUpForm> {
             labelText: 'Số điện thoại',
             prefixIcon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
-            validator: (value) => value == null || value.isEmpty
-                ? 'Vui lòng nhập số điện thoại'
-                : null,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Vui lòng nhập số điện thoại';
+              }
+              return _serverPhoneError;
+            },
           ),
           const SizedBox(height: 16),
           CustomTextField(
@@ -79,9 +91,31 @@ class _SignUpFormState extends State<SignUpForm> {
             labelText: 'Mật khẩu',
             prefixIcon: Icons.lock_outlined,
             isPasswordField: true,
-            validator: (value) => value == null || value.isEmpty
-                ? 'Vui lòng nhập mật khẩu'
-                : null,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Vui lòng nhập mật khẩu';
+              }
+              if (value.length < 6) {
+                return 'Mật khẩu phải có ít nhất 6 ký tự';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          CustomTextField(
+            controller: _retryPasswordController,
+            labelText: 'Nhập lại mật khẩu',
+            prefixIcon: Icons.lock_clock_outlined,
+            isPasswordField: true,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Vui lòng nhập lại mật khẩu';
+              }
+              if (value != _passwordController.text) {
+                return 'Mật khẩu nhập lại không trùng khớp';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 24),
           BlocConsumer<AuthService, AuthState>(
@@ -89,19 +123,27 @@ class _SignUpFormState extends State<SignUpForm> {
               if (state is AuthSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Registration successful!'),
+                    content: Text('Đăng ký tài khoản thành công!'),
                     backgroundColor: Colors.green,
                   ),
                 );
                 Navigator.pop(context);
               }
               if (state is AuthFailure) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.errorMessage),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                if (state.errorMessage == 'phone_already_taken') {
+                  setState(() {
+                    _serverPhoneError =
+                        'Số điện thoại này đã được đăng ký sử dụng.';
+                  });
+                  _formKey.currentState!.validate();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.errorMessage),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
             builder: (context, state) {

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../widgets/payment/vietqr_payment.dart';
+import '../../services/notification/notification_service.dart';
 
 class PaymentCheckoutScreen extends StatefulWidget {
   final String bookingId;
@@ -26,6 +27,7 @@ class PaymentCheckoutScreen extends StatefulWidget {
 
 class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
   final _supabase = Supabase.instance.client;
+  final _notificationService = NotificationService();
   bool _isPaid = false;
 
   @override
@@ -126,6 +128,33 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
           .from('payments')
           .update({'status': 'completed'})
           .eq('payment_memo', widget.paymentMemo);
+          
+      // Fetch booking details to get customer and provider IDs
+      final bookingRes = await _supabase
+          .from('bookings')
+          .select('customer_id, provider_id, service_type')
+          .eq('booking_id', widget.bookingId)
+          .maybeSingle();
+
+      if (bookingRes != null) {
+        final customerId = bookingRes['customer_id'] as String;
+        final providerId = bookingRes['provider_id'] as String;
+        final serviceType = bookingRes['service_type'] ?? 'Dịch vụ';
+
+        // Notify Customer
+        await _notificationService.createNotification(
+          userId: customerId,
+          title: 'Thanh toán thành công',
+          content: 'Đơn hàng "$serviceType" (#${widget.bookingId.substring(0, 8)}) đã được xác nhận thanh toán.',
+        );
+
+        // Notify Provider
+        await _notificationService.createNotification(
+          userId: providerId,
+          title: 'Đã nhận thanh toán',
+          content: 'Khách hàng đã thanh toán thành công cho dịch vụ "$serviceType".',
+        );
+      }
           
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Simulated successful bank transfer update!')),
