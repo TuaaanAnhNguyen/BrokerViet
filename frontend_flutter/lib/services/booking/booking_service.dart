@@ -28,7 +28,7 @@ class BookingService {
       },
     );
 
-    // After successful creation, notify the provider
+    // After successful creation, notify both parties
     try {
       final customerProfile = await _client
           .from('profiles')
@@ -36,11 +36,20 @@ class BookingService {
           .eq('user_id', customerId)
           .maybeSingle();
       final customerName = customerProfile?['username'] ?? 'Khách hàng';
+      final sType = serviceType ?? 'Dịch vụ';
 
+      // Notify Provider
       await _notificationService.createNotification(
         userId: providerId,
         title: 'Yêu cầu đặt lịch mới',
-        content: '$customerName vừa đặt lịch dịch vụ "${serviceType ?? 'Dịch vụ'}" của bạn.',
+        content: '$customerName vừa đặt lịch dịch vụ "$sType" của bạn.',
+      );
+
+      // Notify Customer
+      await _notificationService.createNotification(
+        userId: customerId,
+        title: 'Đặt lịch thành công',
+        content: 'Yêu cầu cho dịch vụ "$sType" đã được gửi thành công và đang chờ xác nhận.',
       );
     } catch (e) {
       print('Error creating booking notification: $e');

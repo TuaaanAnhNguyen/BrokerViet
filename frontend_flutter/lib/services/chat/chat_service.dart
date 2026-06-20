@@ -1,9 +1,11 @@
 // lib/services/chat/chat_service.dart
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../notification/notification_service.dart';
 
 class ChatService {
   final SupabaseClient _client = Supabase.instance.client;
+  final NotificationService _notificationService = NotificationService();
 
   String get currentUserId => _client.auth.currentUser?.id ?? '';
 
@@ -24,7 +26,6 @@ class ChatService {
 
     if (existingRoom != null) {
       final chatroomId = existingRoom['chatroom_id'] as String;
-
       return chatroomId;
     }
 
@@ -59,14 +60,12 @@ class ChatService {
 
         if (targetUserId.isEmpty) continue;
 
-        // Đọc thông tin đối phương
         final profileRes = await _client
             .from('profiles')
             .select('username, role, avatar_url')
             .eq('user_id', targetUserId)
             .maybeSingle();
 
-        // Đọc tin nhắn cuối cùng
         final lastMsgRes = await _client
             .from('messages')
             .select('content, sent_at')
@@ -138,12 +137,42 @@ class ChatService {
     final cleanText = text.trim();
     if (cleanText.isEmpty) return;
 
+    // 1. Gửi tin nhắn
     await _client.from('messages').insert({
       'chatroom_id': chatroomId,
       'sender_id': currentUserId,
       'content': cleanText,
       'sent_at': DateTime.now().toUtc().toIso8601String(),
     });
+
+    // 2. Tạo thông báo cho người nhận (Push to DB)
+    try {
+      final roomRes = await _client
+          .from('chatrooms')
+          .select('customer_id, provider_id')
+          .eq('chatroom_id', chatroomId)
+          .single();
+      
+      final customerId = roomRes['customer_id'] as String;
+      final providerId = roomRes['provider_id'] as String;
+      final recipientId = (currentUserId == customerId) ? providerId : customerId;
+
+      final senderProfile = await _client
+          .from('profiles')
+          .select('username')
+          .eq('user_id', currentUserId)
+          .maybeSingle();
+      
+      final senderName = senderProfile?['username'] ?? 'Người dùng';
+
+      await _notificationService.createNotification(
+        userId: recipientId,
+        title: 'Tin nhắn mới từ $senderName',
+        content: cleanText,
+      );
+    } catch (e) {
+      print('Error sending message notification: $e');
+    }
   }
 
   // String _parseTimestamp(String isoString) {

@@ -129,12 +129,30 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
           .update({'status': 'completed'})
           .eq('payment_memo', widget.paymentMemo);
           
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId != null) {
+      // Fetch booking details to get customer and provider IDs
+      final bookingRes = await _supabase
+          .from('bookings')
+          .select('customer_id, provider_id, service_type')
+          .eq('booking_id', widget.bookingId)
+          .maybeSingle();
+
+      if (bookingRes != null) {
+        final customerId = bookingRes['customer_id'] as String;
+        final providerId = bookingRes['provider_id'] as String;
+        final serviceType = bookingRes['service_type'] ?? 'Dịch vụ';
+
+        // Notify Customer
         await _notificationService.createNotification(
-          userId: userId,
+          userId: customerId,
           title: 'Thanh toán thành công',
-          content: 'Đơn hàng #${widget.bookingId.substring(0, 8)} đã được xác nhận thanh toán.',
+          content: 'Đơn hàng "$serviceType" (#${widget.bookingId.substring(0, 8)}) đã được xác nhận thanh toán.',
+        );
+
+        // Notify Provider
+        await _notificationService.createNotification(
+          userId: providerId,
+          title: 'Đã nhận thanh toán',
+          content: 'Khách hàng đã thanh toán thành công cho dịch vụ "$serviceType".',
         );
       }
           
