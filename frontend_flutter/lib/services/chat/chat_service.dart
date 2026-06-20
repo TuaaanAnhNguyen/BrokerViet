@@ -96,11 +96,9 @@ class ChatService {
     }
   }
 
-  // Tạo một Realtime Channel để SUBSCRIBE biến động tin nhắn mới công khai
   RealtimeChannel subscribeToChatChanges(Function onUpdate) {
     final uid = currentUserId;
 
-    // Đăng ký kênh lắng nghe sự kiện INSERT tin nhắn mới trên toàn hệ thống
     final channel = _client.channel('public:messages');
 
     channel
@@ -109,7 +107,6 @@ class ChatService {
           schema: 'public',
           table: 'messages',
           callback: (payload) {
-            // Mỗi khi có tin nhắn mới chạy vào DB, báo cho màn hình UI biết để Fetch lại data mới nhất
             onUpdate();
           },
         )
@@ -139,7 +136,6 @@ class ChatService {
     final cleanText = text.trim();
     if (cleanText.isEmpty) return;
 
-    // 1. Send the message
     await _client.from('messages').insert({
       'chatroom_id': chatroomId,
       'sender_id': currentUserId,
@@ -147,7 +143,6 @@ class ChatService {
       'sent_at': DateTime.now().toUtc().toIso8601String(),
     });
 
-    // 2. Create a notification for the recipient
     try {
       final roomRes = await _client
           .from('chatrooms')
