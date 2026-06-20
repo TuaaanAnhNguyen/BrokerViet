@@ -3,12 +3,25 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../services/auth/auth_service.dart';
 import '../../widgets/avatar_builder.dart'; // ◄ Import your shared widget helper
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+
+  Future<void> _pickAndUploadImage(BuildContext context) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70, // Optimize image size
+    );
+
+    if (image != null && context.mounted) {
+      context.read<AuthService>().add(UpdateAvatarRequested(image.path));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,27 +111,30 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      Stack(
-                        children: [
-                          // ◄ Replaced generic character text circle with your reactive widget
-                          buildAvatar(avatarPath, radius: 46),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: const BoxDecoration(
-                                color: primaryColor,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.camera_alt,
-                                color: Colors.white,
-                                size: 16,
+                      GestureDetector(
+                        onTap: () => _pickAndUploadImage(context),
+                        child: Stack(
+                          children: [
+                            // ◄ Replaced generic character text circle with your reactive widget
+                            buildAvatar(avatarPath, radius: 46),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: primaryColor,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -150,7 +166,7 @@ class ProfileScreen extends StatelessWidget {
                     _buildProfileDataRow(
                       'Mã thành viên',
                       state is AuthSuccess
-                          ? 'ID: ${state.toString().padLeft(4, '0')}'
+                          ? 'ID: ${state.uid.substring(0, 8).toUpperCase()}'
                           : '---',
                     ),
                     _buildProfileDataRow('Ngày sinh', 'Chưa cập nhật'),

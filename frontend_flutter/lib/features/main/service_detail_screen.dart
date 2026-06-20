@@ -1,3 +1,6 @@
+import 'package:broker_viet/features/chat/conversation_screen.dart';
+import 'package:broker_viet/services/chat/chat_service.dart';
+import 'package:broker_viet/widgets/avatar_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // CHANGE: Imported Supabase client
 import '../../widgets/network_image_fallback.dart';
@@ -273,14 +276,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: const NetworkImageWithFallback(
-              imageUrl: '',
-              width: 48,
-              height: 48,
-              fit: BoxFit.cover,
-            ),
+          buildAvatar(
+            _service?.providerAvatarUrl ?? '', 
+            radius: 24,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -569,7 +567,57 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           child: Row(
             children: [
               InkWell(
-                onTap: () {},
+                onTap: () async {
+                  final currentCustomerId = supabase.auth.currentUser?.id ?? '';
+                  final providerId = _service?.providerId ?? '';
+                  final providerName = _service?.providerUsername ?? 'Nhà cung cấp';
+                  final serviceTitle = _service?.title ?? 'Dịch vụ';
+
+                  if (currentCustomerId.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Vui lòng đăng nhập để chat với nhà cung cấp')),
+                    );
+                    return;
+                  }
+
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(
+                      child: CircularProgressIndicator(color: primaryColor),
+                    ),
+                  );
+
+                  try {
+                    final chatService = ChatService();
+                    final chatroomId = await chatService.getOrCreateChatRoom(
+                      providerId: providerId,
+                      customerId: currentCustomerId,
+                    );
+
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ConversationScreen(
+                            chatroomId: chatroomId,
+                            providerName: providerName,
+                            providerRole: 'Nhà cung cấp dịch vụ',
+                          ),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Không thể tạo phòng chat: $e')),
+                      );
+                    }
+                  }
+                },
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   height: 56,
@@ -585,7 +633,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    // CHANGE: Get current logged-in user id for dynamic customer tracking
                     final currentCustomerId =
                         supabase.auth.currentUser?.id ?? '';
 
@@ -593,20 +640,15 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => BookingScreen(
-                          // CHANGE: Cleaned up conflict block, mapped UI metadata dynamically
                           serviceTitle: _service?.title ?? 'Chưa có tiêu đề',
                           providerName:
                               _service?.providerUsername ?? 'Nhà cung cấp',
                           packageName: _selectedPriceIndex == 0
                               ? 'Chẩn đoán Cơ bản'
                               : 'Sửa chữa Chuyên sâu',
-
-                          // CHANGE: Added dynamic relational references instead of hardcoded IDs
                           serviceId: _service?.id ?? '',
                           providerId: _service?.providerId ?? '',
                           customerId: currentCustomerId,
-
-                          // CHANGE: Used safe parsed int value from model instead of regex replacement logic
                           totalPrice: _service?.priceValue.toInt() ?? 0,
                           scheduledAt: DateTime.now(),
                         ),

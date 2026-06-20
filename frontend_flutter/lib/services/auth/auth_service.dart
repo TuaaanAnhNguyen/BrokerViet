@@ -1,3 +1,6 @@
+// lib/services/auth/auth_service.dart
+
+import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
@@ -6,6 +9,10 @@ abstract class AuthState {}
 class AuthInitial extends AuthState {}
 
 class AuthLoading extends AuthState {}
+
+class AuthPasswordResetOtpSent extends AuthState {}
+
+class AuthPasswordResetSuccess extends AuthState {}
 
 class AuthSuccess extends AuthState {
   final String uid;
@@ -42,6 +49,23 @@ class SignUpRequested extends AuthEvent {
   final String password;
   final String role;
   SignUpRequested(this.username, this.phone, this.password, this.role);
+}
+
+class PasswordResetRequested extends AuthEvent {
+  final String phone;
+  PasswordResetRequested(this.phone);
+}
+
+class PasswordResetConfirmed extends AuthEvent {
+  final String phone;
+  final String otpCode;
+  final String newPassword;
+  PasswordResetConfirmed(this.phone, this.otpCode, this.newPassword);
+}
+
+class UpdateAvatarRequested extends AuthEvent {
+  final String imagePath;
+  UpdateAvatarRequested(this.imagePath);
 }
 
 class LogoutRequested extends AuthEvent {}
@@ -133,7 +157,13 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
         );
 
         if (functionResponse.status != 200) {
-          emit(AuthFailure('Đăng ký qua máy chủ không thành công.'));
+          final serverError = functionResponse.data?['error']?.toString() ?? '';
+          if (serverError.contains('phone_already_taken') ||
+              serverError.contains('already registered')) {
+            emit(AuthFailure('phone_already_taken'));
+          } else {
+            emit(AuthFailure('Đăng ký qua máy chủ không thành công.'));
+          }
           return;
         }
 
@@ -175,11 +205,13 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
           );
         }
       } on FunctionException catch (e) {
-        emit(
-          AuthFailure(
-            e.details?.toString() ?? 'Lỗi không xác định khi gọi hàm đăng ký.',
-          ),
-        );
+        final errorString = e.details?.toString() ?? '';
+        if (errorString.contains('phone_already_taken') ||
+            errorString.contains('already registered')) {
+          emit(AuthFailure('phone_already_taken'));
+        } else {
+          emit(AuthFailure('Hệ thống đăng ký gặp lỗi. Vui lòng thử lại sau.'));
+        }
       } on AuthException catch (e) {
         emit(AuthFailure(e.message));
       } catch (e) {
@@ -193,6 +225,100 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
         await _supabase.auth.signOut();
       } catch (_) {}
       emit(AuthInitial());
+    });
+
+    on<UpdateAvatarRequested>((event, emit) async {
+      final currentState = state;
+      if (currentState is! AuthSuccess) return;
+
+      try {
+        final file = File(event.imagePath);
+        final fileExt = event.imagePath.split('.').last;
+        final fileName =
+            '${currentState.uid}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+        final filePath = fileName;
+
+        // 1. Upload to Storage
+        await _supabase.storage
+            .from('profile_avatar')
+            .upload(
+              filePath,
+              file,
+              fileOptions: const FileOptions(
+                cacheControl: '3600',
+                upsert: false,
+              ),
+            );
+
+        // 2. Get Public URL
+        final String publicUrl = _supabase.storage
+            .from('profile_avatar')
+            .getPublicUrl(filePath);
+
+        // 3. Update profiles table
+        await _supabase
+            .from('profiles')
+            .update({'avatar_url': publicUrl})
+            .eq('user_id', currentState.uid);
+
+        // 4. Emit updated state
+        emit(
+          AuthSuccess(
+            uid: currentState.uid,
+            name: currentState.name,
+            email: currentState.email,
+            avatarPath: publicUrl,
+            memberTier: currentState.memberTier,
+          ),
+        );
+      } catch (e) {
+        print('Error updating avatar: $e');
+        emit(currentState);
+      }
+    });
+
+    on<PasswordResetRequested>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        final formattedPhone = _formatPhoneNumber(event.phone);
+
+        await _supabase.auth.signInWithOtp(phone: formattedPhone);
+
+        emit(AuthPasswordResetOtpSent());
+      } on AuthException catch (e) {
+        emit(AuthFailure(e.message));
+      } catch (_) {
+        emit(AuthFailure('Không thể gửi mã xác thực. Vui lòng thử lại.'));
+      }
+    });
+
+    on<PasswordResetConfirmed>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        final formattedPhone = _formatPhoneNumber(event.phone);
+
+        final response = await _supabase.auth.verifyOTP(
+          phone: formattedPhone,
+          token: event.otpCode,
+          type: OtpType.sms,
+        );
+
+        if (response.user != null) {
+          await _supabase.auth.updateUser(
+            UserAttributes(password: event.newPassword),
+          );
+
+          await _supabase.auth.signOut();
+
+          emit(AuthPasswordResetSuccess());
+        } else {
+          emit(AuthFailure('Mã xác thực không chính xác.'));
+        }
+      } on AuthException catch (e) {
+        emit(AuthFailure(e.message));
+      } catch (_) {
+        emit(AuthFailure('Đổi mật khẩu thất bại. Vui lòng thử lại.'));
+      }
     });
   }
 }

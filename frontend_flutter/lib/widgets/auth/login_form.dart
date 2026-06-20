@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../services/auth/auth_service.dart';
 import '../../../../../widgets/custom_text_field.dart';
+import '../../features/auth/forgot_password_screen.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -16,6 +17,8 @@ class _LoginFormState extends State<LoginForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _phoneController;
   late final TextEditingController _passwordController;
+
+  String? _serverLoginError;
 
   @override
   void initState() {
@@ -32,6 +35,10 @@ class _LoginFormState extends State<LoginForm> {
   }
 
   void _submitLogin() {
+    setState(() {
+      _serverLoginError = null;
+    });
+
     if (_formKey.currentState!.validate()) {
       FocusManager.instance.primaryFocus?.unfocus();
       context.read<AuthService>().add(
@@ -55,9 +62,12 @@ class _LoginFormState extends State<LoginForm> {
             labelText: 'Số điện thoại',
             prefixIcon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
-            validator: (value) => value == null || value.isEmpty
-                ? 'Vui lòng nhập số điện thoại'
-                : null,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Vui lòng nhập số điện thoại';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 16),
           CustomTextField(
@@ -65,11 +75,34 @@ class _LoginFormState extends State<LoginForm> {
             labelText: 'Mật khẩu',
             prefixIcon: Icons.lock_outlined,
             isPasswordField: true,
-            validator: (value) => value == null || value.isEmpty
-                ? 'Vui lòng nhập mật khẩu'
-                : null,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Vui lòng nhập mật khẩu';
+              }
+              return _serverLoginError;
+            },
           ),
-          const SizedBox(height: 24),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ForgotPasswordScreen(),
+                  ),
+                );
+              },
+              child: const Text(
+                'Quên mật khẩu?',
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           BlocConsumer<AuthService, AuthState>(
             listenWhen: (previous, current) =>
                 current is AuthSuccess || current is AuthFailure,
@@ -78,16 +111,25 @@ class _LoginFormState extends State<LoginForm> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Chào mừng bạn quay trở lại, ${state.name}!'),
+                    backgroundColor: Colors.green,
                   ),
                 );
               }
               if (state is AuthFailure) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.errorMessage),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                final errorMsg = state.errorMessage.toLowerCase();
+
+                setState(() {
+                  if (errorMsg.contains('invalid login credentials') ||
+                      errorMsg.contains('không chính xác') ||
+                      errorMsg.contains('invalid_credentials')) {
+                    _serverLoginError =
+                        'Số điện thoại hoặc mật khẩu không chính xác.';
+                  } else {
+                    _serverLoginError = 'Lỗi hệ thống. Vui lòng thử lại sau.';
+                  }
+                });
+
+                _formKey.currentState!.validate();
               }
             },
             builder: (context, state) {

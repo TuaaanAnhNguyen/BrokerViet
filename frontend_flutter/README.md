@@ -1,20 +1,3 @@
-# broker_viet
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
 
 ```
 frontend_flutter
@@ -104,8 +87,7 @@ frontend_flutter
 │  └─ settings.gradle.kts
 ├─ assets
 │  ├─ default_profile.png
-│  ├─ tako.png
-│  └─ tam tender.jpg
+│  └─ no_icon_placeholder.png
 ├─ ios
 │  ├─ Flutter
 │  │  ├─ AppFrameworkInfo.plist
@@ -182,25 +164,32 @@ frontend_flutter
 │  │  ├─ main
 │  │  │  ├─ main_navigation_shell.dart
 │  │  │  ├─ notification_screen.dart
+│  │  │  ├─ search_screen.dart
 │  │  │  ├─ service_detail_screen.dart
 │  │  │  └─ service_marketplace_screen.dart
-│  │  ├─ marketplace
+│  │  ├─ payment
+│  │  │  └─ payment_checkout_screen.dart
 │  │  └─ profile
 │  │     ├─ account_setting.dart
 │  │     ├─ profile_menu_screen.dart
 │  │     └─ profile_screen.dart
 │  ├─ main.dart
 │  ├─ models
+│  │  ├─ bank_mapper.dart
 │  │  ├─ booking_model.dart
+│  │  ├─ notification_model.dart
+│  │  ├─ payment_model.dart
+│  │  ├─ service_category_model.dart
 │  │  ├─ service_model.dart
 │  │  └─ user_model.dart
-│  ├─ repositories
 │  ├─ services
 │  │  ├─ auth
 │  │  │  └─ auth_service.dart
 │  │  ├─ booking
-│  │  │  └─ booking_service.dart
-│  │  └─ message
+│  │  │  ├─ booking_service.dart
+│  │  │  └─ booking_submission_service.dart
+│  │  └─ marketplace
+│  │     └─ service_marketplace_service.dart
 │  └─ widgets
 │     ├─ auth
 │     │  ├─ auth_header.dart
@@ -210,8 +199,14 @@ frontend_flutter
 │     ├─ booking_card.dart
 │     ├─ button.dart
 │     ├─ custom_text_field.dart
+│     ├─ network_image_fallback.dart
 │     ├─ notification_tile.dart
-│     └─ service_card.dart
+│     ├─ payment
+│     │  └─ vietqr_payment.dart
+│     └─ service
+│        ├─ category_selector.dart
+│        ├─ nearby_provider_tile.dart
+│        └─ service_card.dart
 ├─ pubspec.lock
 ├─ pubspec.yaml
 ├─ README.md
