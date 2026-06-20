@@ -31,6 +31,7 @@ class BookingCard extends StatelessWidget {
         statusColor = const Color(0xFF2E7D32);
         break;
       case BookingStatus.dangThucHien:
+      case BookingStatus.xacNhan:
         statusColor = primaryColor;
         break;
       case BookingStatus.choDuyet:
@@ -247,6 +248,7 @@ class BookingCard extends StatelessWidget {
           ),
         ];
       case BookingStatus.dangThucHien:
+      case BookingStatus.xacNhan:
         return [
           OutlinedButton(
             onPressed: TrackProgress,

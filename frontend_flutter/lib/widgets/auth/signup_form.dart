@@ -17,6 +17,8 @@ class _SignUpFormState extends State<SignUpForm> {
   late final TextEditingController _usernameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _passwordController;
+  late final TextEditingController _confirmPasswordController;
+  String _selectedRole = 'CUSTOMER';
 
   @override
   void initState() {
@@ -24,6 +26,7 @@ class _SignUpFormState extends State<SignUpForm> {
     _usernameController = TextEditingController();
     _phoneController = TextEditingController();
     _passwordController = TextEditingController();
+    _confirmPasswordController = TextEditingController();
   }
 
   @override
@@ -31,6 +34,7 @@ class _SignUpFormState extends State<SignUpForm> {
     _usernameController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -42,9 +46,80 @@ class _SignUpFormState extends State<SignUpForm> {
           _usernameController.text.trim(),
           _phoneController.text.trim(),
           _passwordController.text.trim(),
+          _selectedRole,
         ),
       );
     }
+  }
+
+  Widget _buildRoleCard({
+    required String role,
+    required String title,
+    required String description,
+    required IconData icon,
+  }) {
+    final isSelected = _selectedRole == role;
+    const Color primaryColor = Color(0xFF004AC6);
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedRole = role;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : const Color(0xFFF1F3F9),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? primaryColor : Colors.transparent,
+            width: 2,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: primaryColor.withValues(alpha: 0.12),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 32,
+              color: isSelected ? primaryColor : const Color(0xFF7E84A2),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? primaryColor : const Color(0xFF0B1C30),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: isSelected
+                    ? primaryColor.withValues(alpha: 0.8)
+                    : const Color(0xFF7E84A2),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -83,13 +158,63 @@ class _SignUpFormState extends State<SignUpForm> {
                 ? 'Vui lòng nhập mật khẩu'
                 : null,
           ),
+          const SizedBox(height: 16),
+          CustomTextField(
+            controller: _confirmPasswordController,
+            labelText: 'Nhập lại mật khẩu',
+            prefixIcon: Icons.lock_outlined,
+            isPasswordField: true,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Vui lòng nhập lại mật khẩu';
+              }
+              if (value != _passwordController.text) {
+                return 'Mật khẩu nhập lại không khớp';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Bạn là:',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF434655),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildRoleCard(
+                  role: 'CUSTOMER',
+                  title: 'Khách hàng',
+                  description: 'Tìm kiếm dịch vụ',
+                  icon: Icons.person_search_outlined,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildRoleCard(
+                  role: 'PROVIDER',
+                  title: 'Đối tác',
+                  description: 'Cung cấp dịch vụ',
+                  icon: Icons.storefront_outlined,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 24),
           BlocConsumer<AuthService, AuthState>(
             listener: (context, state) {
               if (state is AuthSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Registration successful!'),
+                    content: Text('Đăng ký tài khoản thành công!'),
                     backgroundColor: Colors.green,
                   ),
                 );
@@ -117,7 +242,7 @@ class _SignUpFormState extends State<SignUpForm> {
               return ElevatedButton(
                 onPressed: _submitSignUp,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: const Color(0xFF004AC6),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

@@ -6,7 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'features/auth/login_screen.dart';
 import 'services/auth/auth_service.dart';
 import 'features/main/main_navigation_shell.dart';
+import 'screens/provider/provider_dashboard_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +19,7 @@ void main() async {
   String supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+  await initializeDateFormatting('vi_VN', null);
 
   runApp(const BrokerVietApp());
 }
@@ -40,9 +43,12 @@ class BrokerVietApp extends StatelessWidget {
         home: BlocBuilder<AuthService, AuthState>(
           builder: (context, state) {
             if (state is AuthSuccess) {
-              return MainNavigationShell();
+              if (state.memberTier == 'PROVIDER') {
+                return const ProviderDashboardScreen();
+              }
+              return const MainNavigationShell();
             }
-            return LoginScreen();
+            return const LoginScreen();
           },
         ),
       ),
