@@ -2,7 +2,6 @@
 
 enum BookingStatus {
   choDuyet('Chờ duyệt'),
-  dangThucHien('Đang thực hiện'),
   daHoanThanh('Đã hoàn thành'),
   daHuy('Đã hủy');
 
@@ -61,7 +60,6 @@ class BookingModel {
       serviceTitle: json['service_type']?.toString() ??
           json['service_title']?.toString() ??
           'Dịch vụ hệ thống',
-      // Falls back to local asset path string if backend image is null or empty
       imageUrl: (json['image_url'] != null && json['image_url'].toString().isNotEmpty)
           ? json['image_url'].toString()
           : 'assets/no_icon_placeholder.png',
@@ -75,15 +73,11 @@ class BookingModel {
     );
   }
 
-  // Hàm phụ trợ map từ trạng thái database sang String value của Enum
   static String _mapDbStatusToVietnamese(String dbStatus) {
     switch (dbStatus.toLowerCase()) {
       case 'pending':
       case 'cho_duyet':
         return 'Chờ duyệt';
-      case 'ongoing':
-      case 'dang_thuc_hien':
-        return 'Đang thực hiện';
       case 'completed':
       case 'da_hoan_thanh':
         return 'Đã hoàn thành';
@@ -91,7 +85,7 @@ class BookingModel {
       case 'da_huy':
         return 'Đã hủy';
       default:
-        return dbStatus; // Nếu backend trả thẳng tiếng Việt thì giữ nguyên
+        return dbStatus;
     }
   }
 }

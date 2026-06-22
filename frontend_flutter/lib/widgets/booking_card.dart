@@ -30,9 +30,6 @@ class BookingCard extends StatelessWidget {
       case BookingStatus.daHoanThanh:
         statusColor = const Color(0xFF2E7D32);
         break;
-      case BookingStatus.dangThucHien:
-        statusColor = primaryColor;
-        break;
       case BookingStatus.choDuyet:
         statusColor = const Color(0xFFE65100);
         break;
@@ -238,21 +235,6 @@ class BookingCard extends StatelessWidget {
             style: primaryStyle,
             child: const Text(
               'Đặt lịch lại',
-              style: TextStyle(
-                color: primaryColor,
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ];
-      case BookingStatus.dangThucHien:
-        return [
-          OutlinedButton(
-            onPressed: TrackProgress,
-            style: primaryStyle,
-            child: const Text(
-              'Theo dõi tiến độ',
               style: TextStyle(
                 color: primaryColor,
                 fontSize: 13,
