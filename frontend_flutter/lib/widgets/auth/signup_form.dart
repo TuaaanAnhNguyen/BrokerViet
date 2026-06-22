@@ -18,6 +18,7 @@ class _SignUpFormState extends State<SignUpForm> {
   late final TextEditingController _phoneController;
   late final TextEditingController _passwordController;
   late final TextEditingController _retryPasswordController;
+  late String _selectedRole = 'CUSTOMER';
 
   String? _serverPhoneError;
 
@@ -184,22 +185,6 @@ class _SignUpFormState extends State<SignUpForm> {
               }
               if (value != _passwordController.text) {
                 return 'Mật khẩu nhập lại không trùng khớp';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-          CustomTextField(
-            controller: _confirmPasswordController,
-            labelText: 'Nhập lại mật khẩu',
-            prefixIcon: Icons.lock_outlined,
-            isPasswordField: true,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Vui lòng nhập lại mật khẩu';
-              }
-              if (value != _passwordController.text) {
-                return 'Mật khẩu nhập lại không khớp';
               }
               return null;
             },

@@ -24,7 +24,7 @@ class ProviderBookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isCancelled = booking.status == BookingStatus.daHuy;
-    final bool isCompleted = booking.status == BookingStatus.daHoanThanh;
+    final bool isPending = booking.status == BookingStatus.choDuyet;
 
     return Opacity(
       opacity: isCancelled ? 0.6 : 1.0,
@@ -90,11 +90,18 @@ class ProviderBookingCard extends StatelessWidget {
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(Icons.access_time, size: 14, color: bodyText),
+                            const Icon(
+                              Icons.access_time,
+                              size: 14,
+                              color: bodyText,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               booking.formattedDate,
-                              style: const TextStyle(color: bodyText, fontSize: 12),
+                              style: const TextStyle(
+                                color: bodyText,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -102,15 +109,22 @@ class ProviderBookingCard extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: BookingStatusUtils.getBackgroundColorForStatus(booking.status),
+                      color: BookingStatusUtils.getBackgroundColorForStatus(
+                        booking.status,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       BookingStatusUtils.getLabelForStatus(booking.status),
                       style: TextStyle(
-                        color: BookingStatusUtils.getTextColorForStatus(booking.status),
+                        color: BookingStatusUtils.getTextColorForStatus(
+                          booking.status,
+                        ),
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
@@ -118,12 +132,12 @@ class ProviderBookingCard extends StatelessWidget {
                   ),
                 ],
               ),
-              if (!isCompleted && !isCancelled) ...[
+              if (isPending) ...[
                 const SizedBox(height: 16),
                 const Divider(height: 1, color: borderColor),
                 const SizedBox(height: 12),
                 _buildQuickActions(booking.status),
-              ]
+              ],
             ],
           ),
         ),
@@ -154,7 +168,7 @@ class ProviderBookingCard extends StatelessWidget {
           Expanded(
             child: ElevatedButton(
               onPressed: () {
-                onStatusUpdate?.call(BookingStatus.xacNhan);
+                onStatusUpdate?.call(BookingStatus.daHoanThanh);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
@@ -168,64 +182,6 @@ class ProviderBookingCard extends StatelessWidget {
             ),
           ),
         ],
-      );
-    } else if (status == BookingStatus.xacNhan) {
-      return Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () {
-                // Open message functionality
-              },
-              icon: const Icon(Icons.chat_bubble_outline, size: 16),
-              label: const Text('Nhắn tin'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: primaryColor,
-                side: const BorderSide(color: primaryColor),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () {
-                onStatusUpdate?.call(BookingStatus.dangThucHien);
-              },
-              icon: const Icon(Icons.play_arrow_outlined, size: 16),
-              label: const Text('Bắt đầu'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
-    } else if (status == BookingStatus.dangThucHien) {
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: () {
-            onStatusUpdate?.call(BookingStatus.daHoanThanh);
-          },
-          icon: const Icon(Icons.check_circle_outline, size: 16),
-          label: const Text('Hoàn thành'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green.shade600,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
       );
     }
 

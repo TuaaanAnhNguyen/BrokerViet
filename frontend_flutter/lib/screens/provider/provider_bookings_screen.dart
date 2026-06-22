@@ -28,8 +28,6 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
   final List<String> _filters = [
     'All',
     'Pending',
-    'Confirmed',
-    'In Progress',
     'Completed',
     'Cancelled'
   ];
@@ -183,8 +181,6 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
     switch (filter) {
       case 'All': return 'Tất cả';
       case 'Pending': return 'Chờ duyệt';
-      case 'Confirmed': return 'Đã xác nhận';
-      case 'In Progress': return 'Đang thực hiện';
       case 'Completed': return 'Đã hoàn thành';
       case 'Cancelled': return 'Đã hủy';
       default: return filter;
@@ -194,8 +190,6 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
   String _getEmptyMessage() {
     switch (_activeFilter) {
       case 'Pending': return 'Không có yêu cầu chờ xử lý';
-      case 'Confirmed': return 'Không có lịch hẹn đã xác nhận';
-      case 'In Progress': return 'Không có công việc đang thực hiện';
       case 'Completed': return 'Chưa có công việc nào hoàn thành';
       case 'Cancelled': return 'Không có lịch hẹn bị hủy';
       default: return 'Chưa có lịch hẹn nào';
@@ -205,8 +199,6 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
   BookingStatus? _filterToStatus(String filter) {
     switch (filter) {
       case 'Pending': return BookingStatus.choDuyet;
-      case 'Confirmed': return BookingStatus.xacNhan;
-      case 'In Progress': return BookingStatus.dangThucHien;
       case 'Completed': return BookingStatus.daHoanThanh;
       case 'Cancelled': return BookingStatus.daHuy;
       default: return null;
@@ -279,17 +271,13 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
             if (status == BookingStatus.choDuyet) {
               activeBgColor = Colors.orange.shade600;
               activeTextColor = Colors.white;
-            } else if (status == BookingStatus.dangThucHien) {
-              activeBgColor = primaryColor;
-              activeTextColor = Colors.white;
             } else if (status == BookingStatus.daHoanThanh) {
               activeBgColor = Colors.green.shade600;
               activeTextColor = Colors.white;
             }
           }
 
-          // Generate count (mocked dynamically based on current list length for simplicity, 
-          // usually this would come from a separate stat query)
+          // Generate count dynamically based on current list length
           int count = _bookings.where((b) {
             if (filter == 'All') return true;
             return b.status == _filterToStatus(filter);
