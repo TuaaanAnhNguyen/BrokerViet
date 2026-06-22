@@ -66,30 +66,6 @@ class ProviderBookingsService {
         requestedAt: now.subtract(const Duration(days: 1)),
       ),
       ProviderBookingModel(
-        bookingId: '2',
-        customerName: 'Trần Thị B',
-        customerAvatar: null,
-        serviceTitle: 'Bảo trì tủ lạnh',
-        date: now.add(const Duration(days: 1)),
-        status: BookingStatus.xacNhan,
-        price: 150000,
-        address: '45 Lê Lợi, Quận 1, TP.HCM',
-        requestedAt: now.subtract(const Duration(days: 2)),
-        confirmedAt: now.subtract(const Duration(days: 1)),
-      ),
-      ProviderBookingModel(
-        bookingId: '3',
-        customerName: 'Lê Văn C',
-        customerAvatar: null,
-        serviceTitle: 'Lắp đặt điều hòa',
-        date: now.add(const Duration(days: 2)),
-        status: BookingStatus.dangThucHien,
-        price: 500000,
-        address: '88 Nguyễn Huệ, Quận 1, TP.HCM',
-        requestedAt: now.subtract(const Duration(days: 3)),
-        confirmedAt: now.subtract(const Duration(days: 2)),
-      ),
-      ProviderBookingModel(
         bookingId: '4',
         customerName: 'Phạm Văn D',
         customerAvatar: null,
@@ -130,8 +106,6 @@ class ProviderBookingsService {
     
     return allMocks.where((b) {
       if (filter == 'Pending') return b.status == BookingStatus.choDuyet;
-      if (filter == 'Confirmed') return b.status == BookingStatus.xacNhan;
-      if (filter == 'In Progress') return b.status == BookingStatus.dangThucHien;
       if (filter == 'Completed') return b.status == BookingStatus.daHoanThanh;
       if (filter == 'Cancelled') return b.status == BookingStatus.daHuy;
       return true;

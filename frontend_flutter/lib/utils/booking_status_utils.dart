@@ -7,10 +7,6 @@ class BookingStatusUtils {
     switch (status) {
       case BookingStatus.choDuyet:
         return Colors.orange.shade100; // Warning/Amber
-      case BookingStatus.xacNhan:
-        return Colors.blue.shade100; // Info/Blue
-      case BookingStatus.dangThucHien:
-        return Colors.green.shade100; // Success/Green
       case BookingStatus.daHoanThanh:
       case BookingStatus.daHuy:
         return Colors.grey.shade200; // Neutral/Gray
@@ -22,10 +18,6 @@ class BookingStatusUtils {
     switch (status) {
       case BookingStatus.choDuyet:
         return Colors.orange.shade800;
-      case BookingStatus.xacNhan:
-        return Colors.blue.shade800;
-      case BookingStatus.dangThucHien:
-        return Colors.green.shade800;
       case BookingStatus.daHoanThanh:
       case BookingStatus.daHuy:
         return Colors.grey.shade700;

@@ -56,7 +56,7 @@ class ProviderDashboardService {
           customerAvatar: null,
           serviceTitle: 'Bảo trì tủ lạnh',
           date: DateTime.now().add(const Duration(days: 1)),
-          status: BookingStatus.xacNhan,
+          status: BookingStatus.daHoanThanh,
         ),
         ProviderBookingModel(
           bookingId: '3',
@@ -64,7 +64,7 @@ class ProviderDashboardService {
           customerAvatar: null,
           serviceTitle: 'Lắp đặt điều hòa',
           date: DateTime.now().add(const Duration(days: 2)),
-          status: BookingStatus.dangThucHien,
+          status: BookingStatus.daHuy,
         ),
       ];
     }
