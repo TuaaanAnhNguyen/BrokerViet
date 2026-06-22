@@ -14,6 +14,17 @@ enum BookingStatus {
       orElse: () => BookingStatus.choDuyet,
     );
   }
+
+  String toDbString() {
+    switch (this) {
+      case BookingStatus.choDuyet:
+        return 'pending';
+      case BookingStatus.daHoanThanh:
+        return 'completed';
+      case BookingStatus.daHuy:
+        return 'cancelled';
+    }
+  }
 }
 
 class BookingModel {
