@@ -2,6 +2,7 @@
 
 enum BookingStatus {
   choDuyet('Chờ duyệt'),
+  xacNhan('Đã xác nhận'),
   dangThucHien('Đang thực hiện'),
   daHoanThanh('Đã hoàn thành'),
   daHuy('Đã hủy');
@@ -14,6 +15,21 @@ enum BookingStatus {
       (e) => e.value.toLowerCase() == status.toLowerCase(),
       orElse: () => BookingStatus.choDuyet,
     );
+  }
+
+  String toDbString() {
+    switch (this) {
+      case BookingStatus.choDuyet:
+        return 'pending';
+      case BookingStatus.xacNhan:
+        return 'confirmed';
+      case BookingStatus.dangThucHien:
+        return 'ongoing';
+      case BookingStatus.daHoanThanh:
+        return 'completed';
+      case BookingStatus.daHuy:
+        return 'cancelled';
+    }
   }
 }
 
@@ -81,6 +97,9 @@ class BookingModel {
       case 'pending':
       case 'cho_duyet':
         return 'Chờ duyệt';
+      case 'confirmed':
+      case 'xac_nhan':
+        return 'Đã xác nhận';
       case 'ongoing':
       case 'dang_thuc_hien':
         return 'Đang thực hiện';

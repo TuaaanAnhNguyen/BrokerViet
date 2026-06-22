@@ -47,7 +47,8 @@ class SignUpRequested extends AuthEvent {
   final String username;
   final String phone;
   final String password;
-  SignUpRequested(this.username, this.phone, this.password);
+  final String role;
+  SignUpRequested(this.username, this.phone, this.password, this.role);
 }
 
 class PasswordResetRequested extends AuthEvent {
@@ -151,6 +152,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
             'phone': formattedPhone,
             'password': event.password,
             'username': event.username.trim(),
+            'role': event.role,
           },
         );
 
@@ -171,13 +173,28 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
         );
 
         if (loginResponse.user != null) {
+          final userId = loginResponse.user!.id;
+          final profileData = await _supabase
+              .from('profiles')
+              .select()
+              .eq('user_id', userId)
+              .maybeSingle();
+
+          final profileUsername = profileData != null
+              ? profileData['username']
+              : null;
+          final profileRole = profileData != null ? profileData['role'] : null;
+          final profileAvatar = profileData != null
+              ? profileData['avatar_url']
+              : null;
+
           emit(
             AuthSuccess(
-              uid: loginResponse.user!.id,
-              name: event.username.trim(),
+              uid: userId,
+              name: profileUsername ?? event.username.trim(),
               email: loginResponse.user!.email ?? '',
-              avatarPath: 'assets/default_profile.png',
-              memberTier: 'Thành viên',
+              avatarPath: profileAvatar ?? 'assets/default_profile.png',
+              memberTier: profileRole ?? event.role,
             ),
           );
         } else {
