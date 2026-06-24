@@ -77,7 +77,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
     try {
       final success = await _bookingService.updateBooking(
         bookingId,
-        status: 'Đã hủy',
+        status: 'CANCELLED',
       );
 
       if (success && mounted) {

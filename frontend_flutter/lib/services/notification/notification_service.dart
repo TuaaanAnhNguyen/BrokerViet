@@ -84,6 +84,7 @@ class NotificationService {
     required String content,
   }) async {
     try {
+      print('creating notification');
       await _client.from('notifications').insert({
         'user_id': userId,
         'title': title,
