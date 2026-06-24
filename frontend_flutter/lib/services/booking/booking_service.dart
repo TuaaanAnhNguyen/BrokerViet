@@ -39,6 +39,7 @@ class BookingService {
       final sType = serviceType ?? 'Dịch vụ';
 
       // Notify Provider
+      print("notifying provider");
       await _notificationService.createNotification(
         userId: providerId,
         title: 'Yêu cầu đặt lịch mới',
@@ -46,6 +47,7 @@ class BookingService {
       );
 
       // Notify Customer
+      print("Notifying customers");
       await _notificationService.createNotification(
         userId: customerId,
         title: 'Đặt lịch thành công',
@@ -132,6 +134,7 @@ class BookingService {
     );
 
     // 2. Send notification if status changed
+    print("checking status for notification preparing");
     if (status != null && bookingData != null) {
       final customerId = bookingData['customer_id'];
       final providerId = bookingData['provider_id'];
