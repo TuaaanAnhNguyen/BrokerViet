@@ -18,11 +18,11 @@ enum BookingStatus {
   String toDbString() {
     switch (this) {
       case BookingStatus.choDuyet:
-        return 'pending';
+        return 'PENDING';
       case BookingStatus.daHoanThanh:
-        return 'completed';
+        return 'COMPLETED';
       case BookingStatus.daHuy:
-        return 'cancelled';
+        return 'CANCELLED';
     }
   }
 }
@@ -88,12 +88,15 @@ class BookingModel {
     switch (dbStatus.toLowerCase()) {
       case 'pending':
       case 'cho_duyet':
+      case 'PENDING':
         return 'Chờ duyệt';
       case 'completed':
       case 'da_hoan_thanh':
+      case 'COMPLETED':
         return 'Đã hoàn thành';
       case 'cancelled':
       case 'da_huy':
+      case 'CANCELLED':
         return 'Đã hủy';
       default:
         return dbStatus;
