@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../widgets/notification_tile.dart';
 import '../../models/notification_model.dart';
-import '../../services/notification/notification_service.dart';
+import '../../services/notification/notifgit ication_service.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
