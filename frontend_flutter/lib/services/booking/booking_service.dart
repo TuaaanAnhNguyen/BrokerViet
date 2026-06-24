@@ -145,7 +145,7 @@ class BookingService {
 
       final statusLower = status.toLowerCase();
 
-      if (statusLower.contains('duyệt') || statusLower.contains('chấp nhận') || statusLower == 'ongoing') {
+      if (statusLower.contains('duyệt') || statusLower.contains('chấp nhận') || statusLower == 'pending') {
         title = 'Đơn hàng đã được duyệt';
         content = 'Yêu cầu cho dịch vụ "$sType" của bạn đã được chấp nhận.';
       } else if (statusLower.contains('hủy') || statusLower == 'cancelled') {
