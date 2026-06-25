@@ -53,7 +53,7 @@ class ChatService {
   }
 
   RealtimeChannel subscribeToChatChanges(Function onUpdate) {
-    final channel = _client.channel('public:messages_changes');
+    final channel = _client.channel('public:chat_list_update');
 
     channel
         .onPostgresChanges(
@@ -65,7 +65,21 @@ class ChatService {
             onUpdate();
           },
         )
-        .subscribe();
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'chatrooms',
+          callback: (payload) {
+            print('Realtime chatroom has been updated!');
+            onUpdate();
+          },
+        )
+        .subscribe((status, [error]) {
+          print('Realtime pipeline status changed: $status');
+          if (error != null) {
+            print('Encounter realtime chat error: $error');
+          }
+        });
 
     return channel;
   }
