@@ -70,6 +70,14 @@ class ChatService {
     return channel;
   }
 
+  Stream<List<Map<String, dynamic>>> streamMessages(String chatroomId) {
+    return _client
+        .from('messages')
+        .stream(primaryKey: ['message_id'])
+        .eq('chatroom_id', chatroomId)
+        .order('sent_at', ascending: true);
+  }
+
   Future<void> sendMessage(String chatroomId, String text) async {
     final cleanText = text.trim();
     if (cleanText.isEmpty || currentUserId.isEmpty) return;
