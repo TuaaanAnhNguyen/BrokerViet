@@ -65,14 +65,20 @@ class ChatService {
     if (uid.isEmpty) return [];
 
     try {
-      final rooms = await _client
-          .from('chatrooms')
-          .select()
-          .or('customer_id.eq.$uid,provider_id.eq.$uid');
+      final response = await _client.functions.invoke(
+        'list-chatroom',
+        method: HttpMethod.get,
+        queryParameters: {'user_id': uid},
+      );
 
-      return List<Map<String, dynamic>>.from(rooms);
+      final data = response.data as Map<String, dynamic>;
+
+      final List<dynamic> rooms = data['chatrooms'] ?? [];
+
+      return rooms.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
       print('Error fetching chat rooms: $e');
+
       return [];
     }
   }
@@ -82,9 +88,14 @@ class ChatService {
         .from('messages')
         .stream(primaryKey: ['message_id'])
         .eq('chatroom_id', chatroomId)
-        .order('sent_at')
-        .map(
-          (rows) => rows
+        .map((rows) {
+          rows.sort(
+            (a, b) => DateTime.parse(
+              a['sent_at'],
+            ).compareTo(DateTime.parse(b['sent_at'])),
+          );
+
+          return rows
               .map(
                 (row) => {
                   'message_id': row['message_id'],
@@ -93,8 +104,8 @@ class ChatService {
                   'sent_at': row['sent_at'],
                 },
               )
-              .toList(),
-        );
+              .toList();
+        });
   }
 
   // === GET OR CREATE CHATROOM ===
