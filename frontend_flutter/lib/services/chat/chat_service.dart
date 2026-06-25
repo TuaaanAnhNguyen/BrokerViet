@@ -1,11 +1,9 @@
 // lib/services/chat/chat_service.dart
 
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../notification/notification_service.dart';
 
 class ChatService {
   final SupabaseClient _client = Supabase.instance.client;
-  final NotificationService _notificationService = NotificationService();
 
   String get currentUserId => _client.auth.currentUser?.id ?? '';
 
@@ -13,29 +11,14 @@ class ChatService {
     required String providerId,
     required String customerId,
   }) async {
-    if (customerId.isEmpty || providerId.isEmpty) {
-      throw Exception('ID người dùng không hợp lệ.');
-    }
-
-    final existingRoom = await _client
-        .from('chatrooms')
-        .select('chatroom_id')
-        .eq('customer_id', customerId)
-        .eq('provider_id', providerId)
-        .maybeSingle();
-
-    if (existingRoom != null) {
-      final chatroomId = existingRoom['chatroom_id'] as String;
-      return chatroomId;
-    }
-
-    final newRoomRes = await _client
-        .from('chatrooms')
-        .insert({'customer_id': customerId, 'provider_id': providerId})
-        .select('chatroom_id')
-        .single();
-
-    return newRoomRes['chatroom_id'] as String;
+    final response = await _client.functions.invoke(
+      'fetch-chats',
+      method: HttpMethod.post,
+      queryParameters: {'action': 'get_or_create'},
+      body: {'customer_id': customerId, 'provider_id': providerId},
+    );
+    final data = response.data as Map<String, dynamic>;
+    return data['chatroom_id']?.toString() ?? '';
   }
 
   Future<List<Map<String, dynamic>>> fetchChatRooms() async {
@@ -43,60 +26,34 @@ class ChatService {
     if (uid.isEmpty) return [];
 
     try {
-      final List<dynamic> rooms = await _client
-          .from('chatrooms')
-          .select()
-          .or('customer_id.eq.$uid,provider_id.eq.$uid');
+      final response = await _client.functions.invoke(
+        'fetch-chats',
+        method: HttpMethod.get,
+        queryParameters: {'action': 'list', 'user_id': uid},
+      );
 
-      final hydratedRooms = <Map<String, dynamic>>[];
+      final data = response.data as Map<String, dynamic>;
+      final List<dynamic> rawRooms = data['chatrooms'] ?? [];
 
-      for (var room in rooms) {
-        final String customerId = room['customer_id'] ?? '';
-        final String providerId = room['provider_id'] ?? '';
-        final String chatroomId = room['chatroom_id'];
-
-        final bool isCustomer = customerId == uid;
-        final String targetUserId = isCustomer ? providerId : customerId;
-
-        if (targetUserId.isEmpty) continue;
-
-        final profileRes = await _client
-            .from('profiles')
-            .select('username, role, avatar_url')
-            .eq('user_id', targetUserId)
-            .maybeSingle();
-
-        final lastMsgRes = await _client
-            .from('messages')
-            .select('content, sent_at')
-            .eq('chatroom_id', chatroomId)
-            .order('sent_at', ascending: false)
-            .limit(1)
-            .maybeSingle();
-
-        hydratedRooms.add({
-          'chatroom_id': chatroomId,
-          'target_name': profileRes?['username'] ?? 'Người dùng BrokerViet',
-          'target_role': profileRes?['role'] ?? 'Thành viên',
-          'avatar_url': profileRes?['avatar_url'],
-          'last_message': lastMsgRes?['content'] ?? 'Chưa có tin nhắn nào.',
-          'time': lastMsgRes?['sent_at'] != null
-              ? _parseTimestamp(lastMsgRes!['sent_at'])
-              : '',
-          'unread_count': 0,
-        });
-      }
-      return hydratedRooms;
+      return rawRooms.map((room) {
+        final map = room as Map<String, dynamic>;
+        return {
+          'chatroom_id': map['chatroom_id'],
+          'target_name': map['target_name'] ?? 'Người dùng BrokerViet',
+          'target_role': map['target_role'] ?? 'Thành viên',
+          'avatar_url': map['avatar_url'],
+          'last_message': map['last_message'],
+          'time': map['sent_at'] != null ? _parseTimestamp(map['sent_at']) : '',
+        };
+      }).toList();
     } catch (e) {
-      print("Lỗi Fetch Phòng Chat: $e");
+      print("Error fetching chat rooms via Edge Function: $e");
       return [];
     }
   }
 
   RealtimeChannel subscribeToChatChanges(Function onUpdate) {
-    final uid = currentUserId;
-
-    final channel = _client.channel('public:messages');
+    final channel = _client.channel('public:chat_list_update');
 
     channel
         .onPostgresChanges(
@@ -104,21 +61,27 @@ class ChatService {
           schema: 'public',
           table: 'messages',
           callback: (payload) {
+            print('Realtime message update received!');
             onUpdate();
           },
         )
-        .subscribe();
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'chatrooms',
+          callback: (payload) {
+            print('Realtime chatroom has been updated!');
+            onUpdate();
+          },
+        )
+        .subscribe((status, [error]) {
+          print('Realtime pipeline status changed: $status');
+          if (error != null) {
+            print('Encounter realtime chat error: $error');
+          }
+        });
 
     return channel;
-  }
-
-  String _parseTimestamp(String isoString) {
-    try {
-      final dateTime = DateTime.parse(isoString).toLocal();
-      return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-    } catch (_) {
-      return '';
-    }
   }
 
   Stream<List<Map<String, dynamic>>> streamMessages(String chatroomId) {
@@ -131,45 +94,26 @@ class ChatService {
 
   Future<void> sendMessage(String chatroomId, String text) async {
     final cleanText = text.trim();
-    if (cleanText.isEmpty) return;
+    if (cleanText.isEmpty || currentUserId.isEmpty) return;
 
-    try {
-      // 1. Gửi tin nhắn
-      await _client.from('messages').insert({
+    await _client.functions.invoke(
+      'fetch-chats',
+      method: HttpMethod.post,
+      queryParameters: {'action': 'send'},
+      body: {
         'chatroom_id': chatroomId,
         'sender_id': currentUserId,
         'content': cleanText,
-        'sent_at': DateTime.now().toUtc().toIso8601String(),
-      });
+      },
+    );
+  }
 
-      // 2. Tạo thông báo cho người nhận (Push to DB)
-      final roomRes = await _client
-          .from("chatrooms")
-          .select('customer_id, provider_id')
-          .eq('chatroom_id', chatroomId)
-          .single();
-
-      final customerId = roomRes['customer_id'] as String;
-      final providerId = roomRes['provider_id'] as String;
-      final recipientId = (currentUserId == customerId)
-          ? providerId
-          : customerId;
-
-      final senderProfile = await _client
-          .from('profiles')
-          .select('username')
-          .eq('user_id', currentUserId)
-          .maybeSingle();
-
-      final senderName = senderProfile?['username'] ?? 'Người dùng';
-
-      await _notificationService.createNotification(
-        userId: recipientId,
-        title: 'Tin nhắn mới từ $senderName',
-        content: cleanText,
-      );
-    } catch (e) {
-      print('Error sending message notification: $e');
+  String _parseTimestamp(String isoString) {
+    try {
+      final dateTime = DateTime.parse(isoString).toLocal();
+      return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return '';
     }
   }
 }
