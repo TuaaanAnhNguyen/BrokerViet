@@ -59,7 +59,6 @@ class ChatService {
     return controller.stream;
   }
 
-  // === FETCH CHAT ROOMS (via Edge Function) ===
   Future<List<Map<String, dynamic>>> fetchChatRooms() async {
     final uid = currentUserId;
     if (uid.isEmpty) return [];
@@ -90,6 +89,26 @@ class ChatService {
       print("Error fetching chat rooms: $e");
       return [];
     }
+  }
+
+  Stream<List<Map<String, dynamic>>> streamMessages(String chatroomId) {
+    return _client
+        .from('messages')
+        .stream(primaryKey: ['message_id'])
+        .eq('chatroom_id', chatroomId)
+        .order('sent_at')
+        .map(
+          (rows) => rows
+              .map(
+                (row) => {
+                  'message_id': row['message_id'],
+                  'sender_id': row['sender_id'],
+                  'content': row['content'],
+                  'sent_at': row['sent_at'],
+                },
+              )
+              .toList(),
+        );
   }
 
   // === GET OR CREATE CHATROOM ===
