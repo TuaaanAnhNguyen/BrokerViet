@@ -61,32 +61,18 @@ class ChatService {
 
   Future<List<Map<String, dynamic>>> fetchChatRooms() async {
     final uid = currentUserId;
+
     if (uid.isEmpty) return [];
 
     try {
-      final response = await _client.functions.invoke(
-        'list-chatrooms',
-        method: HttpMethod.get,
-        queryParameters: {'user_id': uid},
-      );
+      final rooms = await _client
+          .from('chatrooms')
+          .select()
+          .or('customer_id.eq.$uid,provider_id.eq.$uid');
 
-      final data = response.data as Map<String, dynamic>;
-      final List<dynamic> rawRooms = data['chatrooms'] ?? [];
-
-      return rawRooms.map((room) {
-        final map = room as Map<String, dynamic>;
-        return {
-          'chatroom_id': map['chatroom_id'],
-          'target_name': map['target_name'] ?? 'Người dùng',
-          'target_role': map['target_role'] ?? 'Thành viên',
-          'avatar_url': map['avatar_url'],
-          'last_message': map['last_message'],
-          'sent_at': map['sent_at'],
-          'time': map['sent_at'] != null ? _parseTimestamp(map['sent_at']) : '',
-        };
-      }).toList();
+      return List<Map<String, dynamic>>.from(rooms);
     } catch (e) {
-      print("Error fetching chat rooms: $e");
+      print('Error fetching chat rooms: $e');
       return [];
     }
   }
