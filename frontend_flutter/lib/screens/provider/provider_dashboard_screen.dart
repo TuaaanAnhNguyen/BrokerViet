@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../models/dashboard_summary_model.dart';
 import '../../models/provider_booking_model.dart';
+import '../../models/booking_model.dart';
 import '../../services/provider/provider_dashboard_service.dart';
+import '../../services/provider/provider_bookings_service.dart';
 import '../../widgets/provider/provider_booking_card.dart';
 import 'provider_bookings_screen.dart';
 import 'provider_services_list_screen.dart';
@@ -17,6 +19,7 @@ class ProviderDashboardScreen extends StatefulWidget {
 
 class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   final ProviderDashboardService _dashboardService = ProviderDashboardService();
+  final ProviderBookingsService _bookingsService = ProviderBookingsService();
   
   bool _isLoading = true;
   String? _errorMessage;
@@ -65,6 +68,47 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           _errorMessage = e.toString();
           _isLoading = false;
         });
+      }
+    }
+  }
+
+  Future<void> _updateBookingStatus(String bookingId, BookingStatus newStatus) async {
+    final int index = _upcomingBookings.indexWhere((b) => b.bookingId == bookingId);
+    if (index == -1) return;
+
+    final oldBooking = _upcomingBookings[index];
+    final updatedBooking = ProviderBookingModel(
+      bookingId: oldBooking.bookingId,
+      customerName: oldBooking.customerName,
+      customerAvatar: oldBooking.customerAvatar,
+      serviceTitle: oldBooking.serviceTitle,
+      date: oldBooking.date,
+      status: newStatus,
+      price: oldBooking.price,
+      address: oldBooking.address,
+      customerNotes: oldBooking.customerNotes,
+      requestedAt: oldBooking.requestedAt,
+      confirmedAt: oldBooking.confirmedAt,
+      completedAt: oldBooking.completedAt,
+    );
+
+    // Optimistic UI update
+    setState(() {
+      _upcomingBookings[index] = updatedBooking;
+    });
+
+    try {
+      await _bookingsService.updateBookingStatus(bookingId, newStatus);
+      // Reload dashboard statistics
+      _loadDashboardData();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _upcomingBookings[index] = oldBooking;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Lỗi cập nhật trạng thái')),
+        );
       }
     }
   }
@@ -437,6 +481,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             itemBuilder: (context, index) {
               return ProviderBookingCard(
                 booking: _upcomingBookings[index],
+                onStatusUpdate: (newStatus) => _updateBookingStatus(
+                  _upcomingBookings[index].bookingId,
+                  newStatus,
+                ),
               );
             },
           ),
