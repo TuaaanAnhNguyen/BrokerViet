@@ -30,7 +30,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   String? _errorMessage;
 
   bool _isFavorited = false;
-  int _selectedPriceIndex = 0;
 
   static const Color primaryColor = Color(0xFF004AC6);
   static const Color surfaceColor = Color(0xFFF8F9FF);
@@ -149,7 +148,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         _buildPricePackagesSection(),
                         const SizedBox(height: 24),
                         _buildReviewsSection(),
-                        const SizedBox(height: 80),
+                        const SizedBox(height: 100),
                       ],
                     ),
                   ),
@@ -269,13 +268,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               _service?.rating.toStringAsFixed(1) ?? '0.0',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            const SizedBox(width: 8),
-            const Text('•', style: TextStyle(color: Colors.grey)),
-            const SizedBox(width: 8),
-            const Text(
-              '1.2k Lượt đặt',
-              style: TextStyle(color: bodyText, fontSize: 14),
-            ),
           ],
         ),
       ],
@@ -368,19 +360,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           _service?.subtitle ?? '',
           style: const TextStyle(color: bodyText, fontSize: 15, height: 1.5),
         ),
-        const SizedBox(height: 16),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          childAspectRatio: 4,
-          children: const [
-            _FeatureCheckRow(label: 'Bảo hành 6 tháng'),
-            _FeatureCheckRow(label: 'Hỗ trợ tại nhà'),
-            _FeatureCheckRow(label: 'Báo cáo trong ngày'),
-            _FeatureCheckRow(label: 'Kỹ thuật viên chứng chỉ'),
-          ],
-        ),
       ],
     );
   }
@@ -390,7 +369,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Gói Dịch Vụ & Giá',
+          'Thông tin chi phí',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -398,105 +377,51 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        _buildPriceCard(
-          0,
-          'Chẩn đoán Cơ bản',
-          'Sửa laptop, sửa PC, diệt virus cơ bản',
-          _service?.price ?? '450.000 VND',
-          isPopular: false,
-        ),
-        const SizedBox(height: 12),
-      ],
-    );
-  }
-
-  Widget _buildPriceCard(
-    int index,
-    String title,
-    String subtitle,
-    String price, {
-    required bool isPopular,
-  }) {
-    final isSelected = _selectedPriceIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedPriceIndex = index),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? primaryColor.withOpacity(0.05)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? primaryColor : const Color(0xFFC3C6D7),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: darkText,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(color: bodyText, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  price,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: primaryColor,
-                  ),
-                ),
-              ],
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color(0xFFC3C6D7),
+              width: 1,
             ),
-            if (isPopular)
-              Positioned(
-                top: -28,
-                right: -16,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(8),
-                      topRight: Radius.circular(14),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _service?.title ?? 'Giá dịch vụ trọn gói',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: darkText,
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    'PHỔ BIẾN',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Chi phí dịch vụ niêm yết công khai',
+                      style: TextStyle(color: bodyText, fontSize: 13),
                     ),
-                  ),
+                  ],
                 ),
               ),
-          ],
+              Text(
+                _service?.price ?? 'Liên hệ',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -688,7 +613,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Cảm ơn bạn đã đánh giá!')),
                       );
-                      _loadServiceDetail(); // Reload to show new review
+                      _loadServiceDetail();
                     }
                   } catch (e) {
                     setModalState(() => localError = 'Lỗi hệ thống: $e');
@@ -736,7 +661,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   final currentCustomerId = supabase.auth.currentUser?.id ?? '';
                   final providerId = _service?.providerId ?? '';
                   final providerName = _service?.providerUsername ?? 'Nhà cung cấp';
-                  final serviceTitle = _service?.title ?? 'Dịch vụ';
 
                   if (currentCustomerId.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -808,9 +732,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                           serviceTitle: _service?.title ?? 'Chưa có tiêu đề',
                           providerName:
                               _service?.providerUsername ?? 'Nhà cung cấp',
-                          packageName: _selectedPriceIndex == 0
-                              ? 'Chẩn đoán Cơ bản'
-                              : 'Sửa chữa Chuyên sâu',
+                          packageName: 'Dịch vụ tiêu chuẩn',
                           serviceId: _service?.id ?? '',
                           providerId: _service?.providerId ?? '',
                           customerId: currentCustomerId,
@@ -849,27 +771,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _FeatureCheckRow extends StatelessWidget {
-  final String label;
-  const _FeatureCheckRow({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Icon(Icons.check_circle, color: Color(0xFF004AC6), size: 18),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 14, color: Color(0xFF0B1C30)),
-          ),
-        ),
-      ],
     );
   }
 }

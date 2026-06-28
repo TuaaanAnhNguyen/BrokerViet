@@ -6,6 +6,7 @@ import '../../widgets/provider/provider_booking_card.dart';
 import 'provider_bookings_screen.dart';
 import 'provider_services_list_screen.dart';
 import 'provider_service_form_screen.dart';
+import '../../features/profile/profile_menu_screen.dart';
 
 class ProviderDashboardScreen extends StatefulWidget {
   const ProviderDashboardScreen({super.key});
@@ -90,7 +91,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             const ProviderBookingsScreen(),
             ProviderServicesListScreen(key: _servicesListKey),
             const Center(child: Text('Lịch')),
-            const Center(child: Text('Cá nhân')),
+            const ProfileMenuScreen(),
           ],
         ),
       ),
