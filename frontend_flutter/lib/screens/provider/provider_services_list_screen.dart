@@ -43,37 +43,6 @@ class ProviderServicesListScreenState extends State<ProviderServicesListScreen> 
     }
   }
 
-  void _deleteService(String id) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Xác nhận xóa'),
-        content: const Text('Bạn có chắc chắn muốn xóa dịch vụ này?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Xóa'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      try {
-        await _servicesService.deleteService(id);
-        loadServices();
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Lỗi khi xóa dịch vụ: $e')),
-          );
-        }
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -100,47 +69,18 @@ class ProviderServicesListScreenState extends State<ProviderServicesListScreen> 
         itemCount: _services.length,
         itemBuilder: (context, index) {
           final service = _services[index];
-          return Stack(
-            children: [
-              ServiceCard(
-                service: service,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProviderServiceFormScreen(service: service),
-                    ),
-                  ).then((result) {
-                    if (result == true) loadServices();
-                  });
-                },
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ProviderServiceFormScreen(service: service),
-                          ),
-                        ).then((result) {
-                          if (result == true) loadServices();
-                        });
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _deleteService(service.id),
-                    ),
-                  ],
+          return ServiceCard(
+            service: service,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProviderServiceFormScreen(service: service),
                 ),
-              ),
-            ],
+              ).then((result) {
+                if (result == true) loadServices();
+              });
+            },
           );
         },
       ),
