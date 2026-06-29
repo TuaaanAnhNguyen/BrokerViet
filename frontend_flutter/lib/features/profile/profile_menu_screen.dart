@@ -79,14 +79,16 @@ class ProfileMenuScreen extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new,
-              size: 18,
-              color: primaryColor,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
+          leading: Navigator.canPop(context)
+              ? IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    size: 18,
+                    color: primaryColor,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                )
+              : null,
           titleSpacing: 0,
           title: const Text(
             'Tài khoản',
