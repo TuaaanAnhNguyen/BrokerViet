@@ -14,20 +14,22 @@ class ProviderDashboardScreen extends StatefulWidget {
   const ProviderDashboardScreen({super.key});
 
   @override
-  State<ProviderDashboardScreen> createState() => _ProviderDashboardScreenState();
+  State<ProviderDashboardScreen> createState() =>
+      _ProviderDashboardScreenState();
 }
 
 class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   final ProviderDashboardService _dashboardService = ProviderDashboardService();
   final ProviderBookingsService _bookingsService = ProviderBookingsService();
-  
+
   bool _isLoading = true;
   String? _errorMessage;
   DashboardSummaryModel? _summary;
   List<ProviderBookingModel> _upcomingBookings = [];
   int _currentTabIndex = 0;
-  
-  final GlobalKey<ProviderServicesListScreenState> _servicesListKey = GlobalKey();
+
+  final GlobalKey<ProviderServicesListScreenState> _servicesListKey =
+      GlobalKey();
 
   // Design Tokens (reused from marketplace & detail screens)
   static const Color primaryColor = Color(0xFF004AC6);
@@ -49,12 +51,12 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         _isLoading = true;
         _errorMessage = null;
       });
-      
+
       final results = await Future.wait([
         _dashboardService.fetchDashboardSummary(),
         _dashboardService.fetchUpcomingBookings(),
       ]);
-      
+
       if (mounted) {
         setState(() {
           _summary = results[0] as DashboardSummaryModel;
@@ -72,8 +74,13 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     }
   }
 
-  Future<void> _updateBookingStatus(String bookingId, BookingStatus newStatus) async {
-    final int index = _upcomingBookings.indexWhere((b) => b.bookingId == bookingId);
+  Future<void> _updateBookingStatus(
+    String bookingId,
+    BookingStatus newStatus,
+  ) async {
+    final int index = _upcomingBookings.indexWhere(
+      (b) => b.bookingId == bookingId,
+    );
     if (index == -1) return;
 
     final oldBooking = _upcomingBookings[index];
@@ -134,7 +141,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             ),
             const ProviderBookingsScreen(),
             ProviderServicesListScreen(key: _servicesListKey),
-            const Center(child: Text('Lịch')),
+            
             const ProfileMenuScreen(),
           ],
         ),
@@ -163,7 +170,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         selectedItemColor: primaryColor,
         unselectedItemColor: Colors.grey.shade500,
         showUnselectedLabels: true,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
         unselectedLabelStyle: const TextStyle(fontSize: 12),
         items: const [
           BottomNavigationBarItem(
@@ -181,11 +191,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             activeIcon: Icon(Icons.design_services),
             label: 'Dịch vụ',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_outlined),
-            activeIcon: Icon(Icons.calendar_month),
-            label: 'Lịch',
-          ),
+      
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
@@ -214,8 +220,13 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadDashboardData,
-                    style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
-                    child: const Text('Thử lại', style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                    ),
+                    child: const Text(
+                      'Thử lại',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ],
               ),
@@ -354,7 +365,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, {bool isValueWarning = false}) {
+  Widget _buildStatCard(
+    String label,
+    String value, {
+    bool isValueWarning = false,
+  }) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -367,10 +382,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              color: bodyText,
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: bodyText, fontSize: 12),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -409,17 +421,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 80,
-                height: 12,
-                color: Colors.grey.shade300,
-              ),
+              Container(width: 80, height: 12, color: Colors.grey.shade300),
               const SizedBox(height: 8),
-              Container(
-                width: 50,
-                height: 20,
-                color: Colors.grey.shade300,
-              ),
+              Container(width: 50, height: 20, color: Colors.grey.shade300),
             ],
           ),
         );
@@ -524,20 +528,30 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(width: 120, height: 16, color: Colors.grey.shade200),
+                    Container(
+                      width: 120,
+                      height: 16,
+                      color: Colors.grey.shade200,
+                    ),
                     const SizedBox(height: 8),
-                    Container(width: 180, height: 14, color: Colors.grey.shade200),
+                    Container(
+                      width: 180,
+                      height: 14,
+                      color: Colors.grey.shade200,
+                    ),
                     const SizedBox(height: 8),
-                    Container(width: 100, height: 14, color: Colors.grey.shade200),
+                    Container(
+                      width: 100,
+                      height: 14,
+                      color: Colors.grey.shade200,
+                    ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         );
       },
     );
   }
-
-
 }

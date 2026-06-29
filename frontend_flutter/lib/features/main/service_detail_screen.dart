@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../widgets/network_image_fallback.dart';
 import '../../models/service_model.dart';
+import 'package:broker_viet/screens/provider/view_provider_screen.dart';
 import '../../services/marketplace/service_marketplace_service.dart';
 import '../booking/booking_service_screen.dart';
 
@@ -275,70 +276,86 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   }
 
   Widget _buildProviderCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE5EEFF).withOpacity(0.5),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC3C6D7).withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          buildAvatar(
-            _service?.providerAvatarUrl ?? '',
-            radius: 24,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      _service?.providerUsername ?? 'Nhà cung cấp',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: darkText,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primaryColor,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'PRO',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const Row(
-                  children: [
-                    Icon(Icons.schedule, size: 14, color: bodyText),
-                    SizedBox(width: 4),
-                    Text(
-                      'Phản hồi ~15 phút',
-                      style: TextStyle(color: bodyText, fontSize: 13),
-                    ),
-                  ],
-                ),
-              ],
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ViewProviderScreen(
+              providerId: _service?.providerId ?? '',
+              providerName: _service?.providerUsername ?? 'Nhà cung cấp',
+              avatarUrl: _service?.providerAvatarUrl,
+              isPro: true, // defaulting to true since badge says PRO
             ),
           ),
-          const Icon(Icons.chevron_right, color: Colors.grey),
-        ],
+        );
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE5EEFF).withOpacity(0.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFC3C6D7).withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            buildAvatar(
+              _service?.providerAvatarUrl ?? '',
+              radius: 24,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        _service?.providerUsername ?? 'Nhà cung cấp',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: darkText,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: primaryColor,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'PRO',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Row(
+                    children: [
+                      Icon(Icons.schedule, size: 14, color: bodyText),
+                      SizedBox(width: 4),
+                      Text(
+                        'Phản hồi ~15 phút',
+                        style: TextStyle(color: bodyText, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }
