@@ -3,9 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
+import 'package:app_links/app_links.dart';
 import 'features/auth/login_screen.dart';
 import 'services/auth/auth_service.dart';
 import 'features/main/main_navigation_shell.dart';
+import 'features/payment/vnpay_result_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -23,8 +25,43 @@ void main() async {
   runApp(const BrokerVietApp());
 }
 
-class BrokerVietApp extends StatelessWidget {
+class BrokerVietApp extends StatefulWidget {
   const BrokerVietApp({super.key});
+
+  @override
+  State<BrokerVietApp> createState() => _BrokerVietAppState();
+}
+
+class _BrokerVietAppState extends State<BrokerVietApp> {
+  final _appLinks = AppLinks();
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  void _initDeepLinks() {
+    _appLinks.uriLinkStream.listen((uri) {
+      _handleDeepLink(uri);
+    });
+  }
+
+  void _handleDeepLink(Uri uri) {
+    if (uri.host == 'payment-result') {
+      final txnRef = uri.queryParameters['vnp_TxnRef'];
+      if (txnRef != null) {
+        // Assume txnRef is bookingId_timestamp_random
+        final bookingId = txnRef.split('_').first;
+        _navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (context) => VNPayResultPage(bookingId: bookingId),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +70,7 @@ class BrokerVietApp extends StatelessWidget {
         BlocProvider<AuthService>(create: (context) => AuthService()),
       ],
       child: MaterialApp(
+        navigatorKey: _navigatorKey,
         title: 'BrokerViet',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
@@ -42,9 +80,9 @@ class BrokerVietApp extends StatelessWidget {
         home: BlocBuilder<AuthService, AuthState>(
           builder: (context, state) {
             if (state is AuthSuccess) {
-              return MainNavigationShell();
+              return const MainNavigationShell();
             }
-            return LoginScreen();
+            return const LoginScreen();
           },
         ),
       ),

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/booking/booking_service.dart';
+import '../../services/payment/vnpay_service.dart';
 import '../../widgets/payment/vietqr_payment.dart';
 
 class BookingScreen extends StatefulWidget {
@@ -38,6 +39,7 @@ class BookingScreen extends StatefulWidget {
 class _BookingScreenState extends State<BookingScreen> {
   final _formKey = GlobalKey<FormState>();
   final BookingService _bookingService = BookingService();
+  final VNPayService _vnPayService = VNPayService();
   late TextEditingController _addressController;
   final _notesController = TextEditingController();
 
@@ -65,6 +67,8 @@ class _BookingScreenState extends State<BookingScreen> {
         return 'Thẻ Tín dụng / Ghi nợ';
       case 2:
         return 'Tiền mặt sau dịch vụ';
+      case 3:
+        return 'VNPAY Gateway';
       default:
         return 'Chuyển khoản Online (VietQR)';
     }
@@ -121,6 +125,25 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
           ),
         );
+      } else if (_selectedPaymentMethod == 3) {
+        // Option 3: VNPay route
+        final paymentUrl = await _vnPayService.createPaymentUrl(
+          bookingId: (bookingResult != null && bookingResult['booking_id'] != null)
+              ? bookingResult['booking_id'].toString()
+              : '',
+          amount: finalCalculatedAmount,
+          orderInfo: 'Thanh toan don hang ${widget.serviceTitle}',
+        );
+
+        if (paymentUrl != null) {
+          await _vnPayService.openVNPay(paymentUrl);
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Không thể khởi tạo thanh toán VNPAY.')),
+            );
+          }
+        }
       } else {
         // Options 1 & 2: Cash/Card Route -> Show standard success modal back to root home screen
         final rootNavigator = Navigator.of(context);
@@ -389,6 +412,9 @@ class _BookingScreenState extends State<BookingScreen> {
                     const SizedBox(height: 8),
                     _buildPaymentRow(1, Icons.credit_card, 'Thẻ Tín dụng / Ghi nợ',
                         'Visa, Mastercard, JCB', primaryColor, outlineVariant),
+                    const SizedBox(height: 8),
+                    _buildPaymentRow(3, Icons.account_balance_wallet_outlined, 'VNPAY Gateway',
+                        'Thanh toán qua ứng dụng VNPAY hoặc Ngân hàng', primaryColor, outlineVariant),
                     const SizedBox(height: 8),
                     _buildPaymentRow(2, Icons.payments, 'Tiền mặt sau dịch vụ',
                         'Thanh toán sau khi hoàn thành sửa chữa', primaryColor, outlineVariant),
