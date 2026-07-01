@@ -1,3 +1,5 @@
+// lib/features/main/service_detail_screen.dart
+
 import 'package:broker_viet/features/chat/conversation_screen.dart';
 import 'package:broker_viet/models/review_model.dart';
 import 'package:broker_viet/services/chat/chat_service.dart';
@@ -9,6 +11,7 @@ import '../../models/service_model.dart';
 import 'package:broker_viet/screens/provider/view_provider_screen.dart';
 import '../../services/marketplace/service_marketplace_service.dart';
 import '../booking/booking_service_screen.dart';
+import './map_screen.dart';
 
 class ServiceDetailScreen extends StatefulWidget {
   final String serviceId;
@@ -300,10 +303,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         ),
         child: Row(
           children: [
-            buildAvatar(
-              _service?.providerAvatarUrl ?? '',
-              radius: 24,
-            ),
+            buildAvatar(_service?.providerAvatarUrl ?? '', radius: 24),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -399,10 +399,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: const Color(0xFFC3C6D7),
-              width: 1,
-            ),
+            border: Border.all(color: const Color(0xFFC3C6D7), width: 1),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -473,7 +470,10 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             child: Center(
               child: Text(
                 'Chưa có đánh giá nào cho dịch vụ này.',
-                style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
           )
@@ -514,8 +514,10 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   const SizedBox(height: 6),
                   Text(
                     review.comment,
-                    style:
-                        const TextStyle(fontStyle: FontStyle.italic, color: bodyText),
+                    style: const TextStyle(
+                      fontStyle: FontStyle.italic,
+                      color: bodyText,
+                    ),
                   ),
                 ],
               );
@@ -584,7 +586,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                     icon: Icon(
                       Icons.star,
                       size: 40,
-                      color: index < localRating ? Colors.amber : Colors.grey[300],
+                      color: index < localRating
+                          ? Colors.amber
+                          : Colors.grey[300],
                     ),
                   );
                 }),
@@ -594,7 +598,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                 controller: commentController,
                 maxLines: 3,
                 onChanged: (_) {
-                  if (localError != null) setModalState(() => localError = null);
+                  if (localError != null)
+                    setModalState(() => localError = null);
                 },
                 decoration: InputDecoration(
                   hintText: 'Hãy chia sẻ trải nghiệm của bạn (bắt buộc)...',
@@ -610,12 +615,16 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   final comment = commentController.text.trim();
 
                   if (localRating == 0) {
-                    setModalState(() => localError = 'Vui lòng chọn số sao đánh giá!');
+                    setModalState(
+                      () => localError = 'Vui lòng chọn số sao đánh giá!',
+                    );
                     return;
                   }
 
                   if (comment.isEmpty) {
-                    setModalState(() => localError = 'Vui lòng nhập nội dung đánh giá!');
+                    setModalState(
+                      () => localError = 'Vui lòng nhập nội dung đánh giá!',
+                    );
                     return;
                   }
 
@@ -628,7 +637,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                     if (context.mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Cảm ơn bạn đã đánh giá!')),
+                        const SnackBar(
+                          content: Text('Cảm ơn bạn đã đánh giá!'),
+                        ),
                       );
                       _loadServiceDetail();
                     }
@@ -677,11 +688,16 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                 onTap: () async {
                   final currentCustomerId = supabase.auth.currentUser?.id ?? '';
                   final providerId = _service?.providerId ?? '';
-                  final providerName = _service?.providerUsername ?? 'Nhà cung cấp';
+                  final providerName =
+                      _service?.providerUsername ?? 'Nhà cung cấp';
 
                   if (currentCustomerId.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Vui lòng đăng nhập để chat với nhà cung cấp')),
+                      const SnackBar(
+                        content: Text(
+                          'Vui lòng đăng nhập để chat với nhà cung cấp',
+                        ),
+                      ),
                     );
                     return;
                   }
@@ -735,8 +751,103 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   child: const Icon(Icons.chat_bubble_outline, color: darkText),
                 ),
               ),
+              const SizedBox(width: 8),
+
+              InkWell(
+                onTap: () async {
+                  final providerId = _service?.providerId ?? '';
+                  final providerName =
+                      _service?.providerUsername ?? 'Nhà cung cấp';
+
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(
+                      child: CircularProgressIndicator(color: primaryColor),
+                    ),
+                  );
+
+                  try {
+                    final profileData = await supabase
+                        .from('profiles')
+                        .select('location_latitude, location_longitude')
+                        .eq('user_id', providerId)
+                        .maybeSingle();
+
+                    if (context.mounted) Navigator.pop(context);
+
+                    double? targetLat;
+                    double? targetLng;
+
+                    if (profileData != null) {
+                      targetLat = (profileData['location_latitude'] as num?)
+                          ?.toDouble();
+                      targetLng = (profileData['location_longitude'] as num?)
+                          ?.toDouble();
+                    }
+
+                    if (targetLat == null || targetLng == null) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Đối tác chưa cập nhật cấu hình vị trí.',
+                            ),
+                          ),
+                        );
+                      }
+                      return;
+                    }
+
+                    if (targetLat != null &&
+                        targetLng != null &&
+                        context.mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MapScreen(
+                            initialTargetLat: targetLat,
+                            initialTargetLng: targetLng,
+                            initialProviderName: providerName,
+                          ),
+                        ),
+                      );
+                    } else if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Tọa độ vị trí đối tác không hợp lệ.'),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Lỗi khi truy vấn bản đồ đối tác: $e'),
+                        ),
+                      );
+                    }
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  height: 56,
+                  width: 56,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5EEFF),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFC3C6D7).withOpacity(0.5),
+                    ),
+                  ),
+                  child: const Icon(Icons.map_outlined, color: primaryColor),
+                ),
+              ),
               const SizedBox(width: 12),
+
               Expanded(
+                flex: 2,
                 child: ElevatedButton(
                   onPressed: () {
                     final currentCustomerId =

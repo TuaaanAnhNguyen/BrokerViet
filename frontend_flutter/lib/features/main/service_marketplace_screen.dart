@@ -1,11 +1,13 @@
 // lib/features/main/service_marketplace_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/service_model.dart';
 import '../../widgets/service/service_card.dart';
 import '../../widgets/service/category_selector.dart';
 import '../../widgets/service/nearby_provider_tile.dart';
 import '../../services/marketplace/service_marketplace_service.dart';
+import '../../services/map/map_service.dart';
 import './service_detail_screen.dart';
 import './search_screen.dart';
 
@@ -20,6 +22,7 @@ class ServiceMarketplaceScreen extends StatefulWidget {
 class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
   final ServiceMarketplaceService _marketplaceService =
       ServiceMarketplaceService();
+  final MapService _mapService = MapService();
   final TextEditingController _searchController = TextEditingController();
 
   int _activeCategoryIndex = 0;
@@ -30,11 +33,9 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
     {'label': 'Tất cả', 'icon': Icons.grid_view_rounded, 'id': null},
   ];
 
-  final List<Map<String, String>> _nearbyProviders = const [
-    {'name': 'TechPro VN', 'distance': 'Cách đây 0.8 km', 'score': '4.9'},
-    {'name': 'Linh System', 'distance': 'Cách đây 1.2 km', 'score': '4.8'},
-    {'name': 'FixIt Fast', 'distance': 'Cách đây 2.5 km', 'score': '4.7'},
-  ];
+  List<Map<String, dynamic>> _dynamicNearbyProviders = [];
+  bool _isLoadingProviders = false;
+  String? _providerLocationError;
 
   @override
   void initState() {
@@ -49,7 +50,11 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
   }
 
   Future<void> _initData() async {
-    Future.wait([_loadCategories(), _loadServices()]);
+    await Future.wait([
+      _loadCategories(),
+      _loadServices(),
+      _loadNearbyProviders(),
+    ]);
   }
 
   Future<void> _loadCategories() async {
@@ -141,6 +146,72 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
     }
   }
 
+  Future<void> _loadNearbyProviders() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingProviders = true;
+      _providerLocationError = null;
+    });
+
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        throw Exception("Chưa đăng nhập hệ thống.");
+      }
+
+      final profileData = await Supabase.instance.client
+          .from('profiles')
+          .select('address, location_latitude, location_longitude')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      if (profileData == null || profileData['location_latitude'] == null || profileData['location_longitude'] == null) {
+        setState(() {
+          _providerLocationError =
+              "Vui lòng cập nhật địa chỉ để hiển thị đơn vị gần bạn.";
+          _isLoadingProviders = false;
+        });
+        return;
+      }
+
+      // Note: If location point comes as a GeoJSON map string or GeoJSON map object from Supabase:
+      // {'type': 'Point', 'coordinates': [lng, lat]}
+      final userLat = (profileData['location_latitude'] as num?)?.toDouble();
+
+      final userLng = (profileData['location_longitude'] as num?)?.toDouble();
+
+      if (userLat == null || userLng == null) {
+        setState(() {
+          _providerLocationError = "Cấu trúc tọa độ không hợp lệ.";
+          _isLoadingProviders = false;
+        });
+        return;
+      }
+
+      final nearbyData = await _mapService.findNearbyProviders(
+        latitude: userLat,
+        longitude: userLng,
+        radiusMeters: 15000, // Search up to 15km
+        limit: 10,
+      );
+
+      if (mounted) {
+        setState(() {
+          _dynamicNearbyProviders = nearbyData;
+          _isLoadingProviders = false;
+        });
+      }
+    } catch (e) {
+      print('>>> LỖI KHI LOAD PROVIDERS SPATIAL DATA: $e');
+      if (mounted) {
+        setState(() {
+          _providerLocationError = "Không thể tải danh sách đơn vị gần bạn.";
+          _isLoadingProviders = false;
+        });
+      }
+    }
+  }
+
   List<ServiceModel> _getSortedServices() {
     final sorted = List<ServiceModel>.from(_services);
     if (_sortOrder == 'asc') {
@@ -161,8 +232,11 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
       backgroundColor: const Color(0xFFF8F9FF),
       body: RefreshIndicator(
         onRefresh: () async {
-          await _loadCategories();
-          await _loadServices();
+          await Future.wait([
+            _loadCategories(),
+            _loadServices(),
+            _loadNearbyProviders(),
+          ]);
         },
         color: const Color(0xFF004AC6),
         child: ListView(
@@ -173,7 +247,6 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             const SizedBox(height: 24),
             _buildSectionHeader('Danh mục dịch vụ'),
             const SizedBox(height: 12),
-
             CategorySelector(
               activeIndex: _activeCategoryIndex,
               categories: _categories,
@@ -191,7 +264,6 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
                   : 'Dịch vụ $currentCategoryLabel',
             ),
             const SizedBox(height: 12),
-
             _buildServicesList(_getSortedServices()),
           ],
         ),
@@ -267,7 +339,7 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
                 ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: _providerLocationError == null ? () {} : null,
                 child: const Text(
                   'Xem tất cả',
                   style: TextStyle(
@@ -280,23 +352,92 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 140,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _nearbyProviders.length,
-            itemBuilder: (context, index) {
-              final provider = _nearbyProviders[index];
-              return NearbyProviderTile(
-                name: provider['name']!,
-                distance: provider['distance']!,
-                score: provider['score']!,
-              );
-            },
+        _buildNearbyContent(),
+      ],
+    );
+  }
+
+  Widget _buildNearbyContent() {
+    if (_isLoadingProviders) {
+      return const SizedBox(
+        height: 140,
+        child: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF004AC6)),
           ),
         ),
-      ],
+      );
+    }
+
+    if (_providerLocationError != null) {
+      return Container(
+        height: 110,
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF1F0),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFFCCC7)),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.location_off_rounded,
+              color: Colors.redAccent,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _providerLocationError!,
+                style: const TextStyle(
+                  color: Color(0xFFA8071A),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_dynamicNearbyProviders.isEmpty) {
+      return const SizedBox(
+        height: 140,
+        child: Center(
+          child: Text(
+            'Không tìm thấy đơn vị nào quanh khu vực của bạn.',
+            style: TextStyle(color: Colors.black38, fontSize: 13),
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 140,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _dynamicNearbyProviders.length,
+        itemBuilder: (context, index) {
+          final item = _dynamicNearbyProviders[index];
+
+          // Formating distance clean display string from database metric response
+          final double distanceMeters = (item['distance_meters'] as num? ?? 0)
+              .toDouble();
+          final String distanceStr = distanceMeters >= 1000
+              ? 'Cách ${(distanceMeters / 1000).toStringAsFixed(1)} km'
+              : 'Cách ${distanceMeters.toStringAsFixed(0)} m';
+
+          return NearbyProviderTile(
+            name: item['username'] ?? item['email'] ?? 'Đơn vị ẩn danh',
+            distance: distanceStr,
+            score:
+                '4.8', // You can fallback or wire up your reviews logic later
+          );
+        },
+      ),
     );
   }
 
