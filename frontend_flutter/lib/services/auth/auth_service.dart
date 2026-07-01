@@ -1,5 +1,3 @@
-// lib/services/auth/auth_service.dart
-
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
@@ -19,14 +17,14 @@ class AuthSuccess extends AuthState {
   final String name;
   final String email;
   final String avatarPath;
-  final String memberTier;
+  final String role;
 
   AuthSuccess({
     required this.uid,
     required this.name,
     required this.email,
     required this.avatarPath,
-    required this.memberTier,
+    required this.role,
   });
 }
 
@@ -36,6 +34,8 @@ class AuthFailure extends AuthState {
 }
 
 abstract class AuthEvent {}
+
+class AppStarted extends AuthEvent {}
 
 class LoginRequested extends AuthEvent {
   final String phone;
@@ -84,47 +84,72 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
     return phone;
   }
 
+  Future<AuthSuccess?> _fetchProfileAndBuildSuccessState(
+    User user, {
+    String? fallbackRole,
+  }) async {
+    final userId = user.id;
+    final profileData = await _supabase
+        .from('profiles')
+        .select()
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    final profileUsername = profileData != null
+        ? profileData['username']
+        : null;
+    final profileRole = profileData != null ? profileData['role'] : null;
+    final profileAvatar = profileData != null
+        ? profileData['avatar_url']
+        : null;
+
+    return AuthSuccess(
+      uid: userId,
+      name: profileUsername ?? user.userMetadata?['username'] ?? 'Người dùng',
+      email: user.email ?? '',
+      avatarPath: profileAvatar ?? 'assets/default_profile.png',
+      role: profileRole ?? fallbackRole ?? 'CUSTOMER',
+    );
+  }
+
   AuthService() : super(AuthInitial()) {
+    on<AppStarted>((event, emit) async {
+      final currentUser = _supabase.auth.currentUser;
+      if (currentUser != null) {
+        emit(AuthLoading());
+        try {
+          final successState = await _fetchProfileAndBuildSuccessState(
+            currentUser,
+          );
+          if (successState != null) {
+            emit(successState);
+          } else {
+            emit(AuthInitial());
+          }
+        } catch (_) {
+          emit(AuthInitial());
+        }
+      }
+    });
+
     on<LoginRequested>((event, emit) async {
       emit(AuthLoading());
-
       try {
         final formattedPhone = _formatPhoneNumber(event.phone);
-
         final response = await _supabase.auth.signInWithPassword(
           phone: formattedPhone,
           password: event.password,
         );
 
         if (response.user != null) {
-          final userId = response.user!.id;
-
-          final profileData = await _supabase
-              .from('profiles')
-              .select()
-              .eq('user_id', userId)
-              .maybeSingle();
-
-          final profileUsername = profileData != null
-              ? profileData['username']
-              : null;
-          final profileRole = profileData != null ? profileData['role'] : null;
-          final profileAvatar = profileData != null
-              ? profileData['avatar_url']
-              : null;
-
-          emit(
-            AuthSuccess(
-              uid: userId,
-              name:
-                  profileUsername ??
-                  response.user!.userMetadata?['username'] ??
-                  'Người dùng',
-              email: response.user!.email ?? '',
-              avatarPath: profileAvatar ?? 'assets/default_profile.png',
-              memberTier: profileRole ?? 'Thành viên',
-            ),
+          final successState = await _fetchProfileAndBuildSuccessState(
+            response.user!,
           );
+          if (successState != null) {
+            emit(successState);
+          } else {
+            emit(AuthFailure('Không thể truy xuất thông tin người dùng.'));
+          }
         } else {
           emit(AuthFailure('Không thể truy xuất thông tin người dùng.'));
         }
@@ -137,7 +162,6 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
 
     on<SignUpRequested>((event, emit) async {
       emit(AuthLoading());
-
       try {
         if (event.username.trim().isEmpty) {
           emit(AuthFailure('Tên người dùng không được để trống.'));
@@ -145,14 +169,13 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
         }
 
         final formattedPhone = _formatPhoneNumber(event.phone);
-
         final functionResponse = await _supabase.functions.invoke(
           'create-profile-from-phone',
           body: {
             'phone': formattedPhone,
             'password': event.password,
             'username': event.username.trim(),
-            'role': event.role,
+            'role': event.role.toUpperCase(),
           },
         );
 
@@ -173,30 +196,19 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
         );
 
         if (loginResponse.user != null) {
-          final userId = loginResponse.user!.id;
-          final profileData = await _supabase
-              .from('profiles')
-              .select()
-              .eq('user_id', userId)
-              .maybeSingle();
-
-          final profileUsername = profileData != null
-              ? profileData['username']
-              : null;
-          final profileRole = profileData != null ? profileData['role'] : null;
-          final profileAvatar = profileData != null
-              ? profileData['avatar_url']
-              : null;
-
-          emit(
-            AuthSuccess(
-              uid: userId,
-              name: profileUsername ?? event.username.trim(),
-              email: loginResponse.user!.email ?? '',
-              avatarPath: profileAvatar ?? 'assets/default_profile.png',
-              memberTier: profileRole ?? event.role,
-            ),
+          final successState = await _fetchProfileAndBuildSuccessState(
+            loginResponse.user!,
+            fallbackRole: event.role.toUpperCase(),
           );
+          if (successState != null) {
+            emit(successState);
+          } else {
+            emit(
+              AuthFailure(
+                'Đăng ký thành công nhưng không thể tự động đăng nhập.',
+              ),
+            );
+          }
         } else {
           emit(
             AuthFailure(
@@ -238,7 +250,6 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
             '${currentState.uid}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
         final filePath = fileName;
 
-        // 1. Upload to Storage
         await _supabase.storage
             .from('profile_avatar')
             .upload(
@@ -250,25 +261,22 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
               ),
             );
 
-        // 2. Get Public URL
         final String publicUrl = _supabase.storage
             .from('profile_avatar')
             .getPublicUrl(filePath);
 
-        // 3. Update profiles table
         await _supabase
             .from('profiles')
             .update({'avatar_url': publicUrl})
             .eq('user_id', currentState.uid);
 
-        // 4. Emit updated state
         emit(
           AuthSuccess(
             uid: currentState.uid,
             name: currentState.name,
             email: currentState.email,
             avatarPath: publicUrl,
-            memberTier: currentState.memberTier,
+            role: currentState.role,
           ),
         );
       } catch (e) {
@@ -281,9 +289,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
       emit(AuthLoading());
       try {
         final formattedPhone = _formatPhoneNumber(event.phone);
-
         await _supabase.auth.signInWithOtp(phone: formattedPhone);
-
         emit(AuthPasswordResetOtpSent());
       } on AuthException catch (e) {
         emit(AuthFailure(e.message));
@@ -296,7 +302,6 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
       emit(AuthLoading());
       try {
         final formattedPhone = _formatPhoneNumber(event.phone);
-
         final response = await _supabase.auth.verifyOTP(
           phone: formattedPhone,
           token: event.otpCode,
@@ -307,9 +312,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
           await _supabase.auth.updateUser(
             UserAttributes(password: event.newPassword),
           );
-
           await _supabase.auth.signOut();
-
           emit(AuthPasswordResetSuccess());
         } else {
           emit(AuthFailure('Mã xác thực không chính xác.'));
@@ -320,5 +323,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
         emit(AuthFailure('Đổi mật khẩu thất bại. Vui lòng thử lại.'));
       }
     });
+
+    add(AppStarted());
   }
 }

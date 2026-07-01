@@ -46,7 +46,7 @@ class ProfileMenuScreen extends StatelessWidget {
 
     if (authState is AuthSuccess) {
       dispName = authState.name;
-      subTitleInfo = authState.memberTier;
+      subTitleInfo = authState.role.toUpperCase() == 'PROVIDER' ? 'Nhà cung cấp' : 'Khách hàng';
       avatar = authState.avatarPath;
     }
 

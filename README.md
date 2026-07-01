@@ -325,6 +325,7 @@ BrokerViet
 │  │  │     ├─ provider_dashboard_screen.dart
 │  │  │     ├─ provider_services_list_screen.dart
 │  │  │     ├─ provider_service_form_screen.dart
+│  │  │     ├─ view_provider_screen.dart
 │  │  │     └─ widgets
 │  │  │        └─ booking_detail_sheet.dart
 │  │  ├─ services
