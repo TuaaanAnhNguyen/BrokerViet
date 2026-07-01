@@ -46,7 +46,7 @@ class ProfileMenuScreen extends StatelessWidget {
 
     if (authState is AuthSuccess) {
       dispName = authState.name;
-      subTitleInfo = authState.memberTier;
+      subTitleInfo = authState.role.toUpperCase() == 'PROVIDER' ? 'Nhà cung cấp' : 'Khách hàng';
       avatar = authState.avatarPath;
     }
 
@@ -79,14 +79,16 @@ class ProfileMenuScreen extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new,
-              size: 18,
-              color: primaryColor,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
+          leading: Navigator.canPop(context)
+              ? IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    size: 18,
+                    color: primaryColor,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                )
+              : null,
           titleSpacing: 0,
           title: const Text(
             'Tài khoản',
@@ -185,7 +187,7 @@ class ProfileMenuScreen extends StatelessWidget {
             _buildMenuTile(
               icon: Icons.info_outline_rounded,
               title: 'Về BrokerViet',
-              subtitle: 'Phiên bản hệ thống 1.0.2-Stable',
+              subtitle: 'Phiên bản hệ thống 0.0.1-WIP',
               onTap: () {},
             ),
 

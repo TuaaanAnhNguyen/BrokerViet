@@ -83,18 +83,14 @@ class _BookingScreenState extends State<BookingScreen> {
     debugPrint('Payment method selected: $paymentLabel');
 
     // Calculate final billing amount matching UI breakdown
-    final double serviceFee = widget.totalPrice.toDouble();
-    const double platformFee = 15000;
-    final double discount = serviceFee * 0.10;
-    final int finalCalculatedAmount = (serviceFee + platformFee - discount).toInt();
+    final int finalCalculatedPrice = widget.totalPrice;
 
     try {
-      // 1. Call your Supabase Edge Function / Service table insert
       final bookingResult = await _bookingService.createBooking(
         serviceId: widget.serviceId,
         customerId: widget.customerId,
         providerId: widget.providerId,
-        totalPrice: finalCalculatedAmount, // Use final matching amount
+        totalPrice: finalCalculatedPrice,
         scheduledAt: widget.scheduledAt,
         serviceType: widget.serviceType,
       );
@@ -103,13 +99,15 @@ class _BookingScreenState extends State<BookingScreen> {
       setState(() => _isSubmitting = false);
 
       // Extract generated data or fall back to local random values for execution tracking
-      final String trackingMemo = (bookingResult != null && bookingResult['booking_id'] != null)
+      final String trackingMemo =
+          (bookingResult != null && bookingResult['booking_id'] != null)
           ? bookingResult['booking_id'].toString().substring(0, 8).toUpperCase()
           : 'BK${DateTime.now().millisecondsSinceEpoch.toString().substring(9)}';
 
-      // 2. Routing logic depending on chosen payment method
+      final rootNavigator = Navigator.of(context);
+
       if (_selectedPaymentMethod == 0) {
-        // Option 0: VietQR route -> Send straight to transaction validation screen
+        // VietQR
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => Scaffold(
@@ -117,9 +115,57 @@ class _BookingScreenState extends State<BookingScreen> {
               body: Center(
                 child: VietQRPaymentWidget(
                   memo: trackingMemo,
-                  paymentAmount: finalCalculatedAmount,
-                  providerBankCode: 'bidv', // Change or fetch dynamically if needed
+                  paymentAmount: finalCalculatedPrice,
+                  providerBankCode: 'bidv',
                   providerBankAccount: '8821165401',
+                  onSimulateSuccess: () {
+                    Navigator.pop(context);
+
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (dialogContext) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        title: const Row(
+                          children: [
+                            SizedBox(width: 8),
+                            Text(
+                              'Giả lập thanh toán thành công',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                        content: Text(
+                          'Hệ thống ghi nhận thanh toán thành công cho dịch vụ ${widget.serviceTitle} theo hình thức mã định danh VietQR ($trackingMemo).',
+                          style: const TextStyle(color: Color(0xFF434655)),
+                        ),
+                        actions: [
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(dialogContext);
+                              rootNavigator.popUntil((route) => route.isFirst);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF004AC6),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              'Về Trang Chủ',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -145,13 +191,13 @@ class _BookingScreenState extends State<BookingScreen> {
           }
         }
       } else {
-        // Options 1 & 2: Cash/Card Route -> Show standard success modal back to root home screen
-        final rootNavigator = Navigator.of(context);
         showDialog(
           context: context,
           barrierDismissible: false,
           builder: (dialogContext) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             title: const Row(
               children: [
                 Icon(Icons.check_circle, color: Color(0xFF004AC6)),
@@ -175,9 +221,14 @@ class _BookingScreenState extends State<BookingScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF004AC6),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                child: const Text('Về Trang Chủ', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Về Trang Chủ',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -188,7 +239,9 @@ class _BookingScreenState extends State<BookingScreen> {
       setState(() => _isSubmitting = false);
       debugPrint("Booking Execution Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Không thể lưu đơn đặt lịch. Vui lòng thử lại sau.')),
+        const SnackBar(
+          content: Text('Không thể lưu đơn đặt lịch. Vui lòng thử lại sau.'),
+        ),
       );
     }
   }
@@ -202,9 +255,7 @@ class _BookingScreenState extends State<BookingScreen> {
     const Color outlineVariant = Color(0xFFC3C6D7);
 
     final double serviceFee = widget.totalPrice.toDouble();
-    const double platformFee = 15000;
-    final double discount = serviceFee * 0.10;
-    final double totalAmount = serviceFee + platformFee - discount;
+    final double totalAmount = serviceFee;
 
     String formatCurrency(double amount) {
       return "${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')} VND";
@@ -215,13 +266,20 @@ class _BookingScreenState extends State<BookingScreen> {
       appBar: AppBar(
         title: const Text(
           'Xác nhận đặt lịch',
-          style: TextStyle(color: darkText, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+            color: darkText,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: outlineVariant.withValues(alpha: 0.5), height: 1),
+          child: Container(
+            color: outlineVariant.withValues(alpha: 0.5),
+            height: 1,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: primaryColor),
@@ -245,7 +303,9 @@ class _BookingScreenState extends State<BookingScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: outlineVariant.withValues(alpha: 0.5)),
+                        border: Border.all(
+                          color: outlineVariant.withValues(alpha: 0.5),
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -255,15 +315,25 @@ class _BookingScreenState extends State<BookingScreen> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               color: const Color(0xFFE5EEFF),
-                              image: widget.serviceImageUrl != null && widget.serviceImageUrl!.isNotEmpty
+                              image:
+                                  widget.serviceImageUrl != null &&
+                                      widget.serviceImageUrl!.isNotEmpty
                                   ? DecorationImage(
-                                      image: NetworkImage(widget.serviceImageUrl!),
+                                      image: NetworkImage(
+                                        widget.serviceImageUrl!,
+                                      ),
                                       fit: BoxFit.cover,
-                                  )
+                                    )
                                   : null,
                             ),
-                            child: widget.serviceImageUrl == null || widget.serviceImageUrl!.isEmpty
-                                ? const Icon(Icons.build_circle_outlined, color: primaryColor, size: 36)
+                            child:
+                                widget.serviceImageUrl == null ||
+                                    widget.serviceImageUrl!.isEmpty
+                                ? const Icon(
+                                    Icons.build_circle_outlined,
+                                    color: primaryColor,
+                                    size: 36,
+                                  )
                                 : null,
                           ),
                           const SizedBox(width: 16),
@@ -283,14 +353,21 @@ class _BookingScreenState extends State<BookingScreen> {
                                 const SizedBox(height: 4),
                                 Text(
                                   widget.serviceTitle,
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: darkText,
+                                  ),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Gói: ${widget.packageName}',
-                                  style: const TextStyle(color: bodyText, fontSize: 13),
+                                  style: const TextStyle(
+                                    color: bodyText,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ],
                             ),
@@ -306,11 +383,17 @@ class _BookingScreenState extends State<BookingScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: outlineVariant.withValues(alpha: 0.5)),
+                        border: Border.all(
+                          color: outlineVariant.withValues(alpha: 0.5),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_month, color: primaryColor, size: 24),
+                          const Icon(
+                            Icons.calendar_month,
+                            color: primaryColor,
+                            size: 24,
+                          ),
                           const SizedBox(width: 12),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,8 +404,15 @@ class _BookingScreenState extends State<BookingScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                DateFormat('EEEE, dd MMMM, yyyy - HH:mm', 'vi').format(widget.scheduledAt),
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: darkText),
+                                DateFormat(
+                                  'EEEE, dd MMMM, yyyy - HH:mm',
+                                  'vi',
+                                ).format(widget.scheduledAt),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: darkText,
+                                ),
                               ),
                             ],
                           ),
@@ -334,30 +424,54 @@ class _BookingScreenState extends State<BookingScreen> {
                     // 3. Location Input Block
                     const Text(
                       'Địa điểm làm việc',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: darkText,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     TextFormField(
                       controller: _addressController,
-                      validator: (value) => value!.isEmpty ? 'Vui lòng nhập địa chỉ cụ thể' : null,
+                      validator: (value) => value!.isEmpty
+                          ? 'Vui lòng nhập địa chỉ cụ thể'
+                          : null,
                       style: const TextStyle(fontSize: 14, color: darkText),
                       decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.location_on, color: primaryColor),
+                        prefixIcon: const Icon(
+                          Icons.location_on,
+                          color: primaryColor,
+                        ),
                         suffixIcon: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8.0,
+                            vertical: 6.0,
+                          ),
                           child: ElevatedButton(
                             onPressed: () {
-                              setState(() => _addressController.text =
-                                  "Landmark 81, Vinhomes Central Park, Phường 22, Quận Bình Thạnh");
+                              setState(
+                                () => _addressController.text =
+                                    "Landmark 81, Vinhomes Central Park, Phường 22, Quận Bình Thạnh",
+                              );
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF39B8FD),
                               foregroundColor: const Color(0xFF004666),
                               elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
-                            child: const Text('Hiện tại', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                            child: const Text(
+                              'Hiện tại',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                         filled: true,
@@ -377,7 +491,11 @@ class _BookingScreenState extends State<BookingScreen> {
                     // 4. Instruction Notes Area
                     const Text(
                       'Ghi chú cho kỹ thuật viên',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: darkText,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     TextFormField(
@@ -385,8 +503,12 @@ class _BookingScreenState extends State<BookingScreen> {
                       maxLines: 2,
                       style: const TextStyle(fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'Mô tả thêm về tình trạng máy hoặc hướng dẫn đường đi...',
-                        hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+                        hintText:
+                            'Mô tả thêm về tình trạng máy hoặc hướng dẫn đường đi...',
+                        hintStyle: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
@@ -404,11 +526,21 @@ class _BookingScreenState extends State<BookingScreen> {
                     // 5. Payment Selection Grid Rows
                     const Text(
                       'Phương thức thanh toán',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: darkText,
+                      ),
                     ),
                     const SizedBox(height: 10),
-                    _buildPaymentRow(0, Icons.qr_code_2, 'Chuyển khoản Online (VietQR)',
-                        'Quét mã QR nhanh chóng qua ứng dụng ngân hàng', primaryColor, outlineVariant),
+                    _buildPaymentRow(
+                      0,
+                      Icons.qr_code_2,
+                      'Chuyển khoản Online (VietQR)',
+                      'Quét mã QR nhanh chóng qua ứng dụng ngân hàng',
+                      primaryColor,
+                      outlineVariant,
+                    ),
                     const SizedBox(height: 8),
                     _buildPaymentRow(1, Icons.credit_card, 'Thẻ Tín dụng / Ghi nợ',
                         'Visa, Mastercard, JCB', primaryColor, outlineVariant),
@@ -416,8 +548,14 @@ class _BookingScreenState extends State<BookingScreen> {
                     _buildPaymentRow(3, Icons.account_balance_wallet_outlined, 'VNPAY Gateway',
                         'Thanh toán qua ứng dụng VNPAY hoặc Ngân hàng', primaryColor, outlineVariant),
                     const SizedBox(height: 8),
-                    _buildPaymentRow(2, Icons.payments, 'Tiền mặt sau dịch vụ',
-                        'Thanh toán sau khi hoàn thành sửa chữa', primaryColor, outlineVariant),
+                    _buildPaymentRow(
+                      2,
+                      Icons.payments,
+                      'Tiền mặt sau dịch vụ',
+                      'Thanh toán sau khi hoàn thành sửa chữa',
+                      primaryColor,
+                      outlineVariant,
+                    ),
                     const SizedBox(height: 20),
 
                     // 6. Cost Breakdown Invoice Detail Card
@@ -426,27 +564,52 @@ class _BookingScreenState extends State<BookingScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFFEFF4FF),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: outlineVariant.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: outlineVariant.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
                             'Chi tiết hóa đơn',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: darkText),
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: darkText,
+                            ),
                           ),
                           const SizedBox(height: 12),
-                          _buildBillRow('Phí dịch vụ (${widget.packageName})', formatCurrency(serviceFee), bodyText),
+                          _buildBillRow(
+                            'Phí dịch vụ (${widget.packageName})',
+                            formatCurrency(serviceFee),
+                            bodyText,
+                          ),
                           const SizedBox(height: 6),
-                          _buildBillRow('Phí nền tảng', formatCurrency(platformFee), bodyText),
-                          const SizedBox(height: 6),
-                          _buildBillRow('Khuyến mãi giảm giá (PROMO10)', '-${formatCurrency(discount)}', primaryColor, isMedium: true),
-                          const Divider(height: 24, thickness: 0.5, color: outlineVariant),
+                          const Divider(
+                            height: 24,
+                            thickness: 0.5,
+                            color: outlineVariant,
+                          ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Tổng cộng', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkText)),
-                              Text(formatCurrency(totalAmount), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: darkText)),
+                              const Text(
+                                'Tổng cộng',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: darkText,
+                                ),
+                              ),
+                              Text(
+                                formatCurrency(totalAmount),
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: darkText,
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -462,9 +625,15 @@ class _BookingScreenState extends State<BookingScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border(top: BorderSide(color: outlineVariant.withValues(alpha: 0.5))),
+                border: Border(
+                  top: BorderSide(color: outlineVariant.withValues(alpha: 0.5)),
+                ),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, -4))
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  ),
                 ],
               ),
               child: SafeArea(
@@ -479,15 +648,32 @@ class _BookingScreenState extends State<BookingScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('Giá thanh toán cuối', style: TextStyle(fontSize: 12, color: bodyText)),
-                            Text(formatCurrency(totalAmount), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor)),
+                            const Text(
+                              'Giá thanh toán cuối',
+                              style: TextStyle(fontSize: 12, color: bodyText),
+                            ),
+                            Text(
+                              formatCurrency(totalAmount),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor,
+                              ),
+                            ),
                           ],
                         ),
                         const Row(
                           children: [
-                            Icon(Icons.verified_user, color: bodyText, size: 14),
+                            Icon(
+                              Icons.verified_user,
+                              color: bodyText,
+                              size: 14,
+                            ),
                             SizedBox(width: 4),
-                            Text('Thanh toán bảo mật', style: TextStyle(fontSize: 12, color: bodyText)),
+                            Text(
+                              'Thanh toán bảo mật',
+                              style: TextStyle(fontSize: 12, color: bodyText),
+                            ),
                           ],
                         ),
                       ],
@@ -499,16 +685,27 @@ class _BookingScreenState extends State<BookingScreen> {
                         backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
                         minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         elevation: 0,
                       ),
                       child: _isSubmitting
                           ? const SizedBox(
                               width: 24,
                               height: 24,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
                             )
-                          : const Text('Xác nhận đặt lịch', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          : const Text(
+                              'Xác nhận đặt lịch',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                     const SizedBox(height: 8),
                     RichText(
@@ -516,8 +713,17 @@ class _BookingScreenState extends State<BookingScreen> {
                       text: const TextSpan(
                         style: TextStyle(fontSize: 11, color: bodyText),
                         children: [
-                          TextSpan(text: 'Bằng việc nhấn nút "Xác nhận đặt lịch", bạn đồng ý với '),
-                          TextSpan(text: 'Điều khoản dịch vụ', style: TextStyle(color: primaryColor, decoration: TextDecoration.underline)),
+                          TextSpan(
+                            text:
+                                'Bằng việc nhấn nút "Xác nhận đặt lịch", bạn đồng ý với ',
+                          ),
+                          TextSpan(
+                            text: 'Điều khoản dịch vụ',
+                            style: TextStyle(
+                              color: primaryColor,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
                           TextSpan(text: ' của chúng tôi.'),
                         ],
                       ),
@@ -532,7 +738,14 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
-  Widget _buildPaymentRow(int index, IconData icon, String title, String subtitle, Color activeColor, Color defaultOutline) {
+  Widget _buildPaymentRow(
+    int index,
+    IconData icon,
+    String title,
+    String subtitle,
+    Color activeColor,
+    Color defaultOutline,
+  ) {
     final isSelected = _selectedPaymentMethod == index;
     return GestureDetector(
       onTap: () => setState(() => _selectedPaymentMethod = index),
@@ -541,7 +754,12 @@ class _BookingScreenState extends State<BookingScreen> {
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFEFF4FF) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isSelected ? activeColor : defaultOutline.withValues(alpha: 0.6), width: isSelected ? 2 : 1),
+          border: Border.all(
+            color: isSelected
+                ? activeColor
+                : defaultOutline.withValues(alpha: 0.6),
+            width: isSelected ? 2 : 1,
+          ),
         ),
         child: Row(
           children: [
@@ -551,17 +769,35 @@ class _BookingScreenState extends State<BookingScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: defaultOutline.withValues(alpha: 0.5)),
+                border: Border.all(
+                  color: defaultOutline.withValues(alpha: 0.5),
+                ),
               ),
-              child: Icon(icon, color: isSelected ? activeColor : const Color(0xFF434655)),
+              child: Icon(
+                icon,
+                color: isSelected ? activeColor : const Color(0xFF434655),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0B1C30))),
-                  Text(subtitle, style: const TextStyle(color: Color(0xFF434655), fontSize: 12)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Color(0xFF0B1C30),
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: Color(0xFF434655),
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -570,14 +806,20 @@ class _BookingScreenState extends State<BookingScreen> {
               height: 20,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: isSelected ? activeColor : defaultOutline, width: 2),
+                border: Border.all(
+                  color: isSelected ? activeColor : defaultOutline,
+                  width: 2,
+                ),
               ),
               child: isSelected
                   ? Center(
                       child: Container(
                         width: 10,
                         height: 10,
-                        decoration: BoxDecoration(shape: BoxShape.circle, color: activeColor),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: activeColor,
+                        ),
                       ),
                     )
                   : null,
@@ -588,12 +830,31 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
-  Widget _buildBillRow(String label, String cost, Color textColor, {bool isMedium = false}) {
+  Widget _buildBillRow(
+    String label,
+    String cost,
+    Color textColor, {
+    bool isMedium = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(color: textColor, fontSize: 13, fontWeight: isMedium ? FontWeight.w500 : FontWeight.normal)),
-        Text(cost, style: TextStyle(color: textColor, fontSize: 13, fontWeight: isMedium ? FontWeight.bold : FontWeight.normal)),
+        Text(
+          label,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 13,
+            fontWeight: isMedium ? FontWeight.w500 : FontWeight.normal,
+          ),
+        ),
+        Text(
+          cost,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 13,
+            fontWeight: isMedium ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
       ],
     );
   }

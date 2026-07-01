@@ -21,6 +21,7 @@ void main() async {
   String supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+  await initializeDateFormatting('vi_VN', null);
 
   runApp(const BrokerVietApp());
 }

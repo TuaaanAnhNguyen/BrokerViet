@@ -97,7 +97,27 @@ BrokerViet
 │  │  │  │     ├─ errors-1781169032369.log
 │  │  │  │     ├─ errors-1781169032391.log
 │  │  │  │     ├─ errors-1781505869064.log
-│  │  │  │     └─ errors-1781505869082.log
+│  │  │  │     ├─ errors-1781505869082.log
+│  │  │  │     ├─ errors-1781589241011.log
+│  │  │  │     ├─ errors-1781589241021.log
+│  │  │  │     ├─ errors-1781747372665.log
+│  │  │  │     ├─ errors-1781747372677.log
+│  │  │  │     ├─ errors-1781747372715.log
+│  │  │  │     ├─ errors-1781754635023.log
+│  │  │  │     ├─ errors-1781754635046.log
+│  │  │  │     ├─ errors-1781754635061.log
+│  │  │  │     ├─ errors-1781781243903.log
+│  │  │  │     ├─ errors-1781781243926.log
+│  │  │  │     ├─ errors-1781781243936.log
+│  │  │  │     ├─ errors-1781781243993.log
+│  │  │  │     ├─ errors-1782108866068.log
+│  │  │  │     ├─ errors-1782108866094.log
+│  │  │  │     ├─ errors-1782108866112.log
+│  │  │  │     ├─ errors-1782108866155.log
+│  │  │  │     ├─ errors-1782111990065.log
+│  │  │  │     ├─ errors-1782111990089.log
+│  │  │  │     ├─ errors-1782111990105.log
+│  │  │  │     └─ errors-1782111990127.log
 │  │  │  ├─ noVersion
 │  │  │  │  └─ buildLogic.lock
 │  │  │  └─ vcs-1
@@ -125,7 +145,27 @@ BrokerViet
 │  │  │  │  ├─ errors-1781169032369.log
 │  │  │  │  ├─ errors-1781169032390.log
 │  │  │  │  ├─ errors-1781505869064.log
-│  │  │  │  └─ errors-1781505869082.log
+│  │  │  │  ├─ errors-1781505869082.log
+│  │  │  │  ├─ errors-1781589241011.log
+│  │  │  │  ├─ errors-1781589241021.log
+│  │  │  │  ├─ errors-1781747372665.log
+│  │  │  │  ├─ errors-1781747372677.log
+│  │  │  │  ├─ errors-1781747372715.log
+│  │  │  │  ├─ errors-1781754635023.log
+│  │  │  │  ├─ errors-1781754635046.log
+│  │  │  │  ├─ errors-1781754635061.log
+│  │  │  │  ├─ errors-1781781243903.log
+│  │  │  │  ├─ errors-1781781243926.log
+│  │  │  │  ├─ errors-1781781243936.log
+│  │  │  │  ├─ errors-1781781243993.log
+│  │  │  │  ├─ errors-1782108866068.log
+│  │  │  │  ├─ errors-1782108866094.log
+│  │  │  │  ├─ errors-1782108866112.log
+│  │  │  │  ├─ errors-1782108866155.log
+│  │  │  │  ├─ errors-1782111990065.log
+│  │  │  │  ├─ errors-1782111990088.log
+│  │  │  │  ├─ errors-1782111990105.log
+│  │  │  │  └─ errors-1782111990127.log
 │  │  │  └─ sessions
 │  │  ├─ app
 │  │  │  ├─ build.gradle.kts
@@ -180,6 +220,7 @@ BrokerViet
 │  │  ├─ default_profile.png
 │  │  └─ no_icon_placeholder.png
 │  ├─ broker_viet.iml
+│  ├─ devtools_options.yaml
 │  ├─ ios
 │  │  ├─ Flutter
 │  │  │  ├─ AppFrameworkInfo.plist
@@ -244,6 +285,7 @@ BrokerViet
 │  ├─ lib
 │  │  ├─ features
 │  │  │  ├─ auth
+│  │  │  │  ├─ forgot_password_screen.dart
 │  │  │  │  ├─ login_screen.dart
 │  │  │  │  └─ signup_screen.dart
 │  │  │  ├─ booking
@@ -259,25 +301,52 @@ BrokerViet
 │  │  │  │  ├─ search_screen.dart
 │  │  │  │  ├─ service_detail_screen.dart
 │  │  │  │  └─ service_marketplace_screen.dart
+│  │  │  ├─ payment
+│  │  │  │  └─ payment_checkout_screen.dart
 │  │  │  └─ profile
 │  │  │     ├─ account_setting.dart
 │  │  │     ├─ profile_menu_screen.dart
 │  │  │     └─ profile_screen.dart
 │  │  ├─ main.dart
 │  │  ├─ models
+│  │  │  ├─ bank_mapper.dart
 │  │  │  ├─ booking_model.dart
+│  │  │  ├─ dashboard_summary_model.dart
 │  │  │  ├─ notification_model.dart
+│  │  │  ├─ payment_model.dart
+│  │  │  ├─ profile_model.dart
+│  │  │  ├─ provider_booking_model.dart
+│  │  │  ├─ review_model.dart
 │  │  │  ├─ service_category_model.dart
-│  │  │  ├─ service_model.dart
-│  │  │  └─ user_model.dart
+│  │  │  └─ service_model.dart
+│  │  ├─ screens
+│  │  │  └─ provider
+│  │  │     ├─ provider_bookings_screen.dart
+│  │  │     ├─ provider_dashboard_screen.dart
+│  │  │     ├─ provider_services_list_screen.dart
+│  │  │     ├─ provider_service_form_screen.dart
+│  │  │     ├─ view_provider_screen.dart
+│  │  │     └─ widgets
+│  │  │        └─ booking_detail_sheet.dart
 │  │  ├─ services
 │  │  │  ├─ auth
 │  │  │  │  └─ auth_service.dart
 │  │  │  ├─ booking
-│  │  │  │  ├─ booking_service.dart
-│  │  │  │  └─ booking_submission_service.dart
-│  │  │  └─ marketplace
-│  │  │     └─ service_marketplace_service.dart
+│  │  │  │  └─ booking_service.dart
+│  │  │  ├─ chat
+│  │  │  │  └─ chat_service.dart
+│  │  │  ├─ marketplace
+│  │  │  │  └─ service_marketplace_service.dart
+│  │  │  ├─ notification
+│  │  │  │  └─ notification_service.dart
+│  │  │  ├─ profile
+│  │  │  │  └─ profile_service.dart
+│  │  │  └─ provider
+│  │  │     ├─ provider_bookings_service.dart
+│  │  │     ├─ provider_dashboard_service.dart
+│  │  │     └─ provider_services_service.dart
+│  │  ├─ utils
+│  │  │  └─ booking_status_utils.dart
 │  │  └─ widgets
 │  │     ├─ auth
 │  │     │  ├─ auth_header.dart
@@ -289,6 +358,10 @@ BrokerViet
 │  │     ├─ custom_text_field.dart
 │  │     ├─ network_image_fallback.dart
 │  │     ├─ notification_tile.dart
+│  │     ├─ payment
+│  │     │  └─ vietqr_payment.dart
+│  │     ├─ provider
+│  │     │  └─ provider_booking_card.dart
 │  │     └─ service
 │  │        ├─ category_selector.dart
 │  │        ├─ nearby_provider_tile.dart
