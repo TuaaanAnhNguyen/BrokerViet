@@ -32,3 +32,4 @@ frontend_flutter/DerivedData/
 .DS_Store
 Thumbs.db
 .env
+google-services.json
