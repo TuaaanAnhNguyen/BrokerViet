@@ -177,7 +177,7 @@ class _BookingScreenState extends State<BookingScreen> {
           bookingId: (bookingResult != null && bookingResult['booking_id'] != null)
               ? bookingResult['booking_id'].toString()
               : '',
-          amount: finalCalculatedAmount,
+          amount: finalCalculatedPrice,
           orderInfo: 'Thanh toan don hang ${widget.serviceTitle}',
         );
 
