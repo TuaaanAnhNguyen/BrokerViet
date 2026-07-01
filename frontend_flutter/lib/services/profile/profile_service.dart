@@ -1,5 +1,6 @@
 // lib/services/profile/profile_service.dart
 
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/profile_model.dart';
@@ -49,25 +50,36 @@ class ProfileFailure extends ProfileState {
 }
 
 class ProfileService extends Bloc<ProfileEvent, ProfileState> {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient _client = Supabase.instance.client;
+
+  String get currentUserId => _client.auth.currentUser?.id ?? '';
 
   ProfileService() : super(ProfileInitial()) {
     on<LoadProfileRequested>((event, emit) async {
       emit(ProfileLoading());
       try {
-        final currentUser = _supabase.auth.currentUser;
-        if (currentUser == null) throw Exception("Chưa đăng nhập hệ thống.");
+        if (currentUserId.isEmpty) throw Exception("Chưa đăng nhập hệ thống.");
 
-        final data = await _supabase
-            .from('profiles')
-            .select()
-            .eq('user_id', currentUser.id)
-            .single();
+        final response = await _client.functions.invoke('fetch-profile');
+
+        if (response.status != 200) {
+          final errorData = response.data as Map<String, dynamic>?;
+          throw Exception(
+            errorData?['error'] ?? 'Lỗi không xác định từ Edge Function',
+          );
+        }
+
+        final dataMap = response.data as Map<String, dynamic>;
+        final profileData = dataMap['profile'];
+
+        if (profileData == null) {
+          throw Exception("Không tìm thấy thông tin hồ sơ người dùng.");
+        }
 
         final profile = ProfileModel.fromJson(
-          data,
-          authEmail: currentUser.email,
-          authPhone: currentUser.phone,
+          profileData as Map<String, dynamic>,
+          authEmail: _client.auth.currentUser?.email,
+          authPhone: _client.auth.currentUser?.phone,
         );
 
         emit(ProfileLoadSuccess(profile));
@@ -79,15 +91,21 @@ class ProfileService extends Bloc<ProfileEvent, ProfileState> {
     on<UpdateProfileRequested>((event, emit) async {
       emit(ProfileActionLoading());
       try {
-        final userId = _supabase.auth.currentUser?.id;
-        if (userId == null) throw Exception("Phiên đăng nhập hết hạn.");
+        if (currentUserId.isEmpty) throw Exception("Phiên đăng nhập hết hạn.");
 
-        final updateData = event.updatedProfile.toUpdatePayload();
+        final updatePayload = event.updatedProfile.toUpdatePayload();
 
-        await _supabase
-            .from('profiles')
-            .update(updateData)
-            .eq('user_id', userId);
+        final response = await _client.functions.invoke(
+          'update-profile',
+          body: updatePayload,
+        );
+
+        if (response.status != 200) {
+          final errorData = response.data as Map<String, dynamic>?;
+          throw Exception(
+            errorData?['error'] ?? 'Lỗi không thể cập nhật dữ liệu',
+          );
+        }
 
         emit(ProfileActionSuccess('Cập nhật hồ sơ thành công!'));
 
@@ -100,7 +118,7 @@ class ProfileService extends Bloc<ProfileEvent, ProfileState> {
     on<UpdatePasswordRequested>((event, emit) async {
       emit(ProfileActionLoading());
       try {
-        await _supabase.auth.updateUser(
+        await _client.auth.updateUser(
           UserAttributes(password: event.newPassword),
         );
         emit(ProfileActionSuccess('Cập nhật mật khẩu bảo mật mới thành công!'));
@@ -112,7 +130,7 @@ class ProfileService extends Bloc<ProfileEvent, ProfileState> {
     on<UpdateEmailRequested>((event, emit) async {
       emit(ProfileActionLoading());
       try {
-        await _supabase.auth.updateUser(UserAttributes(email: event.newEmail));
+        await _client.auth.updateUser(UserAttributes(email: event.newEmail));
         emit(
           ProfileActionSuccess(
             'Liên kết xác thực đã được gửi tới hộp thư mới!',
@@ -126,11 +144,17 @@ class ProfileService extends Bloc<ProfileEvent, ProfileState> {
     on<DeleteAccountRequested>((event, emit) async {
       emit(ProfileActionLoading());
       try {
-        final userId = _supabase.auth.currentUser?.id;
-        if (userId != null) {
-          await _supabase.from('profiles').delete().eq('user_id', userId);
+        if (currentUserId.isNotEmpty) {
+          final response = await _client.functions.invoke('delete-profile');
+          if (response.status != 200) {
+            final errorData = response.data as Map<String, dynamic>?;
+            throw Exception(
+              errorData?['error'] ??
+                  'Lỗi không thể xóa tài khoản khỏi hệ thống',
+            );
+          }
         }
-        await _supabase.auth.signOut();
+        await _client.auth.signOut();
         emit(ProfileActionSuccess('Tài khoản đã được gỡ bỏ hoàn toàn.'));
       } catch (e) {
         emit(ProfileFailure(e.toString()));
