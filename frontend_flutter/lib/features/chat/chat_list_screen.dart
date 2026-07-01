@@ -28,14 +28,20 @@ class _ChatListScreenState extends State<ChatListScreen> {
         backgroundColor: Colors.white,
         title: const Text(
           'Tin nhắn',
-          style: TextStyle(color: darkText, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+            color: darkText,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _chatService.streamChatRooms(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: primaryColor));
+            return const Center(
+              child: CircularProgressIndicator(color: primaryColor),
+            );
           }
 
           if (snapshot.hasError) {
@@ -46,7 +52,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
           if (chatRooms.isEmpty) {
             return const Center(
-              child: Text('Không có cuộc hội thoại nào.', style: TextStyle(color: bodyText)),
+              child: Text(
+                'Không có cuộc hội thoại nào.',
+                style: TextStyle(color: bodyText),
+              ),
             );
           }
 
@@ -58,8 +67,24 @@ class _ChatListScreenState extends State<ChatListScreen> {
               final String targetName = room['target_name'] ?? 'Người dùng';
               final String? avatarUrl = room['avatar_url'];
 
+              final String lastSenderId = room['last_sender_id'] ?? '';
+              final String rawLastMessage = room['last_message'] ?? '';
+
+              String displayMessage = rawLastMessage;
+              if (rawLastMessage.isNotEmpty &&
+                  lastSenderId == _chatService.currentUserId) {
+                displayMessage = 'Bạn: $rawLastMessage';
+              }
+
+              final int unreadCount = room['unread_count'] ?? 0;
+              final bool isUnread = unreadCount > 0;
+
               return InkWell(
                 onTap: () async {
+                  if (isUnread) {
+                    _chatService.markAsRead(room['chatroom_id']);
+                  }
+
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -73,7 +98,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   );
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
                       buildAvatar(avatarUrl ?? '', radius: 24),
@@ -82,22 +110,72 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(targetName, style: const TextStyle(fontWeight: FontWeight.bold, color: darkText, fontSize: 15)),
+                            Text(
+                              targetName,
+                              style: TextStyle(
+                                fontWeight: isUnread
+                                    ? FontWeight.bold
+                                    : FontWeight.w600,
+                                color: darkText,
+                                fontSize: 15,
+                              ),
+                            ),
                             const SizedBox(height: 4),
                             Text(
-                              room['last_message'] ?? '',
+                              displayMessage,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: bodyText, fontSize: 13),
+                              style: TextStyle(
+                                color: isUnread ? Colors.black : bodyText,
+                                fontWeight: isUnread
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                fontSize: 13,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      Text(
-                        room['sent_at'] != null 
-                            ? _formatTime(room['sent_at']) 
-                            : '',
-                        style: const TextStyle(fontSize: 11, color: bodyText),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            room['sent_at'] != null
+                                ? _formatTime(room['sent_at'])
+                                : '',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isUnread ? primaryColor : bodyText,
+                              fontWeight: isUnread
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                          if (isUnread) ...[
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: primaryColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              constraints: const BoxConstraints(minWidth: 20),
+                              child: Text(
+                                unreadCount > 99 ? '99+' : '$unreadCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),
