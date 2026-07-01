@@ -4,6 +4,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../screens/provider/provider_bookings_screen.dart';
+import '../../screens/provider/provider_dashboard_screen.dart';
+import '../../screens/provider/provider_services_list_screen.dart';
 import '../../services/auth/auth_service.dart';
 import '../../services/notification/notification_service.dart';
 import '../../models/notification_model.dart';
@@ -27,10 +30,19 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   StreamSubscription<List<NotificationModel>>? _notificationSubscription;
   List<NotificationModel>? _lastNotifications;
 
+  // 1. Define Customer Tabs
   final List<Widget> _customerTabs = [
-    ServiceMarketplaceScreen(),
-    BookingHistoryScreen(),
-    ChatListScreen(),
+    const ServiceMarketplaceScreen(),
+    const BookingHistoryScreen(),
+    const ChatListScreen(),
+  ];
+
+  // 2. Define Provider Tabs
+  final List<Widget> _providerTabs = [
+    const ProviderDashboardScreen(),
+    const ProviderBookingsScreen(),
+    const ProviderServicesListScreen(),
+    const ChatListScreen(),
   ];
 
   @override
@@ -40,34 +52,38 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   }
 
   void _setupNotificationListener() {
-    _notificationSubscription = _notificationService.streamNotifications().listen((notifications) {
-      if (_lastNotifications != null) {
-        // Find notifications that are new (not in previous list)
-        final newNotifications = notifications.where((n) => 
-          !_lastNotifications!.any((old) => old.notificationId == n.notificationId)
-        ).toList();
+    _notificationSubscription = _notificationService
+        .streamNotifications()
+        .listen((notifications) {
+          if (_lastNotifications != null) {
+            final newNotifications = notifications
+                .where(
+                  (n) => !_lastNotifications!.any(
+                    (old) => old.notificationId == n.notificationId,
+                  ),
+                )
+                .toList();
 
-        for (var notification in newNotifications) {
-          if (!notification.isRead) {
-            _showNewNotificationSnackBar(notification);
+            for (var notification in newNotifications) {
+              if (!notification.isRead) {
+                _showNewNotificationSnackBar(notification);
+              }
+            }
           }
-        }
-      }
-      
-      if (mounted) {
-        setState(() {
-          _lastNotifications = notifications;
+
+          if (mounted) {
+            setState(() {
+              _lastNotifications = notifications;
+            });
+          }
         });
-      }
-    });
   }
 
   void _showNewNotificationSnackBar(NotificationModel notification) {
     if (!mounted) return;
-    
-    // Clear current snackbars to show the latest one immediately
+
     ScaffoldMessenger.of(context).clearSnackBars();
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Column(
@@ -76,12 +92,19 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           children: [
             Row(
               children: [
-                const Icon(Icons.notifications_active, color: Colors.white, size: 16),
+                const Icon(
+                  Icons.notifications_active,
+                  color: Colors.white,
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     notification.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
               ],
@@ -116,6 +139,51 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
+  List<BottomNavigationBarItem> _buildCustomerNavbarItems() {
+    return const [
+      BottomNavigationBarItem(
+        icon: Icon(Icons.storefront_outlined),
+        activeIcon: Icon(Icons.storefront),
+        label: 'Khám phá',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.assignment_outlined),
+        activeIcon: Icon(Icons.assignment),
+        label: 'Đơn đã mua',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.chat_bubble_outline_rounded),
+        activeIcon: Icon(Icons.chat_bubble_rounded),
+        label: 'Tin nhắn',
+      ),
+    ];
+  }
+
+  List<BottomNavigationBarItem> _buildProviderNavbarItems() {
+    return const [
+      BottomNavigationBarItem(
+        icon: Icon(Icons.dashboard_outlined),
+        activeIcon: Icon(Icons.dashboard),
+        label: 'Tổng quan',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.calendar_month_outlined),
+        activeIcon: Icon(Icons.calendar_month),
+        label: 'Lịch hẹn',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.construction_outlined),
+        activeIcon: Icon(Icons.construction),
+        label: 'Dịch vụ',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.chat_bubble_outline_rounded),
+        activeIcon: Icon(Icons.chat_bubble_rounded),
+        label: 'Tin nhắn',
+      ),
+    ];
+  }
+
   @override
   void dispose() {
     _notificationSubscription?.cancel();
@@ -124,12 +192,21 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
-    // context.watch để cập nhật avatar khi đăng nhập thành công
     final authState = context.watch<AuthService>().state;
 
     String avatar = 'assets/default_profile.png';
+    String role = 'customer';
+
     if (authState is AuthSuccess) {
       avatar = authState.avatarPath;
+      role = authState.role.toLowerCase().trim();
+    }
+
+    final bool isProvider = role == 'provider';
+    final List<Widget> activeTabs = isProvider ? _providerTabs : _customerTabs;
+
+    if (_currentIndex >= activeTabs.length) {
+      _currentIndex = 0;
     }
 
     const Color primaryColor = Color(0xFF004AC6);
@@ -160,8 +237,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             StreamBuilder<List<NotificationModel>>(
               stream: _notificationService.streamNotifications(),
               builder: (context, snapshot) {
-                final unreadCount = snapshot.data?.where((n) => !n.isRead).length ?? 0;
-                
+                final unreadCount =
+                    snapshot.data?.where((n) => !n.isRead).length ?? 0;
+
                 return Stack(
                   alignment: Alignment.center,
                   children: [
@@ -235,7 +313,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           ),
         ),
 
-        body: IndexedStack(index: _currentIndex, children: _customerTabs),
+        body: IndexedStack(index: _currentIndex, children: activeTabs),
 
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
@@ -263,23 +341,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 _currentIndex = index;
               });
             },
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.storefront_outlined),
-                activeIcon: Icon(Icons.storefront),
-                label: 'Khám phá',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.assignment_outlined),
-                activeIcon: Icon(Icons.assignment),
-                label: 'Đơn đã mua',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.chat_bubble_outline_rounded),
-                activeIcon: Icon(Icons.chat_bubble_rounded),
-                label: 'Tin nhắn',
-              ),
-            ],
+            items: isProvider
+                ? _buildProviderNavbarItems()
+                : _buildCustomerNavbarItems(),
           ),
         ),
       ),

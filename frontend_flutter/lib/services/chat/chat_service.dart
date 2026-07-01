@@ -1,5 +1,6 @@
 // lib/services/chat/chat_service.dart
 
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChatService {
@@ -7,81 +8,79 @@ class ChatService {
 
   String get currentUserId => _client.auth.currentUser?.id ?? '';
 
-  Future<String> getOrCreateChatRoom({
-    required String providerId,
-    required String customerId,
-  }) async {
-    final response = await _client.functions.invoke(
-      'fetch-chats',
-      method: HttpMethod.post,
-      queryParameters: {'action': 'get_or_create'},
-      body: {'customer_id': customerId, 'provider_id': providerId},
-    );
-    final data = response.data as Map<String, dynamic>;
-    return data['chatroom_id']?.toString() ?? '';
+  // === STREAM CHAT ROOMS (via Edge Function + Realtime refresh) ===
+  Stream<List<Map<String, dynamic>>> streamChatRooms() {
+    final controller = StreamController<List<Map<String, dynamic>>>();
+
+    final uid = currentUserId;
+
+    if (uid.isEmpty) {
+      controller.add([]);
+      controller.close();
+      return controller.stream;
+    }
+
+    Future<void> refresh() async {
+      final rooms = await fetchChatRooms();
+      controller.add(rooms);
+    }
+
+    refresh();
+
+    final channel = _client
+        .channel('chat_list_changes_$uid')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'chatrooms',
+          callback: (payload) async {
+            print("CHATROOM EVENT");
+            print(payload);
+            await refresh();
+          },
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'messages',
+          callback: (payload) async {
+            print("MESSAGE EVENT");
+            print(payload);
+            await refresh();
+          },
+        );
+
+    channel.subscribe();
+
+    controller.onCancel = () {
+      _client.removeChannel(channel);
+    };
+
+    return controller.stream;
   }
 
   Future<List<Map<String, dynamic>>> fetchChatRooms() async {
     final uid = currentUserId;
+
     if (uid.isEmpty) return [];
 
     try {
       final response = await _client.functions.invoke(
-        'fetch-chats',
+        'list-chatroom',
         method: HttpMethod.get,
-        queryParameters: {'action': 'list', 'user_id': uid},
+        queryParameters: {'user_id': uid},
       );
 
       final data = response.data as Map<String, dynamic>;
-      final List<dynamic> rawRooms = data['chatrooms'] ?? [];
 
-      return rawRooms.map((room) {
-        final map = room as Map<String, dynamic>;
-        return {
-          'chatroom_id': map['chatroom_id'],
-          'target_name': map['target_name'] ?? 'Người dùng BrokerViet',
-          'target_role': map['target_role'] ?? 'Thành viên',
-          'avatar_url': map['avatar_url'],
-          'last_message': map['last_message'],
-          'time': map['sent_at'] != null ? _parseTimestamp(map['sent_at']) : '',
-        };
-      }).toList();
+      final List<dynamic> rooms = data['chatrooms'] ?? [];
+
+      return rooms.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
-      print("Error fetching chat rooms via Edge Function: $e");
+      print('Error fetching chat rooms: $e');
+
       return [];
     }
-  }
-
-  RealtimeChannel subscribeToChatChanges(Function onUpdate) {
-    final channel = _client.channel('public:chat_list_update');
-
-    channel
-        .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
-          schema: 'public',
-          table: 'messages',
-          callback: (payload) {
-            print('Realtime message update received!');
-            onUpdate();
-          },
-        )
-        .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
-          schema: 'public',
-          table: 'chatrooms',
-          callback: (payload) {
-            print('Realtime chatroom has been updated!');
-            onUpdate();
-          },
-        )
-        .subscribe((status, [error]) {
-          print('Realtime pipeline status changed: $status');
-          if (error != null) {
-            print('Encounter realtime chat error: $error');
-          }
-        });
-
-    return channel;
   }
 
   Stream<List<Map<String, dynamic>>> streamMessages(String chatroomId) {
@@ -89,17 +88,53 @@ class ChatService {
         .from('messages')
         .stream(primaryKey: ['message_id'])
         .eq('chatroom_id', chatroomId)
-        .order('sent_at', ascending: true);
+        .map((rows) {
+          rows.sort(
+            (a, b) => DateTime.parse(
+              a['sent_at'],
+            ).compareTo(DateTime.parse(b['sent_at'])),
+          );
+
+          return rows
+              .map(
+                (row) => {
+                  'message_id': row['message_id'],
+                  'sender_id': row['sender_id'],
+                  'content': row['content'],
+                  'sent_at': row['sent_at'],
+                },
+              )
+              .toList();
+        });
   }
 
+  // === GET OR CREATE CHATROOM ===
+  Future<String> getOrCreateChatRoom({
+    required String providerId,
+    required String customerId,
+  }) async {
+    try {
+      final response = await _client.functions.invoke(
+        'get-or-create-chatroom',
+        method: HttpMethod.post,
+        body: {'customer_id': customerId, 'provider_id': providerId},
+      );
+      final data = response.data as Map<String, dynamic>;
+      return data['chatroom_id']?.toString() ?? '';
+    } catch (e) {
+      print("Error getOrCreateChatRoom: $e");
+      return '';
+    }
+  }
+
+  // === SEND MESSAGE ===
   Future<void> sendMessage(String chatroomId, String text) async {
     final cleanText = text.trim();
     if (cleanText.isEmpty || currentUserId.isEmpty) return;
 
     await _client.functions.invoke(
-      'fetch-chats',
+      'send-message',
       method: HttpMethod.post,
-      queryParameters: {'action': 'send'},
       body: {
         'chatroom_id': chatroomId,
         'sender_id': currentUserId,
@@ -108,9 +143,10 @@ class ChatService {
     );
   }
 
-  String _parseTimestamp(String isoString) {
+  String _parseTimestamp(dynamic isoString) {
+    if (isoString == null) return '';
     try {
-      final dateTime = DateTime.parse(isoString).toLocal();
+      final dateTime = DateTime.parse(isoString.toString()).toLocal();
       return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
     } catch (_) {
       return '';

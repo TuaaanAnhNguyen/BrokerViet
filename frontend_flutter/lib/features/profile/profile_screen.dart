@@ -89,7 +89,7 @@ class ProfileScreen extends StatelessWidget {
             email = state.email.isNotEmpty
                 ? state.email
                 : 'Chưa cập nhật email';
-            tier = state.memberTier;
+            tier = state.role.toUpperCase() == 'PROVIDER' ? 'PROVIDER' : 'CUSTOMER';
             avatarPath = state.avatarPath;
           }
 

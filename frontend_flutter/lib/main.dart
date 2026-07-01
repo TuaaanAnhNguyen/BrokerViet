@@ -6,7 +6,6 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'features/auth/login_screen.dart';
 import 'services/auth/auth_service.dart';
 import 'features/main/main_navigation_shell.dart';
-import 'screens/provider/provider_dashboard_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -44,9 +43,8 @@ class BrokerVietApp extends StatelessWidget {
         home: BlocBuilder<AuthService, AuthState>(
           builder: (context, state) {
             if (state is AuthSuccess) {
-              if (state.memberTier == 'PROVIDER') {
-                return const ProviderDashboardScreen();
-              }
+              // Return MainNavigationShell for both roles since it internally 
+              // splits into _providerTabs or _customerTabs seamlessly.
               return const MainNavigationShell();
             }
             return const LoginScreen();

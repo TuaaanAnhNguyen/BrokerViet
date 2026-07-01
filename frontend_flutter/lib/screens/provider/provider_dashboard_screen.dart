@@ -1,3 +1,5 @@
+// lib/screens/provider/provider_dashboard_screen.dart
+
 import 'package:flutter/material.dart';
 import '../../models/dashboard_summary_model.dart';
 import '../../models/provider_booking_model.dart';
@@ -5,10 +7,8 @@ import '../../models/booking_model.dart';
 import '../../services/provider/provider_dashboard_service.dart';
 import '../../services/provider/provider_bookings_service.dart';
 import '../../widgets/provider/provider_booking_card.dart';
-import 'provider_bookings_screen.dart';
 import 'provider_services_list_screen.dart';
 import 'provider_service_form_screen.dart';
-import '../../features/profile/profile_menu_screen.dart';
 
 class ProviderDashboardScreen extends StatefulWidget {
   const ProviderDashboardScreen({super.key});
@@ -128,24 +128,17 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Stays exactly as a modular tab view component
     return Scaffold(
       backgroundColor: surfaceColor,
       body: SafeArea(
-        child: IndexedStack(
-          index: _currentTabIndex,
-          children: [
-            RefreshIndicator(
-              onRefresh: _loadDashboardData,
-              color: primaryColor,
-              child: _buildBodyContent(),
-            ),
-            const ProviderBookingsScreen(),
-            ProviderServicesListScreen(key: _servicesListKey),
-            
-            const ProfileMenuScreen(),
-          ],
+        child: RefreshIndicator(
+          onRefresh: _loadDashboardData,
+          color: primaryColor,
+          child: _buildBodyContent(),
         ),
       ),
+      // Keep the floating action button pinned strictly to the dashboard layout view
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
@@ -162,42 +155,6 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         },
         backgroundColor: primaryColor,
         child: const Icon(Icons.add, color: Colors.white),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentTabIndex,
-        onTap: _onTabTapped,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: primaryColor,
-        unselectedItemColor: Colors.grey.shade500,
-        showUnselectedLabels: true,
-        selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-        unselectedLabelStyle: const TextStyle(fontSize: 12),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Tổng quan',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt_outlined),
-            activeIcon: Icon(Icons.list_alt),
-            label: 'Lịch hẹn',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.design_services_outlined),
-            activeIcon: Icon(Icons.design_services),
-            label: 'Dịch vụ',
-          ),
-      
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Cá nhân',
-          ),
-        ],
       ),
     );
   }
