@@ -15,7 +15,7 @@ class ProviderBookingsService {
         'get_provider_bookings',
         params: {
           'status_filter': filter,
-          'page_num': page,
+          'page_number': page,
           'page_size': pageSize,
         },
       );
