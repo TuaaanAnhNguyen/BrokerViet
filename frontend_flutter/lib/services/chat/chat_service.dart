@@ -1,5 +1,6 @@
 // lib/services/chat/chat_service.dart
 
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChatService {
@@ -7,121 +8,78 @@ class ChatService {
 
   String get currentUserId => _client.auth.currentUser?.id ?? '';
 
-  Future<String> getOrCreateChatRoom({
-    required String providerId,
-    required String customerId,
-  }) async {
-    if (customerId.isEmpty || providerId.isEmpty) {
-      throw Exception('ID người dùng không hợp lệ.');
+  // === STREAM CHAT ROOMS (via Edge Function + Realtime refresh) ===
+  Stream<List<Map<String, dynamic>>> streamChatRooms() {
+    final controller = StreamController<List<Map<String, dynamic>>>();
+
+    final uid = currentUserId;
+
+    if (uid.isEmpty) {
+      controller.add([]);
+      controller.close();
+      return controller.stream;
     }
 
-    final existingRoom = await _client
-        .from('chatrooms')
-        .select('chatroom_id')
-        .eq('customer_id', customerId)
-        .eq('provider_id', providerId)
-        .maybeSingle();
-
-    if (existingRoom != null) {
-      final chatroomId = existingRoom['chatroom_id'] as String;
-
-      return chatroomId;
+    Future<void> refresh() async {
+      final rooms = await fetchChatRooms();
+      controller.add(rooms);
     }
 
-    final newRoomRes = await _client
-        .from('chatrooms')
-        .insert({'customer_id': customerId, 'provider_id': providerId})
-        .select('chatroom_id')
-        .single();
+    refresh();
 
-    return newRoomRes['chatroom_id'] as String;
+    final channel = _client
+        .channel('chat_list_changes_$uid')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'chatrooms',
+          callback: (payload) async {
+            print("CHATROOM EVENT");
+            print(payload);
+            await refresh();
+          },
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'messages',
+          callback: (payload) async {
+            print("MESSAGE EVENT");
+            print(payload);
+            await refresh();
+          },
+        );
+
+    channel.subscribe();
+
+    controller.onCancel = () {
+      _client.removeChannel(channel);
+    };
+
+    return controller.stream;
   }
 
   Future<List<Map<String, dynamic>>> fetchChatRooms() async {
     final uid = currentUserId;
+
     if (uid.isEmpty) return [];
 
     try {
-      final List<dynamic> rooms = await _client
-          .from('chatrooms')
-          .select()
-          .or('customer_id.eq.$uid,provider_id.eq.$uid');
+      final response = await _client.functions.invoke(
+        'list-chatroom',
+        method: HttpMethod.get,
+        queryParameters: {'user_id': uid},
+      );
 
-      final hydratedRooms = <Map<String, dynamic>>[];
+      final data = response.data as Map<String, dynamic>;
 
-      for (var room in rooms) {
-        final String customerId = room['customer_id'] ?? '';
-        final String providerId = room['provider_id'] ?? '';
-        final String chatroomId = room['chatroom_id'];
+      final List<dynamic> rooms = data['chatrooms'] ?? [];
 
-        final bool isCustomer = customerId == uid;
-        final String targetUserId = isCustomer ? providerId : customerId;
-
-        if (targetUserId.isEmpty) continue;
-
-        // Đọc thông tin đối phương
-        final profileRes = await _client
-            .from('profiles')
-            .select('username, role, avatar_url')
-            .eq('user_id', targetUserId)
-            .maybeSingle();
-
-        // Đọc tin nhắn cuối cùng
-        final lastMsgRes = await _client
-            .from('messages')
-            .select('content, sent_at')
-            .eq('chatroom_id', chatroomId)
-            .order('sent_at', ascending: false)
-            .limit(1)
-            .maybeSingle();
-
-        hydratedRooms.add({
-          'chatroom_id': chatroomId,
-          'target_name': profileRes?['username'] ?? 'Người dùng BrokerViet',
-          'target_role': profileRes?['role'] ?? 'Thành viên',
-          'avatar_url': profileRes?['avatar_url'],
-          'last_message': lastMsgRes?['content'] ?? 'Chưa có tin nhắn nào.',
-          'time': lastMsgRes?['sent_at'] != null
-              ? _parseTimestamp(lastMsgRes!['sent_at'])
-              : '',
-          'unread_count': 0,
-        });
-      }
-      return hydratedRooms;
+      return rooms.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
-      print("Lỗi Fetch Phòng Chat: $e");
+      print('Error fetching chat rooms: $e');
+
       return [];
-    }
-  }
-
-  // Tạo một Realtime Channel để SUBSCRIBE biến động tin nhắn mới công khai
-  RealtimeChannel subscribeToChatChanges(Function onUpdate) {
-    final uid = currentUserId;
-
-    // Đăng ký kênh lắng nghe sự kiện INSERT tin nhắn mới trên toàn hệ thống
-    final channel = _client.channel('public:messages');
-
-    channel
-        .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
-          schema: 'public',
-          table: 'messages',
-          callback: (payload) {
-            // Mỗi khi có tin nhắn mới chạy vào DB, báo cho màn hình UI biết để Fetch lại data mới nhất
-            onUpdate();
-          },
-        )
-        .subscribe();
-
-    return channel;
-  }
-
-  String _parseTimestamp(String isoString) {
-    try {
-      final dateTime = DateTime.parse(isoString).toLocal();
-      return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-    } catch (_) {
-      return '';
     }
   }
 
@@ -130,29 +88,89 @@ class ChatService {
         .from('messages')
         .stream(primaryKey: ['message_id'])
         .eq('chatroom_id', chatroomId)
-        .order('sent_at', ascending: true);
+        .map((rows) {
+          rows.sort(
+            (a, b) => DateTime.parse(
+              a['sent_at'],
+            ).compareTo(DateTime.parse(b['sent_at'])),
+          );
+
+          return rows
+              .map(
+                (row) => {
+                  'message_id': row['message_id'],
+                  'sender_id': row['sender_id'],
+                  'content': row['content'],
+                  'sent_at': row['sent_at'],
+                },
+              )
+              .toList();
+        });
   }
 
+  // === GET OR CREATE CHATROOM ===
+  Future<String> getOrCreateChatRoom({
+    required String providerId,
+    required String customerId,
+  }) async {
+    try {
+      final response = await _client.functions.invoke(
+        'get-or-create-chatroom',
+        method: HttpMethod.post,
+        body: {'customer_id': customerId, 'provider_id': providerId},
+      );
+      final data = response.data as Map<String, dynamic>;
+      return data['chatroom_id']?.toString() ?? '';
+    } catch (e) {
+      print("Error getOrCreateChatRoom: $e");
+      return '';
+    }
+  }
+
+  // === SEND MESSAGE ===
   Future<void> sendMessage(String chatroomId, String text) async {
     final cleanText = text.trim();
-    if (cleanText.isEmpty) return;
+    if (cleanText.isEmpty || currentUserId.isEmpty) return;
 
-    await _client.from('messages').insert({
-      'chatroom_id': chatroomId,
-      'sender_id': currentUserId,
-      'content': cleanText,
-      'sent_at': DateTime.now().toUtc().toIso8601String(),
-    });
+    await _client.functions.invoke(
+      'send-message',
+      method: HttpMethod.post,
+      body: {
+        'chatroom_id': chatroomId,
+        'sender_id': currentUserId,
+        'content': cleanText,
+      },
+    );
   }
 
-  // String _parseTimestamp(String isoString) {
-  //   try {
-  //     final dateTime = DateTime.parse(isoString).toLocal();
-  //     final hour = dateTime.hour.toString().padLeft(2, '0');
-  //     final minute = dateTime.minute.toString().padLeft(2, '0');
-  //     return '$hour:$minute';
-  //   } catch (_) {
-  //     return '';
-  //   }
-  // }
+  Future<void> markAsRead(String chatroomId) async {
+    final uid = currentUserId;
+    if (uid.isEmpty) return;
+
+    try {
+      await _client
+          .from('chatrooms')
+          .update({'customer_unread_count': 0})
+          .eq('chatroom_id', chatroomId)
+          .eq('customer_id', uid);
+
+      await _client
+          .from('chatrooms')
+          .update({'provider_unread_count': 0})
+          .eq('chatroom_id', chatroomId)
+          .eq('provider_id', uid);
+    } catch (e) {
+      print('Error marking chatroom as read: $e');
+    }
+  }
+
+  String _parseTimestamp(dynamic isoString) {
+    if (isoString == null) return '';
+    try {
+      final dateTime = DateTime.parse(isoString.toString()).toLocal();
+      return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return '';
+    }
+  }
 }

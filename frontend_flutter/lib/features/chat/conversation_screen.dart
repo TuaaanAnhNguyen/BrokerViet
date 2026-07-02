@@ -103,8 +103,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
         title: Row(
           children: [
             buildAvatar(
-              (widget.avatarUrl == null || widget.avatarUrl == 'null') 
-                  ? '' 
+              (widget.avatarUrl == null || widget.avatarUrl == 'null')
+                  ? ''
                   : widget.avatarUrl!,
               radius: 18,
             ),

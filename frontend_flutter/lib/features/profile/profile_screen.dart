@@ -1,12 +1,15 @@
 // lib/features/profile/profile_screen.dart
-// the main profile screen that shows the user's information and a back button to go to the profile menu screen
+// the main profile screen that shows the user's information and a back button to go to the profile menu screen, not for actual editing
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../services/auth/auth_service.dart';
-import '../../widgets/avatar_builder.dart'; // ◄ Import your shared widget helper
+import '../../services/profile/profile_service.dart';
+import '../../models/profile_model.dart';
+import '../../widgets/avatar_builder.dart';
+import 'account_setting.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -15,7 +18,7 @@ class ProfileScreen extends StatelessWidget {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 70, // Optimize image size
+      imageQuality: 70,
     );
 
     if (image != null && context.mounted) {
@@ -29,6 +32,9 @@ class ProfileScreen extends StatelessWidget {
     const Color surfaceColor = Color(0xFFF8F9FF);
     const Color darkText = Color(0xFF0B1C30);
     const Color outlineVariant = Color(0xFFC3C6D7);
+
+    // Pull fresh info from database profiles
+    context.read<ProfileService>().add(LoadProfileRequested());
 
     return Scaffold(
       backgroundColor: surfaceColor,
@@ -55,7 +61,16 @@ class ProfileScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () {
-              // Trigger input state switches / update operations endpoints
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AccountSettingScreen(),
+                ),
+              ).then((_) {
+                if (context.mounted) {
+                  context.read<ProfileService>().add(LoadProfileRequested());
+                }
+              });
             },
             child: const Text(
               'Chỉnh sửa',
@@ -76,29 +91,43 @@ class ProfileScreen extends StatelessWidget {
           ),
         ),
       ),
-      // Wrapped with BlocBuilder to consume live authenticated data snapshots safely
-      body: BlocBuilder<AuthService, AuthState>(
+      body: BlocBuilder<ProfileService, ProfileState>(
         builder: (context, state) {
-          String name = 'Khách';
+          if (state is ProfileLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: primaryColor),
+            );
+          }
+
+          ProfileModel? profile;
+          String name = 'Người dùng';
           String email = 'Chưa cập nhật email';
-          String tier = 'Thành viên';
+          String phone = 'Chưa liên kết số điện thoại';
+          String tier = 'KHÁCH HÀNG';
           String avatarPath = 'assets/default_profile.png';
 
-          if (state is AuthSuccess) {
-            name = state.name;
-            email = state.email.isNotEmpty
-                ? state.email
+          if (state is ProfileLoadSuccess) {
+            profile = state.profile;
+            name = profile.username;
+            avatarPath = profile.avatarUrl ?? 'assets/default_profile.png';
+            tier = profile.role?.toUpperCase() == 'PROVIDER'
+                ? 'NHÀ CUNG CẤP'
+                : 'KHÁCH HÀNG';
+            email = profile.email?.isNotEmpty == true
+                ? profile.email!
                 : 'Chưa cập nhật email';
-            tier = state.memberTier;
-            avatarPath = state.avatarPath;
+            phone = profile.phone?.isNotEmpty == true
+                ? profile.phone!
+                : 'Chưa liên kết số điện thoại';
           }
+
+          final bool isProvider = profile?.role?.toUpperCase() == 'PROVIDER';
 
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // Centered Dynamic Avatar Profile Section Box
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 24),
@@ -115,7 +144,6 @@ class ProfileScreen extends StatelessWidget {
                         onTap: () => _pickAndUploadImage(context),
                         child: Stack(
                           children: [
-                            // ◄ Replaced generic character text circle with your reactive widget
                             buildAvatar(avatarPath, radius: 46),
                             Positioned(
                               bottom: 0,
@@ -151,6 +179,7 @@ class ProfileScreen extends StatelessWidget {
                         style: const TextStyle(
                           color: Color(0xFF434655),
                           fontSize: 13,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -158,37 +187,44 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Profile Form Block 1: Contact Parameters Metadata
                 _buildInfoCardGroup(
                   title: 'Thông tin cơ bản',
                   children: [
                     _buildProfileDataRow('Họ và tên', name),
-                    _buildProfileDataRow(
-                      'Mã thành viên',
-                      state is AuthSuccess
-                          ? 'ID: ${state.uid.substring(0, 8).toUpperCase()}'
-                          : '---',
-                    ),
-                    _buildProfileDataRow('Ngày sinh', 'Chưa cập nhật'),
-                    _buildProfileDataRow('Giới tính', 'Chưa cập nhật'),
+                    if (profile?.bio != null && profile!.bio!.isNotEmpty)
+                      _buildProfileDataRow('Giới thiệu', profile.bio!),
                   ],
                   outlineVariant: outlineVariant,
                   darkText: darkText,
                 ),
                 const SizedBox(height: 16),
 
-                // Profile Form Block 2: Communication Data Records
                 _buildInfoCardGroup(
-                  title: 'Liên hệ & Xác thực',
+                  title: 'Liên hệ & Vận hành',
                   children: [
-                    _buildProfileDataRow('Số điện thoại', 'Đã liên kết'),
+                    _buildProfileDataRow('Số điện thoại', phone),
                     _buildProfileDataRow('Địa chỉ Email', email),
-                    _buildProfileDataRow('Địa chỉ', 'Chưa cung cấp'),
                     _buildProfileDataRow(
-                      'Trạng thái',
-                      'Đã xác thực tài khoản BrokerViet',
-                      isVerified: true,
+                      'Địa chỉ thường trú',
+                      profile?.address ?? 'Chưa cung cấp địa chỉ',
                     ),
+
+                    if (isProvider) ...[
+                      _buildProfileDataRow(
+                        'Giờ hoạt động',
+                        '${profile?.openingHour ?? "--:--"} - ${profile?.closingHour ?? "--:--"}',
+                      ),
+                      _buildProfileDataRow(
+                        'Vị trí bản đồ',
+                        profile?.locationText ?? 'Chưa cấu hình tọa độ',
+                      ),
+                      _buildProfileDataRow(
+                        'Tài khoản Payout',
+                        profile?.payoutAccountNumber != null
+                            ? '[${profile?.payoutBankCode ?? "Bank"}] ${profile?.payoutAccountNumber}'
+                            : 'Chưa liên kết ngân hàng',
+                      ),
+                    ],
                   ],
                   outlineVariant: outlineVariant,
                   darkText: darkText,
@@ -233,11 +269,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileDataRow(
-    String label,
-    String value, {
-    bool isVerified = false,
-  }) {
+  Widget _buildProfileDataRow(String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: const BoxDecoration(
@@ -261,27 +293,13 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    value,
-                    style: const TextStyle(
-                      color: Color(0xFF0B1C30),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                if (isVerified) ...[
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.verified_user_rounded,
-                    color: Colors.green,
-                    size: 16,
-                  ),
-                ],
-              ],
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: Color(0xFF0B1C30),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],

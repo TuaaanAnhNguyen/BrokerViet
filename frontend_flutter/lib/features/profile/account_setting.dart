@@ -1,7 +1,13 @@
+// lib/feature/profile/account_setting.dart
+// actual screen for profile editing
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../widgets/avatar_builder.dart'; // ◄ 1. Import your avatar widget file
-import '../../services/auth/auth_service.dart'; // ◄ Make sure to import your AuthService/State file path
+import '../../widgets/avatar_builder.dart';
+import '../../services/profile/profile_service.dart';
+import '../../models/profile_model.dart';
+import '../../widgets/profile/account_setting_tile.dart';
+import '../../widgets/profile/edit_profile_sheet.dart';
 
 class AccountSettingScreen extends StatelessWidget {
   const AccountSettingScreen({super.key});
@@ -12,6 +18,8 @@ class AccountSettingScreen extends StatelessWidget {
     const Color surfaceColor = Color(0xFFF8F9FF);
     const Color darkText = Color(0xFF0B1C30);
     const Color outlineVariant = Color(0xFFC3C6D7);
+
+    context.read<ProfileService>().add(LoadProfileRequested());
 
     return Scaffold(
       backgroundColor: surfaceColor,
@@ -43,38 +51,59 @@ class AccountSettingScreen extends StatelessWidget {
           ),
         ),
       ),
-      // 2. Wrap the body with a BlocBuilder to extract the current user data
-      body: BlocBuilder<AuthService, AuthState>(
-        builder: (context, state) {
-          String avatarPath = 'assets/default_profile.png';
-          String emailDisplay = 'chưa cập nhật email';
-          String phoneDisplay = 'Chưa xác thực';
-
-          if (state is AuthSuccess) {
-            avatarPath = state.avatarPath;
-            emailDisplay = state.email.isNotEmpty
-                ? state.email
-                : 'Chưa cập nhật email';
-            // If phone isn't tracked in AuthSuccess, you can format your display string dynamically
+      body: BlocListener<ProfileService, ProfileState>(
+        listener: (context, state) {
+          if (state is ProfileActionSuccess) {
+            _showSnackBar(context, state.successMessage, Colors.green);
+          } else if (state is ProfileFailure) {
+            _showSnackBar(context, state.errorMessage, Colors.red);
           }
+        },
+        child: BlocBuilder<ProfileService, ProfileState>(
+          builder: (context, state) {
+            if (state is ProfileLoading) {
+              return const Center(
+                child: CircularProgressIndicator(color: primaryColor),
+              );
+            }
 
-          return ListView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            children: [
-              // 3. Header Profile Segment featuring your buildAvatar widget
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Column(
-                  children: [
-                    buildAvatar(
-                      avatarPath,
-                    ), // ◄ 4. Injected your widget here dynamically!
-                    const SizedBox(height: 12),
-                    if (state is AuthSuccess) ...[
+            ProfileModel? profile;
+            String avatarPath = 'assets/default_profile.png';
+            String nameDisplay = 'Người dùng';
+            String tierDisplay = 'CUSTOMER';
+            String emailDisplay = 'Chưa cập nhật email';
+            String phoneDisplay = 'Chưa xác thực';
+
+            if (state is ProfileLoadSuccess) {
+              profile = state.profile;
+              avatarPath = profile.avatarUrl ?? 'assets/default_profile.png';
+              nameDisplay = profile.username;
+              tierDisplay = profile.role?.toUpperCase() == 'PROVIDER'
+                  ? 'NHÀ CUNG CẤP'
+                  : 'KHÁCH HÀNG';
+              emailDisplay = profile.email?.isNotEmpty == true
+                  ? profile.email!
+                  : 'Chưa cập nhật email';
+              phoneDisplay = profile.phone?.isNotEmpty == true
+                  ? profile.phone!
+                  : 'Chưa xác thực';
+            }
+
+            final bool isProvider = profile?.role?.toUpperCase() == 'PROVIDER';
+
+            return ListView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              children: [
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Column(
+                    children: [
+                      buildAvatar(avatarPath),
+                      const SizedBox(height: 12),
                       Text(
-                        state.name,
+                        nameDisplay,
                         style: const TextStyle(
                           color: darkText,
                           fontSize: 18,
@@ -83,7 +112,7 @@ class AccountSettingScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        state.memberTier,
+                        tierDisplay,
                         style: const TextStyle(
                           color: primaryColor,
                           fontSize: 13,
@@ -91,106 +120,190 @@ class AccountSettingScreen extends StatelessWidget {
                         ),
                       ),
                     ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Section 1: Security Parameters
-              _buildSectionHeader('Bảo mật tài khoản'),
-              _buildSettingTile(
-                icon: Icons.lock_outline_rounded,
-                title: 'Thay đổi mật khẩu',
-                subtitle: 'Cập nhật mật khẩu định kỳ để bảo vệ tài khoản',
-                onTap: () => _showChangePasswordDialog(context),
-              ),
-              _buildSettingTile(
-                icon: Icons.phonelink_lock_rounded,
-                title: 'Xác thực 2 lớp (2FA)',
-                subtitle: 'Bảo vệ bổ sung bằng mã OTP qua số điện thoại',
-                trailing: Switch(
-                  value: true,
-                  activeThumbColor: primaryColor,
-                  onChanged: (bool value) {},
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Section 2: Linked Credentials (Using real BLoC state)
-              _buildSectionHeader('Thông tin liên kết'),
-              _buildSettingTile(
-                icon: Icons.email_outlined,
-                title: 'Thay đổi địa chỉ Email',
-                subtitle:
-                    emailDisplay, // ◄ Render true active email state dynamically
-                onTap: () => _showChangeEmailDialog(context),
-              ),
-              _buildSettingTile(
-                icon: Icons.phone_android_rounded,
-                title: 'Thay đổi số điện thoại',
-                subtitle: 'Đã xác thực bảo mật',
-                onTap: () {},
-              ),
-              const SizedBox(height: 16),
-
-              // Section 3: Privacy & Preferences
-              _buildSectionHeader('Quyền riêng tư & Thông báo'),
-              _buildSettingTile(
-                icon: Icons.notifications_none_rounded,
-                title: 'Thông báo ứng dụng',
-                subtitle: 'Nhận cập nhật về tiến độ sửa chữa & tin nhắn',
-                trailing: Switch(
-                  value: true,
-                  activeThumbColor: primaryColor,
-                  onChanged: (bool value) {},
-                ),
-              ),
-              _buildSettingTile(
-                icon: Icons.g_translate_rounded,
-                title: 'Ngôn ngữ hiển thị',
-                subtitle: 'Tiếng Việt',
-                onTap: () {},
-              ),
-              const SizedBox(height: 24),
-
-              // Section 4: Danger Zone Actions
-              _buildSectionHeader('Vùng nguy hiểm'),
-              Container(
-                color: Colors.white,
-                child: ListTile(
-                  leading: Icon(
-                    Icons.delete_forever_rounded,
-                    color: Colors.red.shade700,
-                    size: 22,
                   ),
-                  title: Text(
-                    'Yêu cầu xóa tài khoản',
-                    style: TextStyle(
-                      color: Colors.red.shade700,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                ),
+                const SizedBox(height: 8),
+
+                if (profile != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: ElevatedButton.icon(
+                      icon: const Icon(
+                        Icons.edit,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                      label: const Text(
+                        'Chỉnh sửa thông tin cá nhân',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                      ),
+                      onPressed: () => _openEditSheet(context, profile!),
                     ),
                   ),
-                  subtitle: const Text(
-                    'Xóa vĩnh viễn dữ liệu profile và lịch sử giao dịch',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                  trailing: const Icon(
-                    Icons.arrow_forward_ios,
-                    size: 14,
-                    color: Color(0xFFC3C6D7),
-                  ),
-                  onTap: () => _showDeleteAccountPrompt(context),
+
+                _buildSectionHeader('Bảo mật tài khoản'),
+                AccountSettingTile(
+                  icon: Icons.lock_outline_rounded,
+                  title: 'Thay đổi mật khẩu',
+                  subtitle: 'Cập nhật mật khẩu định kỳ để bảo vệ tài khoản',
+                  onTap: () {},
                 ),
-              ),
-            ],
-          );
-        },
+                const SizedBox(height: 16),
+
+                _buildSectionHeader('Thông tin liên kết'),
+                AccountSettingTile(
+                  icon: Icons.email_outlined,
+                  title: 'Thay đổi địa chỉ Email',
+                  subtitle: emailDisplay,
+                  onTap: () {},
+                ),
+                AccountSettingTile(
+                  icon: Icons.phone_android_rounded,
+                  title: 'Thay đổi số điện thoại',
+                  subtitle: phoneDisplay,
+                  onTap: () {},
+                ),
+                const SizedBox(height: 16),
+
+                if (isProvider && profile != null) ...[
+                  _buildSectionHeader('Thông tin vận hành (Chỉ Đối Tác)'),
+                  AccountSettingTile(
+                    icon: Icons.storefront_outlined,
+                    title: 'Cấu hình khung giờ hoạt động',
+                    subtitle:
+                        'Mở cửa: ${profile.openingHour ?? "Chưa thiết lập"} • Đóng cửa: ${profile.closingHour ?? "Chưa thiết lập"}',
+                    onTap: () => _openEditSheet(context, profile!),
+                  ),
+                  AccountSettingTile(
+                    icon: Icons.map_outlined,
+                    title: 'Địa chỉ & Tọa độ bản đồ',
+                    subtitle:
+                        profile.locationText ??
+                        profile.address ??
+                        'Chưa xác định vị trí vệ tinh',
+                    onTap: () => _openEditSheet(context, profile!),
+                  ),
+                  AccountSettingTile(
+                    icon: Icons.account_balance_wallet_outlined,
+                    title: 'Tài khoản ngân hàng nhận Payout',
+                    subtitle: profile.payoutAccountNumber != null
+                        ? '[${profile.payoutBankCode ?? "Ngân hàng"}] ${profile.payoutAccountNumber}'
+                        : 'Chưa cấu hình tài khoản nhận doanh thu',
+                    onTap: () => _openEditSheet(context, profile!),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                _buildSectionHeader('Quyền riêng tư & Thông báo'),
+                AccountSettingTile(
+                  icon: Icons.notifications_none_rounded,
+                  title: 'Thông báo ứng dụng',
+                  subtitle: 'Nhận cập nhật về tiến độ sửa chữa & tin nhắn',
+                  trailing: Switch(
+                    value: true,
+                    activeThumbColor: primaryColor,
+                    onChanged: (bool value) {},
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                _buildSectionHeader('Vùng nguy hiểm'),
+                Container(
+                  color: Colors.white,
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.delete_forever_rounded,
+                      color: Colors.red.shade700,
+                      size: 22,
+                    ),
+                    title: Text(
+                      'Yêu cầu xóa tài khoản',
+                      style: TextStyle(
+                        color: Colors.red.shade700,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Xóa vĩnh viễn dữ liệu profile khỏi hệ thống',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    trailing: const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 14,
+                      color: Color(0xFFC3C6D7),
+                    ),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (dialogContext) => AlertDialog(
+                          backgroundColor: Colors.white,
+                          surfaceTintColor: Colors.transparent,
+                          title: const Text(
+                            'Xóa tài khoản vĩnh viễn',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          content: const Text(
+                            'Hành động này không thể hoàn tác. Toàn bộ thông tin hồ sơ của bạn sẽ bị gỡ bỏ hoàn toàn khỏi hệ thống.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(dialogContext),
+                              child: const Text('Hủy'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(dialogContext);
+                                context.read<ProfileService>().add(
+                                  DeleteAccountRequested(),
+                                );
+                                Navigator.of(
+                                  context,
+                                ).popUntil((route) => route.isFirst);
+                              },
+                              child: Text(
+                                'Xác nhận xóa',
+                                style: TextStyle(
+                                  color: Colors.red.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  // Keep your existing _buildSectionHeader, _buildSettingTile, and _show dialog helpers below unchanged...
+  void _openEditSheet(BuildContext context, ProfileModel profile) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (modalContext) => EditProfileSheet(currentProfile: profile),
+    );
+  }
+
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -206,173 +319,9 @@ class AccountSettingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    Widget? trailing,
-    VoidCallback? onTap,
-  }) {
-    return Container(
-      color: Colors.white,
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFF1F3F6), width: 0.5),
-        ),
-      ),
-      child: ListTile(
-        leading: Icon(icon, color: const Color(0xFF004AC6), size: 22),
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: Color(0xFF0B1C30),
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: const TextStyle(color: Color(0xFF7E84A2), fontSize: 12),
-        ),
-        trailing:
-            trailing ??
-            const Icon(
-              Icons.arrow_forward_ios,
-              size: 14,
-              color: Color(0xFFC3C6D7),
-            ),
-        onTap: trailing == null ? onTap : null,
-      ),
-    );
-  }
-
-  void _showChangePasswordDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Đổi mật khẩu',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildDialogTextField(hint: 'Mật khẩu hiện tại', obscure: true),
-            const SizedBox(height: 10),
-            _buildDialogTextField(hint: 'Mật khẩu mới', obscure: true),
-            const SizedBox(height: 10),
-            _buildDialogTextField(hint: 'Xác nhận mật khẩu mới', obscure: true),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF004AC6),
-            ),
-            child: const Text(
-              'Cập nhật',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showChangeEmailDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Thay đổi Email',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildDialogTextField(hint: 'Địa chỉ Email mới', obscure: false),
-            const SizedBox(height: 10),
-            const Text(
-              'Hệ thống sẽ gửi một liên kết xác nhận mã OTP về hòm thư này để hoàn tất thay đổi.',
-              style: TextStyle(color: Colors.black45, fontSize: 11),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF004AC6),
-            ),
-            child: const Text('Gửi mã', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteAccountPrompt(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Xóa tài khoản vĩnh viễn?',
-          style: TextStyle(
-            color: Colors.red.shade700,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: const Text(
-          'Hành động này không thể hoàn tác. Toàn bộ thông tin đặt lịch dịch vụ, ví liên kết và lịch sử trò chuyện của bạn sẽ bị gỡ sạch khỏi hệ thống BrokerViet.',
-          style: TextStyle(fontSize: 13, height: 1.3),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy bỏ'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Tôi xác nhận xóa',
-              style: TextStyle(
-                color: Colors.red.shade700,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDialogTextField({required String hint, required bool obscure}) {
-    return TextFormField(
-      obscureText: obscure,
-      style: const TextStyle(fontSize: 14),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 10,
-        ),
-        filled: true,
-        fillColor: const Color(0xFFF1F3F6),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide.none,
-        ),
-      ),
-    );
+  void _showSnackBar(BuildContext context, String message, Color bgColor) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message), backgroundColor: bgColor));
   }
 }

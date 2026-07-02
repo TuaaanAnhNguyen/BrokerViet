@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/service_model.dart';
 import '../../models/service_category_model.dart';
+import '../../models/review_model.dart';
 import 'dart:convert';
 
 class ServiceMarketplaceService {
@@ -120,6 +121,64 @@ class ServiceMarketplaceService {
       return ServiceModel.fromJson(item);
     } catch (e) {
       print('>>> Lỗi khi gọi RPC get_service_detail: $e');
+      rethrow;
+    }
+  }
+
+  // ── REVIEWS ───────────────────────────────────────────────
+  Future<List<ReviewModel>> fetchServiceReviews(String serviceId) async {
+    try {
+      final response = await _supabase
+          .from('reviews')
+          .select('*, profiles(username, avatar_url)')
+          .eq('service_id', serviceId)
+          .order('created_at', ascending: false);
+
+      return (response as List).map((json) => ReviewModel.fromMap(json)).toList();
+    } catch (e) {
+      print('>>> Lỗi khi fetch reviews: $e');
+      return [];
+    }
+  }
+
+  Future<bool> checkUserPurchasedService(String serviceId) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return false;
+
+      final response = await _supabase
+          .from('bookings')
+          .select('booking_id')
+          .eq('customer_id', userId)
+          .eq('service_id', serviceId)
+          .eq('status', 'COMPLETED')
+          .limit(1)
+          .maybeSingle();
+
+      return response != null;
+    } catch (e) {
+      print('>>> Lỗi khi check purchase: $e');
+      return false;
+    }
+  }
+
+  Future<void> submitReview({
+    required String serviceId,
+    required int rating,
+    required String comment,
+  }) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('Bạn cần đăng nhập để đánh giá');
+
+      await _supabase.from('reviews').insert({
+        'service_id': serviceId,
+        'user_id': userId,
+        'rating': rating,
+        'comment': comment,
+      });
+    } catch (e) {
+      print('>>> Lỗi khi gửi review: $e');
       rethrow;
     }
   }

@@ -64,8 +64,6 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
     switch (tabLabel) {
       case 'Chờ duyệt':
         return BookingStatus.choDuyet;
-      case 'Đang thực hiện':
-        return BookingStatus.dangThucHien;
       case 'Đã hoàn thành':
         return BookingStatus.daHoanThanh;
       case 'Đã hủy':
@@ -79,7 +77,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
     try {
       final success = await _bookingService.updateBooking(
         bookingId,
-        status: 'Đã hủy',
+        status: 'CANCELLED',
       );
 
       if (success && mounted) {

@@ -74,4 +74,48 @@ class ServiceModel {
       imageUrl: json['image_url']?.toString() ?? 'assets/no_icon_placeholder.png',
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'description': subtitle,
+      'provider_id': providerId,
+      'service_cat_id': categoryId,
+      'price': priceValue,
+      'image_url': imageUrl,
+      'rating': rating,
+    };
+  }
+
+  ServiceModel copyWith({
+    String? id,
+    String? title,
+    String? subtitle,
+    String? providerId,
+    String? providerUsername,
+    String? providerAvatarUrl,
+    String? categoryId,
+    String? categoryName,
+    String? price,
+    double? priceValue,
+    double? rating,
+    List<String>? tags,
+    String? imageUrl,
+  }) {
+    return ServiceModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      subtitle: subtitle ?? this.subtitle,
+      providerId: providerId ?? this.providerId,
+      providerUsername: providerUsername ?? this.providerUsername,
+      providerAvatarUrl: providerAvatarUrl ?? this.providerAvatarUrl,
+      categoryId: categoryId ?? this.categoryId,
+      categoryName: categoryName ?? this.categoryName,
+      price: price ?? this.price,
+      priceValue: priceValue ?? this.priceValue,
+      rating: rating ?? this.rating,
+      tags: tags ?? this.tags,
+      imageUrl: imageUrl ?? this.imageUrl,
+    );
+  }
 }
