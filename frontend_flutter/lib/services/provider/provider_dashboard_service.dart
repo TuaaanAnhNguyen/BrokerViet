@@ -9,8 +9,9 @@ class ProviderDashboardService {
   Future<DashboardSummaryModel> fetchDashboardSummary() async {
     try {
       final response = await _supabase.rpc('get_provider_dashboard_summary');
-      
+
       if (response != null) {
+        print('DASHBOARD RESPONSE: $response');
         return DashboardSummaryModel.fromJson(response as Map<String, dynamic>);
       }
       return DashboardSummaryModel.empty();
@@ -31,10 +32,12 @@ class ProviderDashboardService {
   Future<List<ProviderBookingModel>> fetchUpcomingBookings() async {
     try {
       final response = await _supabase.rpc('get_provider_upcoming_bookings');
-      
+
       if (response != null && response is List) {
         return response
-            .map((e) => ProviderBookingModel.fromJson(e as Map<String, dynamic>))
+            .map(
+              (e) => ProviderBookingModel.fromJson(e as Map<String, dynamic>),
+            )
             .toList();
       }
       return [];
