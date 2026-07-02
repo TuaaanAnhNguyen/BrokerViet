@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/booking/booking_service.dart';
+import '../../services/payment/vnpay_service.dart';
 import '../../widgets/payment/vietqr_payment.dart';
 
 class BookingScreen extends StatefulWidget {
@@ -38,6 +40,7 @@ class BookingScreen extends StatefulWidget {
 class _BookingScreenState extends State<BookingScreen> {
   final _formKey = GlobalKey<FormState>();
   final BookingService _bookingService = BookingService();
+  final VNPayService _vnPayService = VNPayService();
   late TextEditingController _addressController;
   final _notesController = TextEditingController();
 
@@ -65,6 +68,8 @@ class _BookingScreenState extends State<BookingScreen> {
         return 'Thẻ Tín dụng / Ghi nợ';
       case 2:
         return 'Tiền mặt sau dịch vụ';
+      case 3:
+        return 'Cổng thanh toán VNPAY';
       default:
         return 'Chuyển khoản Online (VietQR)';
     }
@@ -91,14 +96,20 @@ class _BookingScreenState extends State<BookingScreen> {
         serviceType: widget.serviceType,
       );
 
+      // ASYNC FETCH: Ensure we have the actual persistent Booking ID from the database
+      final String? confirmedBookingId = (bookingResult != null && bookingResult['booking_id'] != null)
+          ? bookingResult['booking_id'].toString()
+          : await _bookingService.getLatestBookingId(widget.customerId);
+
       if (!mounted) return;
       setState(() => _isSubmitting = false);
 
-      // Extract generated data or fall back to local random values for execution tracking
-      final String trackingMemo =
-          (bookingResult != null && bookingResult['booking_id'] != null)
-          ? bookingResult['booking_id'].toString().substring(0, 8).toUpperCase()
-          : 'BK${DateTime.now().millisecondsSinceEpoch.toString().substring(9)}';
+      if (confirmedBookingId == null) {
+        throw Exception("Could not retrieve booking ID after creation.");
+      }
+
+      // Extract generated data for execution tracking
+      final String trackingMemo = confirmedBookingId.substring(0, 8).toUpperCase();
 
       final rootNavigator = Navigator.of(context);
 
@@ -167,6 +178,23 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
           ),
         );
+      } else if (_selectedPaymentMethod == 3) {
+        debugPrint('Sending to VNPay: bookingId=$confirmedBookingId, amount=$finalCalculatedPrice');
+        final paymentUrl = await _vnPayService.createPaymentUrl(
+          bookingId: confirmedBookingId,
+          amount: finalCalculatedPrice,
+          orderInfo: 'Thanh toan don hang ${widget.serviceTitle}',
+        );
+        print(paymentUrl);
+        if (paymentUrl != null) {
+          await _vnPayService.openVNPay(paymentUrl);
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Không thể khởi tạo thanh toán VNPAY.')),
+            );
+          }
+        }
       } else {
         showDialog(
           context: context,
@@ -519,14 +547,11 @@ class _BookingScreenState extends State<BookingScreen> {
                       outlineVariant,
                     ),
                     const SizedBox(height: 8),
-                    _buildPaymentRow(
-                      1,
-                      Icons.credit_card,
-                      'Thẻ Tín dụng / Ghi nợ',
-                      'Visa, Mastercard, JCB',
-                      primaryColor,
-                      outlineVariant,
-                    ),
+                    _buildPaymentRow(1, Icons.credit_card, 'Thẻ Tín dụng / Ghi nợ',
+                        'Visa, Mastercard, JCB', primaryColor, outlineVariant),
+                    const SizedBox(height: 8),
+                    _buildPaymentRow(3, Icons.account_balance_wallet_outlined, 'VNPAY Gateway',
+                        'Thanh toán qua ứng dụng VNPAY hoặc Ngân hàng', primaryColor, outlineVariant),
                     const SizedBox(height: 8),
                     _buildPaymentRow(
                       2,
