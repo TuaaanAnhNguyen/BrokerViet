@@ -40,7 +40,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   // 2. Define Provider Tabs
   final List<Widget> _providerTabs = [
     const ProviderDashboardScreen(),
-    const ProviderBookingsScreen(),
+    // const ProviderBookingsScreen(),
     const ProviderServicesListScreen(),
     const ChatListScreen(),
   ];
