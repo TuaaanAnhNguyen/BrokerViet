@@ -433,8 +433,8 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
           return NearbyProviderTile(
             name: item['username'] ?? item['email'] ?? 'Đơn vị ẩn danh',
             distance: distanceStr,
-            score:
-                '4.8', // You can fallback or wire up your reviews logic later
+            // score:
+            //     '4.8', // You can fallback or wire up your reviews logic later
           );
         },
       ),

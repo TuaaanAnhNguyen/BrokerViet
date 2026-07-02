@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 class NearbyProviderTile extends StatelessWidget {
   final String name;
   final String distance;
-  final String score;
+  final String? score;
 
   const NearbyProviderTile({
     super.key,
     required this.name,
     required this.distance,
-    required this.score,
+    this.score,
   });
 
   @override
@@ -47,22 +47,24 @@ class NearbyProviderTile extends StatelessWidget {
             distance,
             style: const TextStyle(color: Color(0xFF434655), fontSize: 11),
           ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.star, color: Colors.amber, size: 14),
-              const SizedBox(width: 2),
-              Text(
-                score,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF006591),
+          if (score != null && score!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.star, color: Colors.amber, size: 14),
+                const SizedBox(width: 2),
+                Text(
+                  score!,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF006591),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
       ),
     );
