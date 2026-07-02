@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/booking/booking_service.dart';
 import '../../services/payment/vnpay_service.dart';
 import '../../widgets/payment/vietqr_payment.dart';
@@ -68,7 +69,7 @@ class _BookingScreenState extends State<BookingScreen> {
       case 2:
         return 'Tiền mặt sau dịch vụ';
       case 3:
-        return 'VNPAY Gateway';
+        return 'Cổng thanh toán VNPAY';
       default:
         return 'Chuyển khoản Online (VietQR)';
     }
@@ -95,14 +96,20 @@ class _BookingScreenState extends State<BookingScreen> {
         serviceType: widget.serviceType,
       );
 
+      // ASYNC FETCH: Ensure we have the actual persistent Booking ID from the database
+      final String? confirmedBookingId = (bookingResult != null && bookingResult['booking_id'] != null)
+          ? bookingResult['booking_id'].toString()
+          : await _bookingService.getLatestBookingId(widget.customerId);
+
       if (!mounted) return;
       setState(() => _isSubmitting = false);
 
-      // Extract generated data or fall back to local random values for execution tracking
-      final String trackingMemo =
-          (bookingResult != null && bookingResult['booking_id'] != null)
-          ? bookingResult['booking_id'].toString().substring(0, 8).toUpperCase()
-          : 'BK${DateTime.now().millisecondsSinceEpoch.toString().substring(9)}';
+      if (confirmedBookingId == null) {
+        throw Exception("Could not retrieve booking ID after creation.");
+      }
+
+      // Extract generated data for execution tracking
+      final String trackingMemo = confirmedBookingId.substring(0, 8).toUpperCase();
 
       final rootNavigator = Navigator.of(context);
 
@@ -172,15 +179,13 @@ class _BookingScreenState extends State<BookingScreen> {
           ),
         );
       } else if (_selectedPaymentMethod == 3) {
-        // Option 3: VNPay route
+        debugPrint('Sending to VNPay: bookingId=$confirmedBookingId, amount=$finalCalculatedPrice');
         final paymentUrl = await _vnPayService.createPaymentUrl(
-          bookingId: (bookingResult != null && bookingResult['booking_id'] != null)
-              ? bookingResult['booking_id'].toString()
-              : '',
+          bookingId: confirmedBookingId,
           amount: finalCalculatedPrice,
           orderInfo: 'Thanh toan don hang ${widget.serviceTitle}',
         );
-
+        print(paymentUrl);
         if (paymentUrl != null) {
           await _vnPayService.openVNPay(paymentUrl);
         } else {
