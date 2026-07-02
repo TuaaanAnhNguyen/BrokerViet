@@ -40,7 +40,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   // 2. Define Provider Tabs
   final List<Widget> _providerTabs = [
     const ProviderDashboardScreen(),
-    const ProviderBookingsScreen(),
+    // const ProviderBookingsScreen(),
     const ProviderServicesListScreen(),
     const ChatListScreen(),
   ];
@@ -166,11 +166,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         activeIcon: Icon(Icons.dashboard),
         label: 'Tổng quan',
       ),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.calendar_month_outlined),
-        activeIcon: Icon(Icons.calendar_month),
-        label: 'Lịch hẹn',
-      ),
+      // BottomNavigationBarItem(
+      //   icon: Icon(Icons.calendar_month_outlined),
+      //   activeIcon: Icon(Icons.calendar_month),
+      //   label: 'Lịch hẹn',
+      // ),
       BottomNavigationBarItem(
         icon: Icon(Icons.construction_outlined),
         activeIcon: Icon(Icons.construction),

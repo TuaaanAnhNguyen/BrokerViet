@@ -143,6 +143,27 @@ class ChatService {
     );
   }
 
+  Future<void> markAsRead(String chatroomId) async {
+    final uid = currentUserId;
+    if (uid.isEmpty) return;
+
+    try {
+      await _client
+          .from('chatrooms')
+          .update({'customer_unread_count': 0})
+          .eq('chatroom_id', chatroomId)
+          .eq('customer_id', uid);
+
+      await _client
+          .from('chatrooms')
+          .update({'provider_unread_count': 0})
+          .eq('chatroom_id', chatroomId)
+          .eq('provider_id', uid);
+    } catch (e) {
+      print('Error marking chatroom as read: $e');
+    }
+  }
+
   String _parseTimestamp(dynamic isoString) {
     if (isoString == null) return '';
     try {

@@ -30,14 +30,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   void _submitRequest() {
     if (_formKey.currentState!.validate()) {
+      final phoneInput = _phoneController.text.trim();
+
       if (!_isOtpSent) {
-        context.read<AuthService>().add(
-          PasswordResetRequested(_phoneController.text.trim()),
-        );
+        context.read<AuthService>().add(ForgotPasswordRequested(phoneInput));
       } else {
         context.read<AuthService>().add(
-          PasswordResetConfirmed(
-            _phoneController.text.trim(),
+          ForgotPasswordConfirmed(
+            phoneInput,
             _otpController.text.trim(),
             _passwordController.text.trim(),
           ),
@@ -53,7 +53,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       appBar: AppBar(
         title: const Text(
           'Khôi phục mật khẩu',
-          style: TextStyle(color: Colors.black87),
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -68,7 +72,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               });
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Mã OTP đã được gửi!'),
+                  content: Text(
+                    'Mã OTP đã được gửi tới máy điện thoại của bạn!',
+                  ),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -77,7 +83,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text(
-                    'Đổi mật khẩu thành công. Vui lòng đăng nhập lại.',
+                    'Đổi mật khẩu thành công. Vui lòng đăng nhập lại bằng mật khẩu mới.',
                   ),
                   backgroundColor: Colors.green,
                 ),
@@ -103,11 +109,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   children: [
                     Text(
                       _isOtpSent
-                          ? 'Nhập mã OTP được gửi tới số điện thoại và đặt mật khẩu mới.'
-                          : 'Nhập số điện thoại của bạn để nhận mã xác thực OTP khôi phục.',
+                          ? 'Nhập mã số OTP gồm 6 chữ số và thiết lập chuỗi mật khẩu bảo mật mới.'
+                          : 'Nhập số điện thoại đã đăng ký tài khoản để hệ thống gửi mã xác thực OTP khôi phục.',
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 14,
                         color: Colors.black54,
+                        height: 1.4,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -117,9 +124,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       prefixIcon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
                       enabled: !_isOtpSent,
-                      validator: (value) => value == null || value.isEmpty
-                          ? 'Vui lòng nhập số điện thoại'
-                          : null,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Vui lòng nhập số điện thoại';
+                        }
+                        if (!RegExp(r'^[0-9]{9,11}$').hasMatch(
+                          value.trim().replaceAll(RegExp(r'\s+'), ''),
+                        )) {
+                          return 'Định dạng số điện thoại chưa đúng';
+                        }
+                        return null;
+                      },
                     ),
                     if (_isOtpSent) ...[
                       const SizedBox(height: 16),
@@ -128,7 +143,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         labelText: 'Mã xác thực OTP',
                         prefixIcon: Icons.pin_outlined,
                         keyboardType: TextInputType.number,
-                        validator: (value) => value == null || value.isEmpty
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
                             ? 'Vui lòng nhập mã OTP'
                             : null,
                       ),
@@ -139,7 +155,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         prefixIcon: Icons.lock_outlined,
                         isPasswordField: true,
                         validator: (value) => value == null || value.length < 6
-                            ? 'Mật khẩu mới phải từ 6 ký tự'
+                            ? 'Mật khẩu mới phải từ 6 ký tự trở lên'
                             : null,
                       ),
                     ],
@@ -150,17 +166,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ElevatedButton(
                         onPressed: _submitRequest,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
+                          backgroundColor: const Color(0xFF004AC6),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
+                          elevation: 0,
                         ),
                         child: Text(
                           _isOtpSent ? 'Xác nhận đổi mật khẩu' : 'Gửi mã OTP',
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

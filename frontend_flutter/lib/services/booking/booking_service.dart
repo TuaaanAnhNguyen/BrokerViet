@@ -180,4 +180,23 @@ class BookingService {
       queryParameters: {'booking_id': bookingId},
     );
   }
+
+  // ── FETCH LATEST ID ───────────────────────────────────────
+  Future<String?> getLatestBookingId(String customerId) async {
+    try {
+      print("fetching booking id");
+      final response = await _client
+          .from('bookings')
+          .select('booking_id')
+          .eq('customer_id', customerId)
+          .order('booked_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      print(response.toString());
+      return response?['booking_id']?.toString();
+    } catch (e) {
+      print('Error fetching latest booking ID: $e');
+      return null;
+    }
+  }
 }
