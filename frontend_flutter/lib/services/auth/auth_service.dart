@@ -51,16 +51,19 @@ class SignUpRequested extends AuthEvent {
   SignUpRequested(this.username, this.phone, this.password, this.role);
 }
 
-class PasswordResetRequested extends AuthEvent {
+// ==========================================
+// REWORKED FORGOT PASSWORD EVENTS
+// ==========================================
+class ForgotPasswordRequested extends AuthEvent {
   final String phone;
-  PasswordResetRequested(this.phone);
+  ForgotPasswordRequested(this.phone);
 }
 
-class PasswordResetConfirmed extends AuthEvent {
+class ForgotPasswordConfirmed extends AuthEvent {
   final String phone;
   final String otpCode;
   final String newPassword;
-  PasswordResetConfirmed(this.phone, this.otpCode, this.newPassword);
+  ForgotPasswordConfirmed(this.phone, this.otpCode, this.newPassword);
 }
 
 class UpdateAvatarRequested extends AuthEvent {
@@ -95,13 +98,9 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
         .eq('user_id', userId)
         .maybeSingle();
 
-    final profileUsername = profileData != null
-        ? profileData['username']
-        : null;
+    final profileUsername = profileData != null ? profileData['username'] : null;
     final profileRole = profileData != null ? profileData['role'] : null;
-    final profileAvatar = profileData != null
-        ? profileData['avatar_url']
-        : null;
+    final profileAvatar = profileData != null ? profileData['avatar_url'] : null;
 
     return AuthSuccess(
       uid: userId,
@@ -118,9 +117,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
       if (currentUser != null) {
         emit(AuthLoading());
         try {
-          final successState = await _fetchProfileAndBuildSuccessState(
-            currentUser,
-          );
+          final successState = await _fetchProfileAndBuildSuccessState(currentUser);
           if (successState != null) {
             emit(successState);
           } else {
@@ -142,9 +139,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
         );
 
         if (response.user != null) {
-          final successState = await _fetchProfileAndBuildSuccessState(
-            response.user!,
-          );
+          final successState = await _fetchProfileAndBuildSuccessState(response.user!);
           if (successState != null) {
             emit(successState);
           } else {
@@ -203,18 +198,10 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
           if (successState != null) {
             emit(successState);
           } else {
-            emit(
-              AuthFailure(
-                'Đăng ký thành công nhưng không thể tự động đăng nhập.',
-              ),
-            );
+            emit(AuthFailure('Đăng ký thành công nhưng không thể tự động đăng nhập.'));
           }
         } else {
-          emit(
-            AuthFailure(
-              'Đăng ký thành công nhưng không thể tự động đăng nhập.',
-            ),
-          );
+          emit(AuthFailure('Đăng ký thành công nhưng không thể tự động đăng nhập.'));
         }
       } on FunctionException catch (e) {
         final errorString = e.details?.toString() ?? '';
@@ -246,13 +233,10 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
       try {
         final file = File(event.imagePath);
         final fileExt = event.imagePath.split('.').last;
-        final fileName =
-            '${currentState.uid}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+        final fileName = '${currentState.uid}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
         final filePath = fileName;
 
-        await _supabase.storage
-            .from('profile_avatar')
-            .upload(
+        await _supabase.storage.from('profile_avatar').upload(
               filePath,
               file,
               fileOptions: const FileOptions(
@@ -261,9 +245,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
               ),
             );
 
-        final String publicUrl = _supabase.storage
-            .from('profile_avatar')
-            .getPublicUrl(filePath);
+        final String publicUrl = _supabase.storage.from('profile_avatar').getPublicUrl(filePath);
 
         await _supabase
             .from('profiles')
@@ -285,10 +267,25 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
       }
     });
 
-    on<PasswordResetRequested>((event, emit) async {
+    // ====================================================================
+    // HANDLING REWORKED FORGOT PASSWORD
+    // ====================================================================
+    on<ForgotPasswordRequested>((event, emit) async {
       emit(AuthLoading());
       try {
         final formattedPhone = _formatPhoneNumber(event.phone);
+
+        final targetProfile = await _supabase
+            .from('profiles')
+            .select('user_id')
+            .eq('phone', formattedPhone)
+            .maybeSingle();
+
+        if (targetProfile == null) {
+          emit(AuthFailure('Số điện thoại này chưa được đăng ký trên hệ thống.'));
+          return;
+        }
+
         await _supabase.auth.signInWithOtp(phone: formattedPhone);
         emit(AuthPasswordResetOtpSent());
       } on AuthException catch (e) {
@@ -298,10 +295,11 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
       }
     });
 
-    on<PasswordResetConfirmed>((event, emit) async {
+    on<ForgotPasswordConfirmed>((event, emit) async {
       emit(AuthLoading());
       try {
         final formattedPhone = _formatPhoneNumber(event.phone);
+        
         final response = await _supabase.auth.verifyOTP(
           phone: formattedPhone,
           token: event.otpCode,
@@ -312,10 +310,11 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
           await _supabase.auth.updateUser(
             UserAttributes(password: event.newPassword),
           );
+          
           await _supabase.auth.signOut();
           emit(AuthPasswordResetSuccess());
         } else {
-          emit(AuthFailure('Mã xác thực không chính xác.'));
+          emit(AuthFailure('Mã xác thực không chính xác hoặc đã hết hạn.'));
         }
       } on AuthException catch (e) {
         emit(AuthFailure(e.message));

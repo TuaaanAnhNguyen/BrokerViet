@@ -166,11 +166,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         activeIcon: Icon(Icons.dashboard),
         label: 'Tổng quan',
       ),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.calendar_month_outlined),
-        activeIcon: Icon(Icons.calendar_month),
-        label: 'Lịch hẹn',
-      ),
+      // BottomNavigationBarItem(
+      //   icon: Icon(Icons.calendar_month_outlined),
+      //   activeIcon: Icon(Icons.calendar_month),
+      //   label: 'Lịch hẹn',
+      // ),
       BottomNavigationBarItem(
         icon: Icon(Icons.construction_outlined),
         activeIcon: Icon(Icons.construction),

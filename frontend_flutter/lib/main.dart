@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'features/auth/login_screen.dart';
 import 'services/auth/auth_service.dart';
+import 'services/profile/profile_service.dart';
 import 'features/main/main_navigation_shell.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -31,7 +32,10 @@ class BrokerVietApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthService>(create: (context) => AuthService()),
+        BlocProvider<AuthService>(
+          create: (context) => AuthService()..add(AppStarted()),
+        ),
+        BlocProvider<ProfileService>(create: (context) => ProfileService()),
       ],
       child: MaterialApp(
         title: 'BrokerViet',
@@ -43,7 +47,7 @@ class BrokerVietApp extends StatelessWidget {
         home: BlocBuilder<AuthService, AuthState>(
           builder: (context, state) {
             if (state is AuthSuccess) {
-              // Return MainNavigationShell for both roles since it internally 
+              // Return MainNavigationShell for both roles since it internally
               // splits into _providerTabs or _customerTabs seamlessly.
               return const MainNavigationShell();
             }

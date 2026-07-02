@@ -1,4 +1,5 @@
 // lib/feature/profile/account_setting.dart
+// actual screen for profile editing
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -94,7 +95,6 @@ class AccountSettingScreen extends StatelessWidget {
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.symmetric(vertical: 12),
               children: [
-                // Header Profile Segment
                 Container(
                   color: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 24),
@@ -147,27 +147,15 @@ class AccountSettingScreen extends StatelessWidget {
                     ),
                   ),
 
-                // Section 1: Security
                 _buildSectionHeader('Bảo mật tài khoản'),
                 AccountSettingTile(
                   icon: Icons.lock_outline_rounded,
                   title: 'Thay đổi mật khẩu',
                   subtitle: 'Cập nhật mật khẩu định kỳ để bảo vệ tài khoản',
-                  onTap: () {}, // Add target dialog method execution here
-                ),
-                AccountSettingTile(
-                  icon: Icons.phonelink_lock_rounded,
-                  title: 'Xác thực 2 lớp (2FA)',
-                  subtitle: 'Bảo vệ bổ sung bằng mã OTP qua số điện thoại',
-                  trailing: Switch(
-                    value: true,
-                    activeThumbColor: primaryColor,
-                    onChanged: (bool value) {},
-                  ),
+                  onTap: () {},
                 ),
                 const SizedBox(height: 16),
 
-                // Section 2: Links
                 _buildSectionHeader('Thông tin liên kết'),
                 AccountSettingTile(
                   icon: Icons.email_outlined,
@@ -183,7 +171,6 @@ class AccountSettingScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Section 3: Provider Operational Data
                 if (isProvider && profile != null) ...[
                   _buildSectionHeader('Thông tin vận hành (Chỉ Đối Tác)'),
                   AccountSettingTile(
@@ -213,7 +200,6 @@ class AccountSettingScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                 ],
 
-                // Section 4: Privacy
                 _buildSectionHeader('Quyền riêng tư & Thông báo'),
                 AccountSettingTile(
                   icon: Icons.notifications_none_rounded,
@@ -225,15 +211,8 @@ class AccountSettingScreen extends StatelessWidget {
                     onChanged: (bool value) {},
                   ),
                 ),
-                AccountSettingTile(
-                  icon: Icons.g_translate_rounded,
-                  title: 'Ngôn ngữ hiển thị',
-                  subtitle: 'Tiếng Việt',
-                  onTap: () {},
-                ),
                 const SizedBox(height: 24),
 
-                // Section 5: Danger Zone
                 _buildSectionHeader('Vùng nguy hiểm'),
                 Container(
                   color: Colors.white,
@@ -252,7 +231,7 @@ class AccountSettingScreen extends StatelessWidget {
                       ),
                     ),
                     subtitle: const Text(
-                      'Xóa vĩnh viễn dữ liệu profile và lịch sử giao dịch',
+                      'Xóa vĩnh viễn dữ liệu profile khỏi hệ thống',
                       style: TextStyle(fontSize: 12),
                     ),
                     trailing: const Icon(
@@ -260,7 +239,49 @@ class AccountSettingScreen extends StatelessWidget {
                       size: 14,
                       color: Color(0xFFC3C6D7),
                     ),
-                    onTap: () {},
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (dialogContext) => AlertDialog(
+                          backgroundColor: Colors.white,
+                          surfaceTintColor: Colors.transparent,
+                          title: const Text(
+                            'Xóa tài khoản vĩnh viễn',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          content: const Text(
+                            'Hành động này không thể hoàn tác. Toàn bộ thông tin hồ sơ của bạn sẽ bị gỡ bỏ hoàn toàn khỏi hệ thống.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(dialogContext),
+                              child: const Text('Hủy'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(dialogContext);
+                                context.read<ProfileService>().add(
+                                  DeleteAccountRequested(),
+                                );
+                                Navigator.of(
+                                  context,
+                                ).popUntil((route) => route.isFirst);
+                              },
+                              child: Text(
+                                'Xác nhận xóa',
+                                style: TextStyle(
+                                  color: Colors.red.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],

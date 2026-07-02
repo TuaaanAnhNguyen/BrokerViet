@@ -64,14 +64,14 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               const SizedBox(height: 16),
               _buildFormLabel('Tên hiển thị'),
               _buildField(hint: 'Nhập tên mới', initialValue: updatedName, onChanged: (val) => updatedName = val),
-              _buildFormLabel('Giới thiệu ngắn (Bio)'),
-              _buildField(hint: 'Nhập tiểu sử ngắn', initialValue: updatedBio, onChanged: (val) => updatedBio = val),
+              _buildFormLabel('Giới thiệu ngắn (Tiểu sử)'),
+              _buildField(hint: 'Nhập giới thiệu kinh nghiệm...', initialValue: updatedBio, onChanged: (val) => updatedBio = val),
               _buildFormLabel('Địa chỉ thường trú'),
-              _buildField(hint: 'Nhập địa chỉ', initialValue: updatedAddress, onChanged: (val) => updatedAddress = val),
+              _buildField(hint: 'Nhập địa chỉ nhà', initialValue: updatedAddress, onChanged: (val) => updatedAddress = val),
               
               if (isProvider) ...[
                 const Divider(height: 32),
-                const Text('Cấu hình kinh doanh (Provider)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF004AC6))),
+                const Text('Cấu hình kinh doanh (Đối Tác)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF004AC6))),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -97,11 +97,11 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                   ],
                 ),
                 _buildFormLabel('Tên hiển thị vị trí định vị'),
-                _buildField(hint: 'Tòa nhà...', initialValue: updatedLocText, onChanged: (val) => updatedLocText = val),
+                _buildField(hint: 'Tòa nhà, số tầng...', initialValue: updatedLocText, onChanged: (val) => updatedLocText = val),
                 _buildFormLabel('Mã ngân hàng'),
-                _buildField(hint: 'VCB / TCB', initialValue: updatedBankCode, onChanged: (val) => updatedBankCode = val),
+                _buildField(hint: 'VCB / TCB / MB', initialValue: updatedBankCode, onChanged: (val) => updatedBankCode = val),
                 _buildFormLabel('Số tài khoản nhận Payout'),
-                _buildField(hint: '0123...', initialValue: updatedBankAcc, onChanged: (val) => updatedBankAcc = val),
+                _buildField(hint: 'Nhập số tài khoản ngân hàng', initialValue: updatedBankAcc, onChanged: (val) => updatedBankAcc = val),
               ],
               const SizedBox(height: 24),
               Row(
