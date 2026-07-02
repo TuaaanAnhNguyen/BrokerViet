@@ -152,7 +152,7 @@ class ServiceMarketplaceService {
           .select('booking_id')
           .eq('customer_id', userId)
           .eq('service_id', serviceId)
-          .eq('status', 'completed')
+          .eq('status', 'COMPLETED')
           .limit(1)
           .maybeSingle();
 
