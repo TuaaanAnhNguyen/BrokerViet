@@ -98,9 +98,13 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
         .eq('user_id', userId)
         .maybeSingle();
 
-    final profileUsername = profileData != null ? profileData['username'] : null;
+    final profileUsername = profileData != null
+        ? profileData['username']
+        : null;
     final profileRole = profileData != null ? profileData['role'] : null;
-    final profileAvatar = profileData != null ? profileData['avatar_url'] : null;
+    final profileAvatar = profileData != null
+        ? profileData['avatar_url']
+        : null;
 
     return AuthSuccess(
       uid: userId,
@@ -117,7 +121,9 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
       if (currentUser != null) {
         emit(AuthLoading());
         try {
-          final successState = await _fetchProfileAndBuildSuccessState(currentUser);
+          final successState = await _fetchProfileAndBuildSuccessState(
+            currentUser,
+          );
           if (successState != null) {
             emit(successState);
           } else {
@@ -139,7 +145,9 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
         );
 
         if (response.user != null) {
-          final successState = await _fetchProfileAndBuildSuccessState(response.user!);
+          final successState = await _fetchProfileAndBuildSuccessState(
+            response.user!,
+          );
           if (successState != null) {
             emit(successState);
           } else {
@@ -151,7 +159,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
       } on AuthException catch (e) {
         emit(AuthFailure(e.message));
       } catch (e) {
-        emit(AuthFailure('Số điện thoại hoặc mật khẩu không chính xác.'));
+        emit(AuthFailure(e.toString()));
       }
     });
 
@@ -198,10 +206,18 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
           if (successState != null) {
             emit(successState);
           } else {
-            emit(AuthFailure('Đăng ký thành công nhưng không thể tự động đăng nhập.'));
+            emit(
+              AuthFailure(
+                'Đăng ký thành công nhưng không thể tự động đăng nhập.',
+              ),
+            );
           }
         } else {
-          emit(AuthFailure('Đăng ký thành công nhưng không thể tự động đăng nhập.'));
+          emit(
+            AuthFailure(
+              'Đăng ký thành công nhưng không thể tự động đăng nhập.',
+            ),
+          );
         }
       } on FunctionException catch (e) {
         final errorString = e.details?.toString() ?? '';
@@ -233,10 +249,13 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
       try {
         final file = File(event.imagePath);
         final fileExt = event.imagePath.split('.').last;
-        final fileName = '${currentState.uid}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+        final fileName =
+            '${currentState.uid}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
         final filePath = fileName;
 
-        await _supabase.storage.from('profile_avatar').upload(
+        await _supabase.storage
+            .from('profile_avatar')
+            .upload(
               filePath,
               file,
               fileOptions: const FileOptions(
@@ -245,7 +264,9 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
               ),
             );
 
-        final String publicUrl = _supabase.storage.from('profile_avatar').getPublicUrl(filePath);
+        final String publicUrl = _supabase.storage
+            .from('profile_avatar')
+            .getPublicUrl(filePath);
 
         await _supabase
             .from('profiles')
@@ -282,7 +303,9 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
             .maybeSingle();
 
         if (targetProfile == null) {
-          emit(AuthFailure('Số điện thoại này chưa được đăng ký trên hệ thống.'));
+          emit(
+            AuthFailure('Số điện thoại này chưa được đăng ký trên hệ thống.'),
+          );
           return;
         }
 
@@ -299,7 +322,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
       emit(AuthLoading());
       try {
         final formattedPhone = _formatPhoneNumber(event.phone);
-        
+
         final response = await _supabase.auth.verifyOTP(
           phone: formattedPhone,
           token: event.otpCode,
@@ -310,7 +333,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
           await _supabase.auth.updateUser(
             UserAttributes(password: event.newPassword),
           );
-          
+
           await _supabase.auth.signOut();
           emit(AuthPasswordResetSuccess());
         } else {

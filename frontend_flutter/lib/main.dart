@@ -11,6 +11,8 @@ import 'features/main/main_navigation_shell.dart';
 import 'features/payment/vnpay_result_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:firebase_core/firebase_core.dart';
+import './services/notification/firebase_cloud_messaging_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +25,22 @@ void main() async {
 
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
   await initializeDateFormatting('vi_VN', null);
+
+  try {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: "AIzaSyCcf9ueYgdZdtODLjBYMmSpcPoRdJ7jjI4",
+        appId: "1:579951195028:android:c39859a995e4badf6a9581",
+        messagingSenderId: "579951195028",
+        projectId: "brokerviet-b7d3f",
+        storageBucket: "brokerviet-b7d3f.firebasestorage.app",
+      ),
+    );
+    
+    await FcmHandler().initNotificationLifecycle();
+  } catch (e) {
+    print("Firebase Init Failed: $e");
+  }
 
   runApp(const BrokerVietApp());
 }

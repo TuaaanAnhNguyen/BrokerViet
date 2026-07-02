@@ -1,8 +1,77 @@
+// lib/services/notification/notification_service.dart
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/notification_model.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
   final _client = Supabase.instance.client;
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
+
+  NotificationService() {
+    _initRealtimeNotificationListener();
+  }
+
+  void _initRealtimeNotificationListener() {
+    final userId = _client.auth.currentSession?.user.id;
+    if (userId == null) return;
+
+    // Listen to real-time INSERT database modifications specifically for this user
+    _client
+        .channel('public:notifications:user_$userId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'notifications',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user_id',
+            value: userId,
+          ),
+          callback: (payload) {
+            // Extract text fields straight from the raw database row payload map
+            final String title =
+                payload.newRecord['title'] ?? 'BrokerViet Update';
+            final String content = payload.newRecord['content'] ?? '';
+
+            // Push it to the device system UI drawer instantly
+            _showLocalNotificationBanner(title, content);
+          },
+        )
+        .subscribe();
+  }
+
+  Future<void> _showLocalNotificationBanner(
+    String title,
+    String content,
+  ) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'high_importance_channel',
+          'High Importance Notifications',
+          channelDescription:
+              'This channel is used for important broker and chat updates.',
+          importance: Importance.max,
+          priority: Priority.high,
+          showWhen: true,
+        );
+
+    const NotificationDetails platformDetails = NotificationDetails(
+      android: androidDetails,
+    );
+
+    // Generate an ID for the alert banner item slot
+    int notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+    // FIX: Swapped positional arguments for named parameters required by version 22+
+    await _localNotifications.show(
+      id: notificationId,
+      title: title,
+      body: content,
+      notificationDetails: platformDetails,
+    );
+  }
 
   // Get notifications for current user
   Future<List<NotificationModel>> getNotifications() async {
@@ -34,7 +103,10 @@ class NotificationService {
         .stream(primaryKey: ['notification_id'])
         .eq('user_id', userId)
         .order('created_at', ascending: false)
-        .map((data) => data.map((json) => NotificationModel.fromMap(json)).toList());
+        .map(
+          (data) =>
+              data.map((json) => NotificationModel.fromMap(json)).toList(),
+        );
   }
 
   // Mark a notification as read
