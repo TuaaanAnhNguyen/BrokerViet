@@ -18,7 +18,10 @@ class DashboardSummaryModel {
   });
 
   factory DashboardSummaryModel.fromJson(Map<String, dynamic> json) {
-    final currencyFormatter = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: 'đ',
+    );
 
     double revToday = 0;
     if (json['revenue_today'] != null) {
@@ -26,17 +29,21 @@ class DashboardSummaryModel {
     }
 
     double revMonth = 0;
-    if (json['monthly_revenue'] != null) {
-      revMonth = double.tryParse(json['monthly_revenue'].toString()) ?? 0;
+    if (json['revenue_month'] != null) {
+      revMonth = double.tryParse(json['revenue_month'].toString()) ?? 0;
     }
 
     return DashboardSummaryModel(
-      todaysBookings: int.tryParse(json['todays_bookings']?.toString() ?? '0') ?? 0,
-      pendingRequests: int.tryParse(json['pending_requests']?.toString() ?? '0') ?? 0,
+      todaysBookings:
+          int.tryParse(json['today_bookings_count']?.toString() ?? '0') ?? 0,
+      pendingRequests:
+          int.tryParse(json['pending_requests_count']?.toString() ?? '0') ?? 0,
       revenueToday: currencyFormatter.format(revToday),
       monthlyRevenue: currencyFormatter.format(revMonth),
-      averageRating: double.tryParse(json['average_rating']?.toString() ?? '0') ?? 0.0,
-      totalCompletedJobs: int.tryParse(json['total_completed_jobs']?.toString() ?? '0') ?? 0,
+      averageRating:
+          double.tryParse(json['average_rating']?.toString() ?? '0') ?? 0.0,
+      totalCompletedJobs:
+          int.tryParse(json['total_completed_jobs']?.toString() ?? '0') ?? 0,
     );
   }
 

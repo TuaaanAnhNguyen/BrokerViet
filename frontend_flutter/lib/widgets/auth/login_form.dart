@@ -121,11 +121,13 @@ class _LoginFormState extends State<LoginForm> {
                 setState(() {
                   if (errorMsg.contains('invalid login credentials') ||
                       errorMsg.contains('không chính xác') ||
+                      errorMsg.contains('user not found') ||
                       errorMsg.contains('invalid_credentials')) {
                     _serverLoginError =
                         'Số điện thoại hoặc mật khẩu không chính xác.';
                   } else {
                     _serverLoginError = 'Lỗi hệ thống. Vui lòng thử lại sau.';
+                    print('Login error: ${state.errorMessage}');
                   }
                 });
 
