@@ -62,27 +62,33 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
     _initDeepLinks();
   }
 
-  void _initDeepLinks() {
-    _appLinks.uriLinkStream.listen((uri) {
-      _handleDeepLink(uri);
-    });
+  Future<void> _initDeepLinks() async {
+    final initialUri = await _appLinks.getInitialLink();
+
+    if (initialUri != null) {
+      _handleDeepLink(initialUri);
+    }
+
+    _appLinks.uriLinkStream.listen(_handleDeepLink);
   }
 
   void _handleDeepLink(Uri uri) {
     if (uri.host == 'payment-result') {
-      final txnRef = uri.queryParameters['vnp_TxnRef'];
-      if (txnRef != null) {
-        // Assume txnRef is bookingId_timestamp_random
-        final bookingId = txnRef.split('_').first;
-        _navigatorKey.currentState?.push(
+      final bookingId = uri.queryParameters['booking_id'];
+      final responseCode = uri.queryParameters['response_code'];
+
+      if (bookingId != null) {
+        _navigatorKey.currentState?.pushReplacement(
           MaterialPageRoute(
-            builder: (context) => VNPayResultPage(bookingId: bookingId),
+            builder: (context) => VNPayResultPage(
+              bookingId: bookingId,
+
+            ),
           ),
         );
       }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -92,23 +98,37 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
         ),
         BlocProvider<ProfileService>(create: (context) => ProfileService()),
       ],
-      child: MaterialApp(
-        navigatorKey: _navigatorKey,
-        title: 'BrokerViet',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        ),
-        home: BlocBuilder<AuthService, AuthState>(
-          builder: (context, state) {
-            if (state is AuthSuccess) {
-              return const MainNavigationShell();
-            }
-            return const LoginScreen();
+        child: MaterialApp(
+          navigatorKey: _navigatorKey,
+          title: 'BrokerViet',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          ),
+
+          onUnknownRoute: (settings) {
+            return MaterialPageRoute(
+              builder: (_) => BlocBuilder<AuthService, AuthState>(
+                builder: (context, state) {
+                  if (state is AuthSuccess) {
+                    return const MainNavigationShell();
+                  }
+                  return const LoginScreen();
+                },
+              ),
+            );
           },
+
+          home: BlocBuilder<AuthService, AuthState>(
+            builder: (context, state) {
+              if (state is AuthSuccess) {
+                return const MainNavigationShell();
+              }
+              return const LoginScreen();
+            },
+          ),
         ),
-      ),
     );
   }
 }
