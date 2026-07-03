@@ -14,6 +14,7 @@ class BookingService {
     required int totalPrice,
     required DateTime scheduledAt,
     String? serviceType,
+    String? voucherCode,
   }) async {
     final response = await _client.functions.invoke(
       'create-booking',
@@ -25,6 +26,7 @@ class BookingService {
         'total_price': totalPrice,
         'scheduled_at': scheduledAt.toIso8601String(),
         if (serviceType != null) 'service_type': serviceType,
+        if (voucherCode != null) 'voucher_code': voucherCode,
       },
     );
 
@@ -51,7 +53,8 @@ class BookingService {
       await _notificationService.createNotification(
         userId: customerId,
         title: 'Đặt lịch thành công',
-        content: 'Yêu cầu cho dịch vụ "$sType" đã được gửi thành công và đang chờ xác nhận.',
+        content:
+            'Yêu cầu cho dịch vụ "$sType" đã được gửi thành công và đang chờ xác nhận.',
       );
     } catch (e) {
       print('Error creating booking notification: $e');
@@ -139,22 +142,27 @@ class BookingService {
       final customerId = bookingData['customer_id'];
       final providerId = bookingData['provider_id'];
       final sType = bookingData['service_type'] ?? 'Dịch vụ';
-      
+
       final currentUserId = _client.auth.currentUser?.id;
-      final recipientId = (currentUserId == customerId) ? providerId : customerId;
-      
+      final recipientId = (currentUserId == customerId)
+          ? providerId
+          : customerId;
+
       String title = 'Cập nhật đơn hàng';
       String content = 'Đơn hàng #$bookingId đã chuyển sang trạng thái $status';
 
       final statusLower = status.toLowerCase();
 
-      if (statusLower.contains('duyệt') || statusLower.contains('chấp nhận') || statusLower == 'pending') {
+      if (statusLower.contains('duyệt') ||
+          statusLower.contains('chấp nhận') ||
+          statusLower == 'pending') {
         title = 'Đơn hàng đã được duyệt';
         content = 'Yêu cầu cho dịch vụ "$sType" của bạn đã được chấp nhận.';
       } else if (statusLower.contains('hủy') || statusLower == 'cancelled') {
         title = 'Đơn hàng đã bị hủy';
         content = 'Đơn hàng cho dịch vụ "$sType" đã được hủy thành công.';
-      } else if (statusLower.contains('hoàn thành') || statusLower == 'completed') {
+      } else if (statusLower.contains('hoàn thành') ||
+          statusLower == 'completed') {
         title = 'Dịch vụ hoàn tất';
         content = 'Dịch vụ "$sType" đã được đánh dấu là hoàn thành.';
       } else if (statusLower.contains('từ chối') || statusLower == 'rejected') {
