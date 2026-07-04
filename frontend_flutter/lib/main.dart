@@ -69,8 +69,12 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
   }
 
   void _handleDeepLink(Uri uri) {
-    if (uri.host == 'payment-result') {
-      final txnRef = uri.queryParameters['vnp_TxnRef'];
+    print("Deep link received: $uri");
+    print("Scheme: ${uri.scheme}");
+    print("Host: ${uri.host}");
+    print("Query: ${uri.queryParameters}");
+    if (uri.host == 'vnpay_result_page') {
+      final txnRef = uri.queryParameters['txn_ref'];
       if (txnRef != null) {
         // Assume txnRef is bookingId_timestamp_random
         final bookingId = txnRef.split('_').first;
