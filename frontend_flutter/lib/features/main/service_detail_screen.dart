@@ -12,6 +12,7 @@ import 'package:broker_viet/screens/provider/view_provider_screen.dart';
 import '../../services/marketplace/service_marketplace_service.dart';
 import '../booking/booking_service_screen.dart';
 import './map_screen.dart';
+import './all_reviews_screen.dart';
 
 class ServiceDetailScreen extends StatefulWidget {
   final String serviceId;
@@ -252,6 +253,12 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   }
 
   Widget _buildTitleSection() {
+    double averageRating = 0.0;
+    if (_reviews.isNotEmpty) {
+      double sum = _reviews.fold(0, (prev, element) => prev + element.rating);
+      averageRating = sum / _reviews.length;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -269,9 +276,16 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             const Icon(Icons.star, color: Colors.amber, size: 20),
             const SizedBox(width: 4),
             Text(
-              _service?.rating.toStringAsFixed(1) ?? '0.0',
+              averageRating > 0 ? averageRating.toStringAsFixed(1) : 'Chưa có đánh giá',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
+            if (_reviews.isNotEmpty) ...[
+              const SizedBox(width: 4),
+              Text(
+                '(${_reviews.length})',
+                style: const TextStyle(color: bodyText, fontSize: 14),
+              ),
+            ],
           ],
         ),
       ],
@@ -440,6 +454,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   }
 
   Widget _buildReviewsSection() {
+    final currentUserId = supabase.auth.currentUser?.id;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -456,7 +472,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             ),
             if (_hasPurchased)
               TextButton.icon(
-                onPressed: _showReviewForm,
+                onPressed: () => _showReviewForm(),
                 icon: const Icon(Icons.rate_review, size: 18),
                 label: const Text('Viết đánh giá'),
                 style: TextButton.styleFrom(foregroundColor: primaryColor),
@@ -485,6 +501,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             separatorBuilder: (context, index) => const Divider(height: 32),
             itemBuilder: (context, index) {
               final review = _reviews[index];
+              final isOwner = currentUserId != null && review.userId == currentUserId;
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -496,6 +514,13 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         review.userName,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
+                      if (isOwner) ...[
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => _showReviewForm(existingReview: review),
+                          child: const Icon(Icons.edit, size: 14, color: primaryColor),
+                        ),
+                      ],
                       const Spacer(),
                       Row(
                         children: List.generate(
@@ -527,7 +552,15 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           const SizedBox(height: 16),
           OutlinedButton(
             onPressed: () {
-              // TODO: Navigate to all reviews screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AllReviewsScreen(
+                    reviews: _reviews,
+                    serviceTitle: _service?.title ?? 'Dịch vụ',
+                  ),
+                ),
+              );
             },
             style: OutlinedButton.styleFrom(
               minimumSize: const Size.fromHeight(48),
@@ -546,10 +579,11 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     );
   }
 
-  void _showReviewForm() {
-    int localRating = 0;
+  void _showReviewForm({ReviewModel? existingReview}) {
+    int localRating = existingReview?.rating ?? 0;
     String? localError;
-    final commentController = TextEditingController();
+    bool isSubmitting = false;
+    final commentController = TextEditingController(text: existingReview?.comment);
 
     showModalBottomSheet(
       context: context,
@@ -568,9 +602,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Đánh giá dịch vụ',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                existingReview == null ? 'Đánh giá dịch vụ' : 'Chỉnh sửa đánh giá',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
               const Text('Vui lòng chọn mức độ hài lòng'),
@@ -579,10 +613,12 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(5, (index) {
                   return IconButton(
-                    onPressed: () => setModalState(() {
-                      localRating = index + 1;
-                      localError = null;
-                    }),
+                    onPressed: isSubmitting
+                        ? null
+                        : () => setModalState(() {
+                              localRating = index + 1;
+                              localError = null;
+                            }),
                     icon: Icon(
                       Icons.star,
                       size: 40,
@@ -597,9 +633,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               TextField(
                 controller: commentController,
                 maxLines: 3,
+                enabled: !isSubmitting,
                 onChanged: (_) {
-                  if (localError != null)
-                    setModalState(() => localError = null);
+                  if (localError != null) setModalState(() => localError = null);
                 },
                 decoration: InputDecoration(
                   hintText: 'Hãy chia sẻ trải nghiệm của bạn (bắt buộc)...',
@@ -610,55 +646,125 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () async {
-                  final comment = commentController.text.trim();
+              isSubmitting
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: CircularProgressIndicator(color: primaryColor),
+                    )
+                  : Column(
+                      children: [
+                        ElevatedButton(
+                          onPressed: () async {
+                            final comment = commentController.text.trim();
 
-                  if (localRating == 0) {
-                    setModalState(
-                      () => localError = 'Vui lòng chọn số sao đánh giá!',
-                    );
-                    return;
-                  }
+                            if (localRating == 0) {
+                              setModalState(
+                                () => localError = 'Vui lòng chọn số sao đánh giá!',
+                              );
+                              return;
+                            }
 
-                  if (comment.isEmpty) {
-                    setModalState(
-                      () => localError = 'Vui lòng nhập nội dung đánh giá!',
-                    );
-                    return;
-                  }
+                            if (comment.isEmpty) {
+                              setModalState(
+                                () => localError = 'Vui lòng nhập nội dung đánh giá!',
+                              );
+                              return;
+                            }
 
-                  try {
-                    await _marketplaceService.submitReview(
-                      serviceId: widget.serviceId,
-                      rating: localRating,
-                      comment: comment,
-                    );
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Cảm ơn bạn đã đánh giá!'),
+                            setModalState(() => isSubmitting = true);
+
+                            try {
+                              if (existingReview == null) {
+                                await _marketplaceService.submitReview(
+                                  serviceId: widget.serviceId,
+                                  rating: localRating,
+                                  comment: comment,
+                                );
+                              } else {
+                                await _marketplaceService.updateReview(
+                                  reviewId: existingReview.id,
+                                  rating: localRating,
+                                  comment: comment,
+                                );
+                              }
+                              
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(existingReview == null 
+                                      ? 'Cảm ơn bạn đã đánh giá!' 
+                                      : 'Đã cập nhật đánh giá!'),
+                                  ),
+                                );
+                                _loadServiceDetail();
+                              }
+                            } catch (e) {
+                              setModalState(() {
+                                localError = 'Lỗi hệ thống: $e';
+                                isSubmitting = false;
+                              });
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            minimumSize: const Size.fromHeight(50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            existingReview == null ? 'Gửi đánh giá' : 'Cập nhật đánh giá',
+                            style: const TextStyle(color: Colors.white, fontSize: 16),
+                          ),
                         ),
-                      );
-                      _loadServiceDetail();
-                    }
-                  } catch (e) {
-                    setModalState(() => localError = 'Lỗi hệ thống: $e');
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  minimumSize: const Size.fromHeight(50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Gửi đánh giá',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              ),
+                        if (existingReview != null) ...[
+                          const SizedBox(height: 12),
+                          TextButton(
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Xác nhận xóa'),
+                                  content: const Text('Bạn có chắc chắn muốn xóa đánh giá này?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, false),
+                                      child: const Text('Hủy'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, true),
+                                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                      child: const Text('Xóa'),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (confirm == true) {
+                                setModalState(() => isSubmitting = true);
+                                try {
+                                  await _marketplaceService.deleteReview(existingReview.id);
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Đã xóa đánh giá!')),
+                                    );
+                                    _loadServiceDetail();
+                                  }
+                                } catch (e) {
+                                  setModalState(() {
+                                    localError = 'Lỗi khi xóa: $e';
+                                    isSubmitting = false;
+                                  });
+                                }
+                              }
+                            },
+                            child: const Text('Xóa đánh giá', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ],
+                    ),
               const SizedBox(height: 20),
             ],
           ),

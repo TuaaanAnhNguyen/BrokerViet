@@ -172,14 +172,77 @@ class ServiceMarketplaceService {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) throw Exception('Bạn cần đăng nhập để đánh giá');
 
-      await _supabase.from('reviews').insert({
-        'service_id': serviceId,
-        'user_id': userId,
-        'rating': rating,
-        'comment': comment,
-      });
+      final response = await _supabase.functions.invoke(
+        'manage-review',
+        body: {
+          'action': 'create',
+          'service_id': serviceId,
+          'user_id': userId,
+          'rating': rating,
+          'comment': comment,
+        },
+      );
+
+      if (response.status != 200) {
+        final err = (response.data as Map?)?['error'] ?? 'Unknown error';
+        throw Exception('Lỗi khi gửi đánh giá: $err');
+      }
     } catch (e) {
-      print('>>> Lỗi khi gửi review: $e');
+      print('>>> Lỗi khi gửi review qua Edge Function: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateReview({
+    required String reviewId,
+    required int rating,
+    required String comment,
+  }) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('Bạn cần đăng nhập');
+
+      final response = await _supabase.functions.invoke(
+        'manage-review',
+        body: {
+          'action': 'update',
+          'review_id': reviewId,
+          'user_id': userId,
+          'rating': rating,
+          'comment': comment,
+        },
+      );
+
+      if (response.status != 200) {
+        final err = (response.data as Map?)?['error'] ?? 'Unknown error';
+        throw Exception('Lỗi khi cập nhật đánh giá: $err');
+      }
+    } catch (e) {
+      print('>>> Lỗi khi cập nhật review qua Edge Function: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteReview(String reviewId) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('Bạn cần đăng nhập');
+
+      final response = await _supabase.functions.invoke(
+        'manage-review',
+        body: {
+          'action': 'delete',
+          'review_id': reviewId,
+          'user_id': userId,
+        },
+      );
+
+      if (response.status != 200) {
+        final err = (response.data as Map?)?['error'] ?? 'Unknown error';
+        throw Exception('Lỗi khi xóa đánh giá: $err');
+      }
+    } catch (e) {
+      print('>>> Lỗi khi xóa review qua Edge Function: $e');
       rethrow;
     }
   }
