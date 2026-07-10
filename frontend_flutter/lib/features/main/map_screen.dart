@@ -1,6 +1,5 @@
 // lib/features/main/map_screen.dart
 
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -30,7 +29,6 @@ class _MapScreenState extends State<MapScreen> {
   LatLng _currentCenter = const LatLng(10.8231, 106.6297);
   LatLng? _userHomeLocation;
 
-  List<Map<String, dynamic>> _nearbyProviders = [];
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -73,21 +71,44 @@ class _MapScreenState extends State<MapScreen> {
         _currentCenter = _userHomeLocation!;
       }
 
-      await _fetchSurroundingProviders(_currentCenter);
-
       if (_userHomeLocation != null &&
           widget.initialTargetLat != null &&
           widget.initialTargetLng != null) {
-        _routeLines = [
-          Polyline(
-            points: [
-              _userHomeLocation!,
-              LatLng(widget.initialTargetLat!, widget.initialTargetLng!),
-            ],
-            strokeWidth: 5,
-            color: Colors.blue,
-          ),
-        ];
+        try {
+          print('\n========== LOADING ROUTE ==========');
+
+          final route = await _mapService.getRoute(
+            origin: _userHomeLocation!,
+            destination: LatLng(
+              widget.initialTargetLat!,
+              widget.initialTargetLng!,
+            ),
+          );
+
+          print('Route loaded with ${route.points.length} points.');
+
+          _routeLines = [
+            Polyline(points: route.points, strokeWidth: 5, color: Colors.blue),
+          ];
+        } catch (e) {
+          print('Route loading failed: $e');
+
+          setState(() {
+            _errorMessage =
+                'Không thể tải tuyến đường. Hiển thị đường thẳng thay thế.';
+          });
+
+          _routeLines = [
+            Polyline(
+              points: [
+                _userHomeLocation!,
+                LatLng(widget.initialTargetLat!, widget.initialTargetLng!),
+              ],
+              strokeWidth: 5,
+              color: Colors.blue,
+            ),
+          ];
+        }
       }
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -111,33 +132,13 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  Future<void> _fetchSurroundingProviders(LatLng centerPoint) async {
-    try {
-      final providers = await _mapService.findNearbyProviders(
-        latitude: centerPoint.latitude,
-        longitude: centerPoint.longitude,
-        radiusMeters: 20000, // 20km
-        limit: 30,
-      );
-      setState(() {
-        _nearbyProviders = providers;
-        _errorMessage = null;
-      });
-    } catch (e) {
-      setState(
-        () => _errorMessage = "Không thể tải danh sách đơn vị xung quanh.",
-      );
-    }
-  }
-
   void _recenterToMyPosition() {
     if (_userHomeLocation != null) {
       _mapController.move(_userHomeLocation!, 14.5);
-      _fetchSurroundingProviders(_userHomeLocation!);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Vui lòng cập nhật địa chỉ ở trang Marketplace trước.'),
+          content: Text('Vui lòng cập nhật địa chỉ trong hồ sơ trước.'),
         ),
       );
     }
@@ -172,8 +173,7 @@ class _MapScreenState extends State<MapScreen> {
               initialZoom: 14.0,
               maxZoom: 18.0,
               minZoom: 6.0,
-              onPositionChanged: (position, hasGesture) {
-              },
+              onPositionChanged: (position, hasGesture) {},
             ),
             children: [
               TileLayer(
@@ -198,63 +198,48 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     ),
 
-                  // Red Markers: Map dynamically queried backend providers coordinates
-                  ..._nearbyProviders.map((prov) {
-                    final double lat = (prov['latitude'] as num).toDouble();
-                    final double lng = (prov['longitude'] as num).toDouble();
-
-                    final bool isSelected =
-                        widget.initialTargetLat != null &&
-                        widget.initialTargetLng != null &&
-                        (lat - widget.initialTargetLat!).abs() < 0.00001 &&
-                        (lng - widget.initialTargetLng!).abs() < 0.00001;
-
-                    return Marker(
-                      point: LatLng(lat, lng),
+                  if (widget.initialTargetLat != null &&
+                      widget.initialTargetLng != null)
+                    Marker(
+                      point: LatLng(
+                        widget.initialTargetLat!,
+                        widget.initialTargetLng!,
+                      ),
                       width: 90,
                       height: 90,
-                      child: GestureDetector(
-                        onTap: () => _showProviderDetailsModal(prov),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (isSelected)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black87,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  prov['username'] ?? 'Đối tác',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ),
-
-                            Icon(
-                              Icons.location_on,
-                              size: isSelected ? 48 : 38,
-                              color: isSelected
-                                  ? Colors.red
-                                  : Colors.deepOrange,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
                             ),
-                          ],
-                        ),
+                            decoration: BoxDecoration(
+                              color: Colors.black87,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              widget.initialProviderName ?? 'Đơn vị dịch vụ',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.location_on,
+                            color: Colors.red,
+                            size: 48,
+                          ),
+                        ],
                       ),
-                    );
-                  }),
+                    ),
                 ],
               ),
             ],
           ),
 
-          // Loading Overlay State View
           if (_isLoading)
             Positioned.fill(
               child: Container(
@@ -269,7 +254,6 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
 
-          // Error Alerts Toast Notification Box inside maps canvas view bounds
           if (_errorMessage != null)
             Positioned(
               top: 16,
@@ -292,96 +276,6 @@ class _MapScreenState extends State<MapScreen> {
             ),
         ],
       ),
-    );
-  }
-
-  void _showProviderDetailsModal(Map<String, dynamic> provider) {
-    final double distanceMeters = (provider['distance_meters'] as num? ?? 0)
-        .toDouble();
-    final String distanceStr = distanceMeters >= 1000
-        ? '${(distanceMeters / 1000).toStringAsFixed(1)} km'
-        : '${distanceMeters.toStringAsFixed(0)} m';
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: const Color(0xFFE5EEFF),
-                    radius: 24,
-                    child: const Icon(
-                      Icons.store_rounded,
-                      color: Color(0xFF004AC6),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          provider['username'] ?? 'Đơn vị dịch vụ',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Khoảng cách: $distanceStr',
-                          style: const TextStyle(
-                            color: Color(0xFF006591),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const Divider(height: 24),
-              const Text(
-                'Địa chỉ chi tiết:',
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                provider['address'] ??
-                    provider['location_text'] ??
-                    'Chưa xác định cấu hình địa chỉ.',
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF004AC6),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Đóng'),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }
