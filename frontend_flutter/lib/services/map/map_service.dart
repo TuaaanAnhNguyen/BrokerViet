@@ -35,10 +35,10 @@ class MapService {
         },
       );
 
-      print('========== EDGE FUNCTION ==========');
+      print('====================\n');
       print('Status: ${response.status}');
       print('Raw response: ${response.data}');
-      print('===================================');
+      print('====================\n');
 
       if (response.status != 200) {
         throw MapServiceException(

@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import '../../services/chat/chat_service.dart';
 import 'conversation_screen.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../widgets/avatar_builder.dart';
 
 class ChatListScreen extends StatefulWidget {
@@ -15,34 +14,6 @@ class ChatListScreen extends StatefulWidget {
 
 class _ChatListScreenState extends State<ChatListScreen> {
   final ChatService _chatService = ChatService();
-  RealtimeChannel? _chatSubscription;
-  late Future<List<Map<String, dynamic>>> _chatRoomsFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _refreshChats();
-
-    _chatSubscription = _chatService.subscribeToChatChanges(() {
-      if (mounted) {
-        _refreshChats();
-      }
-    });
-  }
-
-  void _refreshChats() {
-    setState(() {
-      _chatRoomsFuture = _chatService.fetchChatRooms();
-    });
-  }
-
-  @override
-  void dispose() {
-    if (_chatSubscription != null) {
-      Supabase.instance.client.removeChannel(_chatSubscription!);
-    }
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,15 +34,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
             fontSize: 18,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: primaryColor),
-            onPressed: _refreshChats,
-          ),
-        ],
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _chatRoomsFuture,
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: _chatService.streamChatRooms(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -131,7 +96,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       ),
                     ),
                   );
-                  _refreshChats();
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(

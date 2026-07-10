@@ -35,11 +35,10 @@ class FcmHandler {
         ?.createNotificationChannel(channel);
 
     String? token = await _fcm.getToken();
-    print('YOUR EMULATOR FCM TOKEN:');
-    print('$token');
+    print('\n\n EMULATOR FCM TOKEN: $token');
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('📥 Foreground message received: ${message.notification?.title}');
+      print('\n\n >>> Foreground message received: ${message.notification?.title}');
 
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;

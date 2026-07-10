@@ -26,14 +26,19 @@ void main() async {
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
   await initializeDateFormatting('vi_VN', null);
 
+  String firebaseMessagingApiKey = dotenv.env['FIREBASE_MESSAGING_API_KEY'] ?? '';
+  String firebaseMessagingAppId = dotenv.env['FIREBASE_MESSAGING_APP_ID'] ?? '';
+  String firebaseMessagingSenderId = dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '';
+  String firebaseProjectId = dotenv.env['FIREBASE_PROJECT_ID'] ?? '';
+
   try {
     await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: "AIzaSyCcf9ueYgdZdtODLjBYMmSpcPoRdJ7jjI4",
-        appId: "1:579951195028:android:c39859a995e4badf6a9581",
-        messagingSenderId: "579951195028",
-        projectId: "brokerviet-b7d3f",
-        storageBucket: "brokerviet-b7d3f.firebasestorage.app",
+      options: FirebaseOptions(
+        apiKey: firebaseMessagingApiKey,
+        appId: firebaseMessagingAppId,
+        messagingSenderId: firebaseMessagingSenderId,
+        projectId: firebaseProjectId,
+        storageBucket: "$firebaseProjectId.firebasestorage.app",
       ),
     );
     

@@ -76,7 +76,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         });
       }
     } catch (e) {
-      print('>>> Lỗi load service detail: $e');
+      print('\n\n>>> Lỗi load service detail: $e');
       if (mounted) {
         setState(() {
           _errorMessage = 'Không thể tải thông tin dịch vụ.';

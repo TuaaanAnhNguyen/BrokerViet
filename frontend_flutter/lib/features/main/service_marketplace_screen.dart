@@ -59,14 +59,14 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
 
   Future<void> _loadCategories() async {
     try {
-      print('>>> Bắt đầu gửi yêu cầu lấy danh mục từ DB...');
+      print('\n\n>>> Bắt đầu gửi yêu cầu lấy danh mục từ DB...');
 
       final categoriesFromDb = await _marketplaceService
           .fetchServiceCategories()
           .timeout(const Duration(seconds: 10));
 
       print(
-        '>>> Kết quả trả về từ Service: ${categoriesFromDb.length} danh mục.',
+        '\n\n>>> Kết quả trả về từ Service: ${categoriesFromDb.length} danh mục.',
       );
 
       if (categoriesFromDb.isNotEmpty) {
@@ -98,7 +98,7 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             _categories = loadedCategories;
           });
           print(
-            '>>> Đã cập nhật trạng thái UI với ${_categories.length} danh mục (bao gồm nút Tất cả).',
+            '\n\n>>> Đã cập nhật trạng thái UI với ${_categories.length} danh mục (bao gồm nút Tất cả).',
           );
         }
       } else {
