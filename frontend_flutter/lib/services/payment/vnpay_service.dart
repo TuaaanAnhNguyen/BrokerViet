@@ -1,8 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../notification/notification_service.dart';
 
 class VNPayService {
   final _client = Supabase.instance.client;
+  final _notification = NotificationService();
 
   /// Step 2: Call create-vnpay-payment edge function
   Future<String?> createPaymentUrl({
