@@ -35,7 +35,7 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data
                     android:scheme="brokerviet"
-                    android:host="vnpay_result_page"/>
+                    android:host="home"/>
             </intent-filter>
         </activity>
 R
