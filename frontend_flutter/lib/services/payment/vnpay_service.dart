@@ -47,6 +47,8 @@ class VNPayService {
   /// Query payment status from Supabase
   Future<String> getPaymentStatus(String bookingId) async {
     try {
+      print("Checking payment: $bookingId");
+
       final response = await _client.functions.invoke(
         'get-payment-status',
         method: HttpMethod.get,
@@ -55,14 +57,25 @@ class VNPayService {
         },
       );
 
+      print("Status code: ${response.status}");
+      print("Response: ${response.data}");
+
       if (response.status == 200) {
         final data = response.data as Map<String, dynamic>;
-        return data['status'] as String? ?? 'unknown';
+
+        final status =
+        (data['status'] as String? ?? 'UNKNOWN').toUpperCase();
+
+        print("Parsed status: $status");
+
+        return status;
       }
-      return 'error';
-    } catch (e) {
-      print('Error getting payment status: $e');
-      return 'error';
+
+      return 'ERROR';
+    } catch (e, stack) {
+      print(e);
+      print(stack);
+      return 'ERROR';
     }
   }
 }

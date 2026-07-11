@@ -15,19 +15,35 @@ class VNPayResultPage extends StatefulWidget {
 
 class _VNPayResultPageState extends State<VNPayResultPage> {
   final _vnPayService = VNPayService();
-  String _status = 'checking';
+  String _status = 'PENDING';
 
   @override
   void initState() {
     super.initState();
     _checkStatus();
   }
-
   Future<void> _checkStatus() async {
-    final status = await _vnPayService.getPaymentStatus(widget.bookingId);
-    if (mounted) {
+    try {
+      print("Checking payment for ${widget.bookingId}");
+
+      final status =
+      await _vnPayService.getPaymentStatus(widget.bookingId);
+
+      print("Received status = $status");
+
+      if (!mounted) return;
+
       setState(() {
         _status = status;
+      });
+    } catch (e, s) {
+      print(e);
+      print(s);
+
+      if (!mounted) return;
+
+      setState(() {
+        _status = "FAILED";
       });
     }
   }
@@ -52,7 +68,7 @@ class _VNPayResultPageState extends State<VNPayResultPage> {
 
   Widget _buildStatusContent(Color primaryColor) {
     switch (_status) {
-      case 'checking':
+      case 'PENDING':
         return const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -61,7 +77,7 @@ class _VNPayResultPageState extends State<VNPayResultPage> {
             Text('Đang kiểm tra trạng thái thanh toán...'),
           ],
         );
-      case 'paid':
+      case 'COMPLETED':
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -88,15 +104,15 @@ class _VNPayResultPageState extends State<VNPayResultPage> {
             ),
           ],
         );
-      case 'failed':
-      case 'cancelled':
+      case 'FAILED':
+      case 'EXPIRED':
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.error, color: Colors.red, size: 80),
             const SizedBox(height: 16),
             Text(
-              _status == 'cancelled' ? 'Thanh toán đã bị hủy' : 'Thanh toán thất bại',
+              _status == 'EXPIRED' ? 'Thanh toán đã bị hủy' : 'Thanh toán thất bại',
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),

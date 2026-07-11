@@ -78,21 +78,26 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
   }
 
   void _handleDeepLink(Uri uri) {
-    if (uri.host == 'payment-result') {
-      final bookingId = uri.queryParameters['booking_id'];
-      final responseCode = uri.queryParameters['response_code'];
+    print("Deep link received: $uri");
 
-      if (bookingId != null) {
-        _navigatorKey.currentState?.pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => VNPayResultPage(
-              bookingId: bookingId,
+    if (uri.host != 'vnpay_result_page') return;
 
-            ),
+    final bookingId = uri.queryParameters['booking_id'];
+    if (bookingId == null) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final navigator = _navigatorKey.currentState;
+
+      print("Navigator ready: $navigator");
+
+      navigator?.push(
+        MaterialPageRoute(
+          builder: (_) => VNPayResultPage(
+            bookingId: bookingId,
           ),
-        );
-      }
-    }
+        ),
+      );
+    });
   }
   @override
   Widget build(BuildContext context) {
