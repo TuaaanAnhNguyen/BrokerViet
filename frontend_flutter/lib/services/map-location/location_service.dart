@@ -1,24 +1,27 @@
-// frontend_flutter/lib/services/map/map_service.dart
+// frontend_flutter/lib/services/map-location/location_service.dart
+// formerly map_service.dart
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:broker_viet/models/route_result_model.dart';
 import '../../models/provider_service_info_model.dart';
 import '../../models/provider_location_model.dart';
+import '../../models/geocoding_result.dart';
+import '../../models/reverse_geocoding_result.dart';
 
-class MapServiceException implements Exception {
+class LocationServiceException implements Exception {
   final String message;
 
-  MapServiceException(this.message);
+  LocationServiceException(this.message);
 
   @override
-  String toString() => 'MapServiceException: $message';
+  String toString() => 'LocationServiceException: $message';
 }
 
-class MapService {
+class LocationService {
   final SupabaseClient _supabaseClient;
 
-  MapService({SupabaseClient? supabaseClient})
+  LocationService({SupabaseClient? supabaseClient})
     : _supabaseClient = supabaseClient ?? Supabase.instance.client;
 
   Future<List<Map<String, dynamic>>> findNearbyProviders({
@@ -45,13 +48,15 @@ class MapService {
       print('====================\n');
 
       if (response.status != 200) {
-        throw MapServiceException(
+        throw LocationServiceException(
           'Failed to fetch nearby providers. Status: ${response.status}',
         );
       }
 
       if (response.data == null) {
-        throw MapServiceException('Edge Function returned a null response.');
+        throw LocationServiceException(
+          'Edge Function returned a null response.',
+        );
       }
 
       final responseData = Map<String, dynamic>.from(response.data as Map);
@@ -59,7 +64,7 @@ class MapService {
       print('Decoded response: $responseData');
 
       if (responseData['success'] != true) {
-        throw MapServiceException(
+        throw LocationServiceException(
           responseData['error']?.toString() ??
               'Unknown error returned from Edge Function.',
         );
@@ -83,42 +88,123 @@ class MapService {
 
       return providers;
     } on FunctionException catch (e) {
-      throw MapServiceException(
+      throw LocationServiceException(
         'Edge Function error: ${e.details ?? e.toString()} (Status: ${e.status})',
       );
     } on PostgrestException catch (e) {
-      throw MapServiceException('Database error: ${e.message}');
+      throw LocationServiceException('Database error: ${e.message}');
     } catch (e, stack) {
       print(stack);
 
-      throw MapServiceException('Unexpected error: $e');
+      throw LocationServiceException('Unexpected error: $e');
     }
   }
 
-  Future<void> updateProviderLocation({
-    required String profileId,
+  Future<GeocodingResult> geocodeAddress({required String address}) async {
+    try {
+      print('\n========== GEOCODE ADDRESS ==========');
+      print('Input: $address');
+
+      final response = await _supabaseClient.functions.invoke(
+        'geocode-address',
+        method: HttpMethod.post,
+        body: {'address': address},
+      );
+
+      print('Status: ${response.status}');
+      print('Response: ${response.data}');
+
+      if (response.status != 200) {
+        throw LocationServiceException('Unable to geocode address.');
+      }
+
+      final json = Map<String, dynamic>.from(response.data);
+
+      if (json['success'] != true) {
+        throw LocationServiceException(
+          json['error'] ?? 'Unknown geocoding error.',
+        );
+      }
+
+      return GeocodingResult.fromJson(json);
+    } on FunctionException catch (e) {
+      throw LocationServiceException(e.details ?? e.toString());
+    } catch (e) {
+      throw LocationServiceException(e.toString());
+    }
+  }
+
+  Future<ReverseGeocodingResult> reverseGeocode({
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      print('\n========== REVERSE GEOCODE ==========');
+      print('Latitude : $latitude');
+      print('Longitude: $longitude');
+
+      final response = await _supabaseClient.functions.invoke(
+        'reverse-geocode',
+        method: HttpMethod.post,
+        body: {'latitude': latitude, 'longitude': longitude},
+      );
+
+      print('Status: ${response.status}');
+      print('Response: ${response.data}');
+
+      if (response.status != 200) {
+        throw LocationServiceException(
+          'Unable to reverse geocode coordinates.',
+        );
+      }
+
+      final json = Map<String, dynamic>.from(response.data);
+
+      if (json['success'] != true) {
+        throw LocationServiceException(
+          json['error'] ?? 'Unknown reverse geocoding error.',
+        );
+      }
+
+      return ReverseGeocodingResult.fromJson(json);
+    } on FunctionException catch (e) {
+      throw LocationServiceException(e.details ?? e.toString());
+    } catch (e) {
+      throw LocationServiceException(e.toString());
+    }
+  }
+
+  Future<void> updateProfileLocation({
     required String address,
     required String locationText,
     required double latitude,
     required double longitude,
   }) async {
     try {
-      await _supabaseClient.rpc(
-        'update_provider_location',
-        params: {
-          'profile_id': profileId,
-          'new_address': address,
-          'new_location_text': locationText,
-          'new_lat': latitude,
-          'new_lng': longitude,
+      final response = await _supabaseClient.functions.invoke(
+        'update-profile-location',
+        method: HttpMethod.post,
+        body: {
+          'address': address,
+          'locationText': locationText,
+          'latitude': latitude,
+          'longitude': longitude,
         },
       );
-    } on PostgrestException catch (e) {
-      throw MapServiceException(
-        'Database error updating location: ${e.message}',
-      );
+
+      if (response.status != 200) {
+        throw LocationServiceException('Unable to update profile location.');
+      }
+
+      final json = Map<String, dynamic>.from(response.data);
+
+      if (json['success'] != true) {
+        throw LocationServiceException(json['error'] ?? 'Unknown error.');
+      }
+    } on FunctionException catch (e) {
+      throw LocationServiceException(e.details ?? e.toString());
     } catch (e) {
-      throw MapServiceException('Failed to update coordinates: $e');
+      throw LocationServiceException(e.toString());
     }
   }
 
@@ -147,19 +233,19 @@ class MapService {
       print('===============================\n');
 
       if (response.status != 200) {
-        throw MapServiceException(
+        throw LocationServiceException(
           'Failed to retrieve route. Status: ${response.status}',
         );
       }
 
       if (response.data == null) {
-        throw MapServiceException('Edge Function returned null.');
+        throw LocationServiceException('Edge Function returned null.');
       }
 
       final responseData = Map<String, dynamic>.from(response.data as Map);
 
       if (responseData['success'] != true) {
-        throw MapServiceException(
+        throw LocationServiceException(
           responseData['error']?.toString() ?? 'Unknown routing error.',
         );
       }
@@ -191,16 +277,16 @@ class MapService {
         durationSeconds: durationSeconds,
       );
     } on FunctionException catch (e) {
-      throw MapServiceException(
+      throw LocationServiceException(
         'Edge Function error: ${e.details ?? e.toString()} '
         '(Status: ${e.status})',
       );
     } on PostgrestException catch (e) {
-      throw MapServiceException('Database error: ${e.message}');
+      throw LocationServiceException('Database error: ${e.message}');
     } catch (e, stack) {
       print(stack);
 
-      throw MapServiceException('Unexpected routing error: $e');
+      throw LocationServiceException('Unexpected routing error: $e');
     }
   }
 
@@ -216,13 +302,13 @@ class MapService {
       print('Response: ${response.data}');
 
       if (response.status != 200) {
-        throw MapServiceException('Unable to load current location.');
+        throw LocationServiceException('Unable to load current location.');
       }
 
       final json = Map<String, dynamic>.from(response.data);
 
       if (json['success'] != true) {
-        throw MapServiceException(json['error'] ?? 'Unknown error.');
+        throw LocationServiceException(json['error'] ?? 'Unknown error.');
       }
 
       final location = Map<String, dynamic>.from(json['location']);
@@ -236,9 +322,9 @@ class MapService {
         address: location['address'],
       );
     } on FunctionException catch (e) {
-      throw MapServiceException(e.details ?? e.toString());
+      throw LocationServiceException(e.details ?? e.toString());
     } catch (e) {
-      throw MapServiceException(e.toString());
+      throw LocationServiceException(e.toString());
     }
   }
 
@@ -257,22 +343,22 @@ class MapService {
       print('Response: ${response.data}');
 
       if (response.status != 200) {
-        throw MapServiceException('Unable to load provider service.');
+        throw LocationServiceException('Unable to load provider service.');
       }
 
       final json = Map<String, dynamic>.from(response.data);
 
       if (json['success'] != true) {
-        throw MapServiceException(json['error'] ?? 'Unknown error.');
+        throw LocationServiceException(json['error'] ?? 'Unknown error.');
       }
 
       return ProviderServiceInfo.fromJson(
         Map<String, dynamic>.from(json['service']),
       );
     } on FunctionException catch (e) {
-      throw MapServiceException(e.details ?? e.toString());
+      throw LocationServiceException(e.details ?? e.toString());
     } catch (e) {
-      throw MapServiceException(e.toString());
+      throw LocationServiceException(e.toString());
     }
   }
 
@@ -292,13 +378,13 @@ class MapService {
       print('Response: ${response.data}');
 
       if (response.status != 200) {
-        throw MapServiceException('Unable to load provider location.');
+        throw LocationServiceException('Unable to load provider location.');
       }
 
       final json = Map<String, dynamic>.from(response.data);
 
       if (json['success'] != true) {
-        throw MapServiceException(json['error'] ?? 'Unknown error.');
+        throw LocationServiceException(json['error'] ?? 'Unknown error.');
       }
 
       final location = Map<String, dynamic>.from(json['location']);
@@ -312,9 +398,9 @@ class MapService {
         address: location['address'],
       );
     } on FunctionException catch (e) {
-      throw MapServiceException(e.details ?? e.toString());
+      throw LocationServiceException(e.details ?? e.toString());
     } catch (e) {
-      throw MapServiceException(e.toString());
+      throw LocationServiceException(e.toString());
     }
   }
 }

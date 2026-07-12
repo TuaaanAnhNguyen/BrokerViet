@@ -3,7 +3,7 @@
 import 'package:broker_viet/features/chat/conversation_screen.dart';
 import 'package:broker_viet/models/review_model.dart';
 import 'package:broker_viet/services/chat/chat_service.dart';
-import 'package:broker_viet/services/map/map_service.dart';
+import 'package:broker_viet/services/map-location/location_service.dart';
 import 'package:broker_viet/widgets/avatar_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -770,9 +770,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   );
 
                   try {
-                    final mapService = MapService();
+                    final locationService = LocationService();
 
-                    final providerLocation = await mapService
+                    final providerLocation = await locationService
                         .getProviderLocation(providerId: _service!.providerId);
 
                     if (!context.mounted) return;
@@ -791,7 +791,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         ),
                       ),
                     );
-                  } on MapServiceException catch (e) {
+                  } on LocationServiceException catch (e) {
                     if (!context.mounted) return;
 
                     Navigator.pop(context);

@@ -6,7 +6,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../models/provider_service_info_model.dart';
 import '../../models/route_result_model.dart';
-import '../../services/map/map_service.dart';
+import '../../services/map-location/location_service.dart';
 
 import '../../widgets/map/destination_marker.dart';
 import '../../widgets/map/error_banner.dart';
@@ -39,7 +39,7 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  final MapService _mapService = MapService();
+  final LocationService _locationService = LocationService();
 
   final MapController _mapController = MapController();
   LatLng? _userLocation;
@@ -65,15 +65,15 @@ class _MapScreenState extends State<MapScreen> {
     });
 
     try {
-      final myLocation = await _mapService.getMyLocation();
+      final myLocation = await _locationService.getMyLocation();
 
       _userLocation = LatLng(myLocation.latitude, myLocation.longitude);
 
-      _providerInfo = await _mapService.getProviderServiceInfo(
+      _providerInfo = await _locationService.getProviderServiceInfo(
         serviceId: widget.serviceId,
       );
 
-      _route = await _mapService.getRoute(
+      _route = await _locationService.getRoute(
         origin: _userLocation!,
         destination: _destination,
       );
@@ -88,7 +88,7 @@ class _MapScreenState extends State<MapScreen> {
           ),
         );
       });
-    } on MapServiceException catch (e) {
+    } on LocationServiceException catch (e) {
       _error = e.message;
     } catch (e) {
       _error = e.toString();

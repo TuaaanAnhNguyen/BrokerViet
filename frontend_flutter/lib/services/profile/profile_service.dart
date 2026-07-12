@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/profile_model.dart';
+import '../map-location/location_service.dart';
 
 abstract class ProfileEvent {}
 
@@ -51,6 +52,7 @@ class ProfileFailure extends ProfileState {
 
 class ProfileService extends Bloc<ProfileEvent, ProfileState> {
   final SupabaseClient _client = Supabase.instance.client;
+  final LocationService _locationService = LocationService();
 
   String get currentUserId => _client.auth.currentUser?.id ?? '';
 
@@ -90,18 +92,38 @@ class ProfileService extends Bloc<ProfileEvent, ProfileState> {
 
     on<UpdateProfileRequested>((event, emit) async {
       emit(ProfileActionLoading());
-      try {
-        if (currentUserId.isEmpty) throw Exception("Phiên đăng nhập hết hạn.");
 
-        final updatePayload = event.updatedProfile.toUpdatePayload();
+      try {
+        if (currentUserId.isEmpty) {
+          throw Exception("Phiên đăng nhập hết hạn.");
+        }
+
+        ProfileModel profileToSave = event.updatedProfile;
+
+        final address = profileToSave.address?.trim();
+
+        // If user entered an address, convert it into coordinates first.
+        if (address != null && address.isNotEmpty) {
+          final geocoded = await _locationService.geocodeAddress(
+            address: address,
+          );
+
+          profileToSave = profileToSave.copyWith(
+            address: address,
+            locationText: geocoded.displayName,
+            locationLatitude: geocoded.latitude,
+            locationLongitude: geocoded.longitude,
+          );
+        }
 
         final response = await _client.functions.invoke(
           'update-profile',
-          body: updatePayload,
+          body: profileToSave.toUpdatePayload(),
         );
 
         if (response.status != 200) {
           final errorData = response.data as Map<String, dynamic>?;
+
           throw Exception(
             errorData?['error'] ?? 'Lỗi không thể cập nhật dữ liệu',
           );
