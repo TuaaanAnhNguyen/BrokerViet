@@ -1,11 +1,20 @@
 // lib/features/booking/booking_service_screen.dart
 
+// lib/features/booking/booking_service_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/booking/booking_service.dart';
 import '../../services/payment/vnpay_service.dart';
+
 import '../../widgets/payment/vietqr_payment.dart';
+import '../../widgets/booking/booking_service_summary_card.dart';
+import '../../widgets/booking/booking_schedule_tile.dart';
+import '../../widgets/booking/booking_address_input.dart';
+import '../../widgets/booking/booking_notes_input.dart';
+import '../../widgets/booking/booking_payment_selector.dart';
+import '../../widgets/booking/booking_bill_details_section.dart';
+import '../../widgets/booking/booking_bottom_action_bar.dart';
 
 class BookingScreen extends StatefulWidget {
   final String serviceId;
@@ -17,7 +26,7 @@ class BookingScreen extends StatefulWidget {
   final String? serviceType;
   final DateTime scheduledAt;
   final int totalPrice;
-  final String? serviceImageUrl; // Added to make the header image dynamic
+  final String? serviceImageUrl;
 
   const BookingScreen({
     super.key,
@@ -41,10 +50,11 @@ class _BookingScreenState extends State<BookingScreen> {
   final _formKey = GlobalKey<FormState>();
   final BookingService _bookingService = BookingService();
   final VNPayService _vnPayService = VNPayService();
+
   late TextEditingController _addressController;
   final _notesController = TextEditingController();
 
-  int _selectedPaymentMethod = 0; // 0: VietQR, 1: Thẻ, 2: Tiền mặt
+  int _selectedPaymentMethod = 0; // 0: VietQR, 1: Thẻ, 2: Tiền mặt, 3: VNPAY
   bool _isSubmitting = false;
 
   @override
@@ -75,16 +85,16 @@ class _BookingScreenState extends State<BookingScreen> {
     }
   }
 
+  String _formatCurrency(double amount) {
+    return "${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')} VND";
+  }
+
   void _processBookingAction() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSubmitting = true);
-
-    final paymentLabel = _selectedPaymentLabel();
-    debugPrint('Payment method selected: $paymentLabel');
-
-    // Calculate final billing amount matching UI breakdown
     final int finalCalculatedPrice = widget.totalPrice;
+    final paymentLabel = _selectedPaymentLabel();
 
     try {
       final bookingResult = await _bookingService.createBooking(
@@ -96,8 +106,8 @@ class _BookingScreenState extends State<BookingScreen> {
         serviceType: widget.serviceType,
       );
 
-      // ASYNC FETCH: Ensure we have the actual persistent Booking ID from the database
-      final String? confirmedBookingId = (bookingResult != null && bookingResult['booking_id'] != null)
+      final String? confirmedBookingId =
+          (bookingResult != null && bookingResult['booking_id'] != null)
           ? bookingResult['booking_id'].toString()
           : await _bookingService.getLatestBookingId(widget.customerId);
 
@@ -108,13 +118,12 @@ class _BookingScreenState extends State<BookingScreen> {
         throw Exception("Could not retrieve booking ID after creation.");
       }
 
-      // Extract generated data for execution tracking
-      final String trackingMemo = confirmedBookingId.substring(0, 8).toUpperCase();
-
+      final String trackingMemo = confirmedBookingId
+          .substring(0, 8)
+          .toUpperCase();
       final rootNavigator = Navigator.of(context);
 
       if (_selectedPaymentMethod == 0) {
-        // VietQR
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => Scaffold(
@@ -127,7 +136,6 @@ class _BookingScreenState extends State<BookingScreen> {
                   providerBankAccount: '8821165401',
                   onSimulateSuccess: () {
                     Navigator.pop(context);
-
                     showDialog(
                       context: context,
                       barrierDismissible: false,
@@ -135,21 +143,15 @@ class _BookingScreenState extends State<BookingScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        title: const Row(
-                          children: [
-                            SizedBox(width: 8),
-                            Text(
-                              'Giả lập thanh toán thành công',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
-                          ],
+                        title: const Text(
+                          'Giả lập thanh toán thành công',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
                         ),
                         content: Text(
                           'Hệ thống ghi nhận thanh toán thành công cho dịch vụ ${widget.serviceTitle} theo hình thức mã định danh VietQR ($trackingMemo).',
-                          style: const TextStyle(color: Color(0xFF434655)),
                         ),
                         actions: [
                           ElevatedButton(
@@ -160,9 +162,6 @@ class _BookingScreenState extends State<BookingScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF004AC6),
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
                             ),
                             child: const Text(
                               'Về Trang Chủ',
@@ -179,19 +178,19 @@ class _BookingScreenState extends State<BookingScreen> {
           ),
         );
       } else if (_selectedPaymentMethod == 3) {
-        debugPrint('Sending to VNPay: bookingId=$confirmedBookingId, amount=$finalCalculatedPrice');
         final paymentUrl = await _vnPayService.createPaymentUrl(
           bookingId: confirmedBookingId,
           amount: finalCalculatedPrice,
           orderInfo: 'Thanh toan don hang ${widget.serviceTitle}',
         );
-        print(paymentUrl);
         if (paymentUrl != null) {
           await _vnPayService.openVNPay(paymentUrl);
         } else {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Không thể khởi tạo thanh toán VNPAY.')),
+              const SnackBar(
+                content: Text('Không thể khởi tạo thanh toán VNPAY.'),
+              ),
             );
           }
         }
@@ -215,7 +214,6 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
             content: Text(
               'Lịch hẹn dịch vụ ${widget.serviceTitle} vào ngày ${DateFormat('dd/MM/yyyy HH:mm').format(widget.scheduledAt)} đã được ghi nhận thành công theo hình thức $paymentLabel.',
-              style: const TextStyle(color: Color(0xFF434655)),
             ),
             actions: [
               ElevatedButton(
@@ -226,9 +224,6 @@ class _BookingScreenState extends State<BookingScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF004AC6),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
                 ),
                 child: const Text(
                   'Về Trang Chủ',
@@ -242,7 +237,6 @@ class _BookingScreenState extends State<BookingScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      debugPrint("Booking Execution Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Không thể lưu đơn đặt lịch. Vui lòng thử lại sau.'),
@@ -256,15 +250,9 @@ class _BookingScreenState extends State<BookingScreen> {
     const Color primaryColor = Color(0xFF004AC6);
     const Color surfaceColor = Color(0xFFF8F9FF);
     const Color darkText = Color(0xFF0B1C30);
-    const Color bodyText = Color(0xFF434655);
     const Color outlineVariant = Color(0xFFC3C6D7);
 
     final double serviceFee = widget.totalPrice.toDouble();
-    final double totalAmount = serviceFee;
-
-    String formatCurrency(double amount) {
-      return "${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')} VND";
-    }
 
     return Scaffold(
       backgroundColor: surfaceColor,
@@ -281,10 +269,7 @@ class _BookingScreenState extends State<BookingScreen> {
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: outlineVariant.withValues(alpha: 0.5),
-            height: 1,
-          ),
+          child: Container(color: outlineVariant.withAlpha(127), height: 1),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: primaryColor),
@@ -301,128 +286,14 @@ class _BookingScreenState extends State<BookingScreen> {
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: outlineVariant.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: const Color(0xFFE5EEFF),
-                              image:
-                                  widget.serviceImageUrl != null &&
-                                      widget.serviceImageUrl!.isNotEmpty
-                                  ? DecorationImage(
-                                      image: NetworkImage(
-                                        widget.serviceImageUrl!,
-                                      ),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : null,
-                            ),
-                            child:
-                                widget.serviceImageUrl == null ||
-                                    widget.serviceImageUrl!.isEmpty
-                                ? const Icon(
-                                    Icons.build_circle_outlined,
-                                    color: primaryColor,
-                                    size: 36,
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'CHI TIẾT ĐƠN ĐẶT DỊCH VỤ',
-                                  style: TextStyle(
-                                    color: primaryColor,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.2,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  widget.serviceTitle,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: darkText,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Gói: ${widget.packageName}',
-                                  style: const TextStyle(
-                                    color: bodyText,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    BookingServiceSummaryCard(
+                      serviceTitle: widget.serviceTitle,
+                      packageName: widget.packageName,
+                      serviceImageUrl: widget.serviceImageUrl,
                     ),
                     const SizedBox(height: 20),
-
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: outlineVariant.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.calendar_month,
-                            color: primaryColor,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Thời gian đã chọn lịch',
-                                style: TextStyle(fontSize: 12, color: bodyText),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                DateFormat(
-                                  'EEEE, dd MMMM, yyyy - HH:mm',
-                                  'vi',
-                                ).format(widget.scheduledAt),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: darkText,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                    BookingScheduleTile(scheduledAt: widget.scheduledAt),
                     const SizedBox(height: 20),
-
                     const Text(
                       'Địa điểm làm việc',
                       style: TextStyle(
@@ -432,63 +303,8 @@ class _BookingScreenState extends State<BookingScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    TextFormField(
-                      controller: _addressController,
-                      validator: (value) => value!.isEmpty
-                          ? 'Vui lòng nhập địa chỉ cụ thể'
-                          : null,
-                      style: const TextStyle(fontSize: 14, color: darkText),
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                          Icons.location_on,
-                          color: primaryColor,
-                        ),
-                        suffixIcon: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8.0,
-                            vertical: 6.0,
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              setState(
-                                () => _addressController.text =
-                                    "Landmark 81, Vinhomes Central Park, Phường 22, Quận Bình Thạnh",
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF39B8FD),
-                              foregroundColor: const Color(0xFF004666),
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text(
-                              'Hiện tại',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: outlineVariant),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: primaryColor),
-                        ),
-                      ),
-                    ),
+                    BookingAddressInput(controller: _addressController),
                     const SizedBox(height: 20),
-
                     const Text(
                       'Ghi chú cho kỹ thuật viên',
                       style: TextStyle(
@@ -498,31 +314,8 @@ class _BookingScreenState extends State<BookingScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    TextFormField(
-                      controller: _notesController,
-                      maxLines: 2,
-                      style: const TextStyle(fontSize: 14),
-                      decoration: InputDecoration(
-                        hintText:
-                            'Mô tả thêm về tình trạng máy hoặc hướng dẫn đường đi...',
-                        hintStyle: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 13,
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: outlineVariant),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: primaryColor),
-                        ),
-                      ),
-                    ),
+                    BookingNotesInput(controller: _notesController),
                     const SizedBox(height: 20),
-
                     const Text(
                       'Phương thức thanh toán',
                       style: TextStyle(
@@ -532,327 +325,31 @@ class _BookingScreenState extends State<BookingScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    _buildPaymentRow(
-                      0,
-                      Icons.qr_code_2,
-                      'Chuyển khoản Online (VietQR)',
-                      'Quét mã QR nhanh chóng qua ứng dụng ngân hàng',
-                      primaryColor,
-                      outlineVariant,
-                    ),
-                    const SizedBox(height: 8),
-                    _buildPaymentRow(1, Icons.credit_card, 'Thẻ Tín dụng / Ghi nợ',
-                        'Visa, Mastercard, JCB', primaryColor, outlineVariant),
-                    const SizedBox(height: 8),
-                    _buildPaymentRow(3, Icons.account_balance_wallet_outlined, 'VNPAY Gateway',
-                        'Thanh toán qua ứng dụng VNPAY hoặc Ngân hàng', primaryColor, outlineVariant),
-                    const SizedBox(height: 8),
-                    _buildPaymentRow(
-                      2,
-                      Icons.payments,
-                      'Tiền mặt sau dịch vụ',
-                      'Thanh toán sau khi hoàn thành sửa chữa',
-                      primaryColor,
-                      outlineVariant,
+                    BookingPaymentSelector(
+                      selectedMethod: _selectedPaymentMethod,
+                      onMethodChanged: (value) =>
+                          setState(() => _selectedPaymentMethod = value),
                     ),
                     const SizedBox(height: 20),
-
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF4FF),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: outlineVariant.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Chi tiết hóa đơn',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: darkText,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _buildBillRow(
-                            'Phí dịch vụ (${widget.packageName})',
-                            formatCurrency(serviceFee),
-                            bodyText,
-                          ),
-                          const SizedBox(height: 6),
-                          const Divider(
-                            height: 24,
-                            thickness: 0.5,
-                            color: outlineVariant,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Tổng cộng',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: darkText,
-                                ),
-                              ),
-                              Text(
-                                formatCurrency(totalAmount),
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: darkText,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                    BookingBillDetailsSection(
+                      packageName: widget.packageName,
+                      serviceFee: serviceFee,
+                      totalAmount: serviceFee,
+                      formatCurrency: _formatCurrency,
                     ),
                   ],
                 ),
               ),
             ),
-
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  top: BorderSide(color: outlineVariant.withValues(alpha: 0.5)),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'Giá thanh toán cuối',
-                              style: TextStyle(fontSize: 12, color: bodyText),
-                            ),
-                            Text(
-                              formatCurrency(totalAmount),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: primaryColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Row(
-                          children: [
-                            Icon(
-                              Icons.verified_user,
-                              color: bodyText,
-                              size: 14,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Thanh toán bảo mật',
-                              style: TextStyle(fontSize: 12, color: bodyText),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      onPressed: _isSubmitting ? null : _processBookingAction,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: _isSubmitting
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text(
-                              'Xác nhận đặt lịch',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                    ),
-                    const SizedBox(height: 8),
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: const TextSpan(
-                        style: TextStyle(fontSize: 11, color: bodyText),
-                        children: [
-                          TextSpan(
-                            text:
-                                'Bằng việc nhấn nút "Xác nhận đặt lịch", bạn đồng ý với ',
-                          ),
-                          TextSpan(
-                            text: 'Điều khoản dịch vụ',
-                            style: TextStyle(
-                              color: primaryColor,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                          TextSpan(text: ' của chúng tôi.'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            BookingBottomActionBar(
+              totalAmount: serviceFee,
+              isSubmitting: _isSubmitting,
+              onSubmitPressed: _processBookingAction,
+              formatCurrency: _formatCurrency,
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildPaymentRow(
-    int index,
-    IconData icon,
-    String title,
-    String subtitle,
-    Color activeColor,
-    Color defaultOutline,
-  ) {
-    final isSelected = _selectedPaymentMethod == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedPaymentMethod = index),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFEFF4FF) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? activeColor
-                : defaultOutline.withValues(alpha: 0.6),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: defaultOutline.withValues(alpha: 0.5),
-                ),
-              ),
-              child: Icon(
-                icon,
-                color: isSelected ? activeColor : const Color(0xFF434655),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Color(0xFF0B1C30),
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: Color(0xFF434655),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? activeColor : defaultOutline,
-                  width: 2,
-                ),
-              ),
-              child: isSelected
-                  ? Center(
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: activeColor,
-                        ),
-                      ),
-                    )
-                  : null,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBillRow(
-    String label,
-    String cost,
-    Color textColor, {
-    bool isMedium = false,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 13,
-            fontWeight: isMedium ? FontWeight.w500 : FontWeight.normal,
-          ),
-        ),
-        Text(
-          cost,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 13,
-            fontWeight: isMedium ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ],
     );
   }
 }
