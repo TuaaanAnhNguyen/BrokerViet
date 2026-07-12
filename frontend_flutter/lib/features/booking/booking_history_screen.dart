@@ -18,9 +18,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
   List<BookingModel> _bookings = [];
   bool _isLoading = true;
 
+  // These now perfectly map to BookingStatus.uiLabel values
   final List<String> _statuses = [
     'Tất cả',
-    'Chờ duyệt',
     'Đang thực hiện',
     'Đã hoàn thành',
     'Đã hủy',
@@ -60,18 +60,15 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
     }
   }
 
+  // Simplified: Looks up enum by matching the uiLabel property directly
   BookingStatus? _getEnumFromTab(String tabLabel) {
-    switch (tabLabel) {
-      case 'Chờ duyệt':
-        return BookingStatus.choDuyet;
-      case 'Đã hoàn thành':
-        return BookingStatus.daHoanThanh;
-      case 'Đã hủy':
-        return BookingStatus.daHuy;
-      default:
-        return null;
+    try {
+      return BookingStatus.values.firstWhere((e) => e.uiLabel == tabLabel);
+    } catch (_) {
+      return null; // For 'Tất cả'
     }
   }
+
 
   void _handleCancelRequest(String bookingId) async {
     try {

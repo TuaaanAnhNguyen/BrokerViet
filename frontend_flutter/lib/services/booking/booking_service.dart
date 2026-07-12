@@ -47,12 +47,12 @@ class BookingService {
       );
 
       // Notify Customer
-      print("Notifying customers");
+/*      print("Notifying customers");
       await _notificationService.createNotification(
         userId: customerId,
         title: 'Đặt lịch thành công',
         content: 'Yêu cầu cho dịch vụ "$sType" đã được gửi thành công và đang chờ xác nhận.',
-      );
+      );*/
     } catch (e) {
       print('Error creating booking notification: $e');
     }

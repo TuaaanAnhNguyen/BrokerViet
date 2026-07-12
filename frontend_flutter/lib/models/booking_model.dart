@@ -1,30 +1,24 @@
 // lib/models/booking_model.dart
 
 enum BookingStatus {
-  choDuyet('Chờ duyệt'),
-  daHoanThanh('Đã hoàn thành'),
-  daHuy('Đã hủy');
+  dangThucHien('PENDING', 'Đang thực hiện'),
+  daHoanThanh('COMPLETED', 'Đã hoàn thành'),
+  daHuy('CANCELLED', 'Đã hủy');
 
-  final String value;
-  const BookingStatus(this.value);
+  final String dbValue;
+  final String uiLabel;
+  const BookingStatus(this.dbValue, this.uiLabel);
 
-  static BookingStatus fromString(String status) {
+  // Safely parse database strings (e.g., 'PENDING', 'completed') into the Enum
+  static BookingStatus fromDbString(String status) {
     return BookingStatus.values.firstWhere(
-      (e) => e.value.toLowerCase() == status.toLowerCase(),
-      orElse: () => BookingStatus.choDuyet,
+      (e) => e.dbValue.toLowerCase() == status.trim().toLowerCase(),
+      orElse: () => BookingStatus.dangThucHien, // Fallback default
     );
   }
 
-  String toDbString() {
-    switch (this) {
-      case BookingStatus.choDuyet:
-        return 'PENDING';
-      case BookingStatus.daHoanThanh:
-        return 'COMPLETED';
-      case BookingStatus.daHuy:
-        return 'CANCELLED';
-    }
-  }
+  // Convert to database string when writing to Supabase
+  String toDbString() => dbValue;
 }
 
 class BookingModel {
@@ -68,38 +62,22 @@ class BookingModel {
     return BookingModel(
       bookingId: json['booking_id']?.toString() ?? '',
       shopName: json['shop_name']?.toString() ?? 'Cửa hàng đối tác',
-      serviceTitle: json['service_type']?.toString() ??
+      serviceTitle:
+          json['service_type']?.toString() ??
           json['service_title']?.toString() ??
           'Dịch vụ hệ thống',
-      imageUrl: (json['image_url'] != null && json['image_url'].toString().isNotEmpty)
+      imageUrl:
+          (json['image_url'] != null && json['image_url'].toString().isNotEmpty)
           ? json['image_url'].toString()
           : 'assets/no_icon_placeholder.png',
       variantDetails: json['variant_details']?.toString() ?? 'Tiêu chuẩn',
-      date: json['scheduled_at']?.toString() ?? json['booked_at']?.toString() ?? '',
+      date:
+          json['scheduled_at']?.toString() ??
+          json['booked_at']?.toString() ??
+          '',
       originalCost: '${json['total_price'] ?? 0} đ',
       cost: '${json['total_price'] ?? 0} đ',
-      status: BookingStatus.fromString(
-        _mapDbStatusToVietnamese(json['status']?.toString() ?? ''),
-      ),
+      status: BookingStatus.fromDbString(json['status']?.toString() ?? ''),
     );
-  }
-
-  static String _mapDbStatusToVietnamese(String dbStatus) {
-    switch (dbStatus.toLowerCase()) {
-      case 'pending':
-      case 'cho_duyet':
-      case 'PENDING':
-        return 'Chờ duyệt';
-      case 'completed':
-      case 'da_hoan_thanh':
-      case 'COMPLETED':
-        return 'Đã hoàn thành';
-      case 'cancelled':
-      case 'da_huy':
-      case 'CANCELLED':
-        return 'Đã hủy';
-      default:
-        return dbStatus;
-    }
   }
 }
