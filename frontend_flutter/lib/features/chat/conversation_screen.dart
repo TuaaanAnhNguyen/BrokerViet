@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../services/chat/chat_service.dart';
 import '../../widgets/avatar_builder.dart';
+import '../../widgets/chat/chat_bubble.dart';
 
 class ConversationScreen extends StatefulWidget {
   final String chatroomId;
@@ -137,22 +138,11 @@ class _ConversationScreenState extends State<ConversationScreen> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.phone_outlined, color: primaryColor),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: bodyText),
-            onPressed: () {},
-          ),
-        ],
+        actions:
+            const [], // Cleaned up! Phone and action icons removed entirely
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: outlineVariant.withValues(alpha: 0.5),
-            height: 1,
-          ),
+          child: Container(color: outlineVariant.withAlpha(127), height: 1),
         ),
       ),
       body: Column(
@@ -196,19 +186,19 @@ class _ConversationScreenState extends State<ConversationScreen> {
                     final bool isMe =
                         msg['sender_id'] == _chatService.currentUserId;
 
-                    return _buildChatBubble(
-                      msg['content'] ?? '',
-                      _parseMessageTime(msg['sent_at']),
-                      isMe,
-                      primaryColor,
-                      darkText,
+                    // Rendering utilizing the newly decoupled widget
+                    return ChatBubble(
+                      text: msg['content'] ?? '',
+                      time: _parseMessageTime(msg['sent_at']),
+                      isMe: isMe,
+                      primaryColor: primaryColor,
+                      darkText: darkText,
                     );
                   },
                 );
               },
             ),
           ),
-
           Container(
             padding: EdgeInsets.fromLTRB(
               12,
@@ -219,7 +209,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               border: Border(
-                top: BorderSide(color: outlineVariant.withValues(alpha: 0.5)),
+                top: BorderSide(color: outlineVariant.withAlpha(127)),
               ),
             ),
             child: Row(
@@ -271,68 +261,6 @@ class _ConversationScreenState extends State<ConversationScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildChatBubble(
-    String text,
-    String time,
-    bool isMe,
-    Color primary,
-    Color dark,
-  ) {
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isMe ? primary : Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 2),
-            bottomRight: Radius.circular(isMe ? 2 : 16),
-          ),
-          border: isMe ? null : Border.all(color: const Color(0xFFE2E4EB)),
-          boxShadow: [
-            if (!isMe)
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              text,
-              style: TextStyle(
-                color: isMe ? Colors.white : dark,
-                fontSize: 14,
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Text(
-                time,
-                style: TextStyle(
-                  color: isMe ? Colors.white70 : Colors.black38,
-                  fontSize: 10,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -1,6 +1,8 @@
 // frontend_flutter/lib/services/map/map_service.dart
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:broker_viet/models/route_result_model.dart';
 
 class MapServiceException implements Exception {
   final String message;
@@ -15,7 +17,7 @@ class MapService {
   final SupabaseClient _supabaseClient;
 
   MapService({SupabaseClient? supabaseClient})
-      : _supabaseClient = supabaseClient ?? Supabase.instance.client;
+    : _supabaseClient = supabaseClient ?? Supabase.instance.client;
 
   Future<List<Map<String, dynamic>>> findNearbyProviders({
     required double latitude,
@@ -35,10 +37,10 @@ class MapService {
         },
       );
 
-      print('========== EDGE FUNCTION ==========');
+      print('====================\n');
       print('Status: ${response.status}');
       print('Raw response: ${response.data}');
-      print('===================================');
+      print('====================\n');
 
       if (response.status != 200) {
         throw MapServiceException(
@@ -47,14 +49,10 @@ class MapService {
       }
 
       if (response.data == null) {
-        throw MapServiceException(
-          'Edge Function returned a null response.',
-        );
+        throw MapServiceException('Edge Function returned a null response.');
       }
 
-      final responseData = Map<String, dynamic>.from(
-        response.data as Map,
-      );
+      final responseData = Map<String, dynamic>.from(response.data as Map);
 
       print('Decoded response: $responseData');
 
@@ -87,15 +85,11 @@ class MapService {
         'Edge Function error: ${e.details ?? e.toString()} (Status: ${e.status})',
       );
     } on PostgrestException catch (e) {
-      throw MapServiceException(
-        'Database error: ${e.message}',
-      );
+      throw MapServiceException('Database error: ${e.message}');
     } catch (e, stack) {
       print(stack);
 
-      throw MapServiceException(
-        'Unexpected error: $e',
-      );
+      throw MapServiceException('Unexpected error: $e');
     }
   }
 
@@ -122,9 +116,89 @@ class MapService {
         'Database error updating location: ${e.message}',
       );
     } catch (e) {
-      throw MapServiceException(
-        'Failed to update coordinates: $e',
+      throw MapServiceException('Failed to update coordinates: $e');
+    }
+  }
+
+  Future<RouteResult> getRoute({
+    required LatLng origin,
+    required LatLng destination,
+  }) async {
+    try {
+      print('\n========== GET ROUTE ==========');
+      print('Origin: (${origin.latitude}, ${origin.longitude})');
+      print('Destination: (${destination.latitude}, ${destination.longitude})');
+
+      final response = await _supabaseClient.functions.invoke(
+        'get-route',
+        method: HttpMethod.post,
+        body: {
+          'originLat': origin.latitude,
+          'originLng': origin.longitude,
+          'destinationLat': destination.latitude,
+          'destinationLng': destination.longitude,
+        },
       );
+
+      print('Status: ${response.status}');
+      print('Raw response: ${response.data}');
+      print('===============================\n');
+
+      if (response.status != 200) {
+        throw MapServiceException(
+          'Failed to retrieve route. Status: ${response.status}',
+        );
+      }
+
+      if (response.data == null) {
+        throw MapServiceException('Edge Function returned null.');
+      }
+
+      final responseData = Map<String, dynamic>.from(response.data as Map);
+
+      if (responseData['success'] != true) {
+        throw MapServiceException(
+          responseData['error']?.toString() ?? 'Unknown routing error.',
+        );
+      }
+
+      final coordinates = List<Map<String, dynamic>>.from(
+        responseData['coordinates'],
+      );
+
+      final points = coordinates.map((coordinate) {
+        return LatLng(
+          (coordinate['lat'] as num).toDouble(),
+          (coordinate['lng'] as num).toDouble(),
+        );
+      }).toList();
+
+      final distanceMeters = (responseData['distanceMeters'] as num).toDouble();
+
+      final durationSeconds = (responseData['durationSeconds'] as num)
+          .toDouble();
+
+      print('Route successfully loaded.');
+      print('Points: ${points.length}');
+      print('Distance: ${(distanceMeters / 1000).toStringAsFixed(2)} km');
+      print('Duration: ${(durationSeconds / 60).toStringAsFixed(1)} mins');
+
+      return RouteResult(
+        points: points,
+        distanceMeters: distanceMeters,
+        durationSeconds: durationSeconds,
+      );
+    } on FunctionException catch (e) {
+      throw MapServiceException(
+        'Edge Function error: ${e.details ?? e.toString()} '
+        '(Status: ${e.status})',
+      );
+    } on PostgrestException catch (e) {
+      throw MapServiceException('Database error: ${e.message}');
+    } catch (e, stack) {
+      print(stack);
+
+      throw MapServiceException('Unexpected routing error: $e');
     }
   }
 }

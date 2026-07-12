@@ -19,8 +19,6 @@ class ServiceMarketplaceService {
       throw ArgumentError('MinPrice cannot be greater than MaxPrice.');
     }
 
-    // Gộp tất cả tham số vào một Map và truyền trực tiếp giá trị thực tế (hoặc null)
-    // Điều này giúp Postgres nhận diện đúng cấu trúc hàm giống như khi bạn test thủ công
     final params = <String, dynamic>{
       'p_limit': _normalizeLimit(limit),
       'p_offset': _normalizeOffset(offset),
@@ -59,6 +57,7 @@ class ServiceMarketplaceService {
 
       return dataList.map((item) {
         try {
+          print('>>> Item raw: $item');
           return ServiceModel.fromJson(item as Map<String, dynamic>);
         } catch (e) {
           print('>>> Lỗi ép kiểu Model tại item: $item. Chi tiết: $e');

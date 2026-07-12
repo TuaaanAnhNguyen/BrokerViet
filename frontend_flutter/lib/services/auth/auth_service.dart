@@ -1,6 +1,9 @@
+// lib/services/auth/auth_service.dart
+
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
+import '../notification/firebase_cloud_messaging_handler.dart';
 
 abstract class AuthState {}
 
@@ -125,6 +128,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
             currentUser,
           );
           if (successState != null) {
+            await FcmHandler().registerCurrentDevice();
             emit(successState);
           } else {
             emit(AuthInitial());
@@ -149,6 +153,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
             response.user!,
           );
           if (successState != null) {
+            await FcmHandler().registerCurrentDevice();
             emit(successState);
           } else {
             emit(AuthFailure('Không thể truy xuất thông tin người dùng.'));
@@ -204,6 +209,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
             fallbackRole: event.role.toUpperCase(),
           );
           if (successState != null) {
+            await FcmHandler().registerCurrentDevice();
             emit(successState);
           } else {
             emit(

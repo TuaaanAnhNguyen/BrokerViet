@@ -13,6 +13,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
 import './services/notification/firebase_cloud_messaging_handler.dart';
+import './services/navigation_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,17 +27,24 @@ void main() async {
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
   await initializeDateFormatting('vi_VN', null);
 
+  String firebaseMessagingApiKey =
+      dotenv.env['FIREBASE_MESSAGING_API_KEY'] ?? '';
+  String firebaseMessagingAppId = dotenv.env['FIREBASE_MESSAGING_APP_ID'] ?? '';
+  String firebaseMessagingSenderId =
+      dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '';
+  String firebaseProjectId = dotenv.env['FIREBASE_PROJECT_ID'] ?? '';
+
   try {
     await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: "AIzaSyCcf9ueYgdZdtODLjBYMmSpcPoRdJ7jjI4",
-        appId: "1:579951195028:android:c39859a995e4badf6a9581",
-        messagingSenderId: "579951195028",
-        projectId: "brokerviet-b7d3f",
-        storageBucket: "brokerviet-b7d3f.firebasestorage.app",
+      options: FirebaseOptions(
+        apiKey: firebaseMessagingApiKey,
+        appId: firebaseMessagingAppId,
+        messagingSenderId: firebaseMessagingSenderId,
+        projectId: firebaseProjectId,
+        storageBucket: "$firebaseProjectId.firebasestorage.app",
       ),
     );
-    
+
     await FcmHandler().initNotificationLifecycle();
   } catch (e) {
     print("Firebase Init Failed: $e");
@@ -73,22 +81,26 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
   }
 
   void _handleDeepLink(Uri uri) {
-    if (uri.host == 'payment-result') {
-      final bookingId = uri.queryParameters['booking_id'];
-      final responseCode = uri.queryParameters['response_code'];
+    print("Deep link received: $uri");
 
-      if (bookingId != null) {
-        _navigatorKey.currentState?.pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => VNPayResultPage(
-              bookingId: bookingId,
+    if (uri.host != 'vnpay_result_page') return;
 
-            ),
-          ),
-        );
-      }
-    }
+    final bookingId = uri.queryParameters['booking_id'];
+    if (bookingId == null) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final navigator = _navigatorKey.currentState;
+
+      print("Navigator ready: $navigator");
+
+      navigator?.push(
+        MaterialPageRoute(
+          builder: (_) => VNPayResultPage(bookingId: bookingId),
+        ),
+      );
+    });
   }
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -98,37 +110,37 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
         ),
         BlocProvider<ProfileService>(create: (context) => ProfileService()),
       ],
-        child: MaterialApp(
-          navigatorKey: _navigatorKey,
-          title: 'BrokerViet',
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            useMaterial3: true,
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          ),
-
-          onUnknownRoute: (settings) {
-            return MaterialPageRoute(
-              builder: (_) => BlocBuilder<AuthService, AuthState>(
-                builder: (context, state) {
-                  if (state is AuthSuccess) {
-                    return const MainNavigationShell();
-                  }
-                  return const LoginScreen();
-                },
-              ),
-            );
-          },
-
-          home: BlocBuilder<AuthService, AuthState>(
-            builder: (context, state) {
-              if (state is AuthSuccess) {
-                return const MainNavigationShell();
-              }
-              return const LoginScreen();
-            },
-          ),
+      child: MaterialApp(
+        navigatorKey: NavigationService.navigatorKey,
+        title: 'BrokerViet',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         ),
+
+        onUnknownRoute: (settings) {
+          return MaterialPageRoute(
+            builder: (_) => BlocBuilder<AuthService, AuthState>(
+              builder: (context, state) {
+                if (state is AuthSuccess) {
+                  return const MainNavigationShell();
+                }
+                return const LoginScreen();
+              },
+            ),
+          );
+        },
+
+        home: BlocBuilder<AuthService, AuthState>(
+          builder: (context, state) {
+            if (state is AuthSuccess) {
+              return const MainNavigationShell();
+            }
+            return const LoginScreen();
+          },
+        ),
+      ),
     );
   }
 }

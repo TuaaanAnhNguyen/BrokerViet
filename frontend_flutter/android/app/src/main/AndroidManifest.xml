@@ -35,10 +35,10 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data
                     android:scheme="brokerviet"
-                    android:host="payment-result"/>
+                    android:host="home"/>
             </intent-filter>
         </activity>
-
+R
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

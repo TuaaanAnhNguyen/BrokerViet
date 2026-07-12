@@ -8,7 +8,7 @@ class ChatService {
 
   String get currentUserId => _client.auth.currentUser?.id ?? '';
 
-  // === STREAM CHAT ROOMS (via Edge Function + Realtime refresh) ===
+  // STREAM CHATROOMS
   Stream<List<Map<String, dynamic>>> streamChatRooms() {
     final controller = StreamController<List<Map<String, dynamic>>>();
 
@@ -21,11 +21,25 @@ class ChatService {
     }
 
     Future<void> refresh() async {
-      final rooms = await fetchChatRooms();
-      controller.add(rooms);
+      try {
+        final rooms = await fetchChatRooms();
+
+        if (!controller.isClosed) {
+          controller.add(rooms);
+        }
+      } catch (e) {
+        print("Refresh error: $e");
+      }
     }
 
     refresh();
+
+    Timer? refreshTimer;
+
+    refreshTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => refresh(),
+    );
 
     final channel = _client
         .channel('chat_list_changes_$uid')
@@ -33,9 +47,8 @@ class ChatService {
           event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'chatrooms',
-          callback: (payload) async {
-            print("CHATROOM EVENT");
-            print(payload);
+          callback: (_) async {
+            print("Realtime -> chatrooms");
             await refresh();
           },
         )
@@ -43,9 +56,8 @@ class ChatService {
           event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'messages',
-          callback: (payload) async {
-            print("MESSAGE EVENT");
-            print(payload);
+          callback: (_) async {
+            print("Realtime -> messages");
             await refresh();
           },
         );
@@ -53,12 +65,14 @@ class ChatService {
     channel.subscribe();
 
     controller.onCancel = () {
+      refreshTimer?.cancel();
       _client.removeChannel(channel);
     };
 
     return controller.stream;
   }
 
+  // FETCH CHATROOMS
   Future<List<Map<String, dynamic>>> fetchChatRooms() async {
     final uid = currentUserId;
 
@@ -75,14 +89,16 @@ class ChatService {
 
       final List<dynamic> rooms = data['chatrooms'] ?? [];
 
-      return rooms.map((e) => Map<String, dynamic>.from(e)).toList();
+      return rooms
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
     } catch (e) {
-      print('Error fetching chat rooms: $e');
-
+      print("fetchChatRooms error: $e");
       return [];
     }
   }
 
+  // STREAM MESSAGES
   Stream<List<Map<String, dynamic>>> streamMessages(String chatroomId) {
     return _client
         .from('messages')
@@ -108,7 +124,7 @@ class ChatService {
         });
   }
 
-  // === GET OR CREATE CHATROOM ===
+  // GET / CREATE CHATROOM
   Future<String> getOrCreateChatRoom({
     required String providerId,
     required String customerId,
@@ -117,34 +133,45 @@ class ChatService {
       final response = await _client.functions.invoke(
         'get-or-create-chatroom',
         method: HttpMethod.post,
-        body: {'customer_id': customerId, 'provider_id': providerId},
+        body: {
+          'customer_id': customerId,
+          'provider_id': providerId,
+        },
       );
+
       final data = response.data as Map<String, dynamic>;
+
       return data['chatroom_id']?.toString() ?? '';
     } catch (e) {
-      print("Error getOrCreateChatRoom: $e");
+      print(e);
       return '';
     }
   }
 
-  // === SEND MESSAGE ===
-  Future<void> sendMessage(String chatroomId, String text) async {
+  // SEND MESSAGE
+  Future<void> sendMessage(
+    String chatroomId,
+    String text,
+  ) async {
     final cleanText = text.trim();
+
     if (cleanText.isEmpty || currentUserId.isEmpty) return;
 
     await _client.functions.invoke(
-      'send-message',
+      "send-message",
       method: HttpMethod.post,
       body: {
-        'chatroom_id': chatroomId,
-        'sender_id': currentUserId,
-        'content': cleanText,
+        "chatroom_id": chatroomId,
+        "sender_id": currentUserId,
+        "content": cleanText,
       },
     );
   }
 
+  // MARK READ
   Future<void> markAsRead(String chatroomId) async {
     final uid = currentUserId;
+
     if (uid.isEmpty) return;
 
     try {
@@ -160,15 +187,33 @@ class ChatService {
           .eq('chatroom_id', chatroomId)
           .eq('provider_id', uid);
     } catch (e) {
-      print('Error marking chatroom as read: $e');
+      print(e);
     }
   }
 
-  String _parseTimestamp(dynamic isoString) {
+  // DETAIL
+  Future<Map<String, dynamic>> getChatroomDetail(
+    String chatroomId,
+  ) async {
+    final response = await Supabase.instance.client.functions.invoke(
+      'get-chatroom-detail',
+      body: {
+        'chatroom_id': chatroomId,
+      },
+    );
+
+    return Map<String, dynamic>.from(response.data);
+  }
+
+  String parseTimestamp(dynamic isoString) {
     if (isoString == null) return '';
+
     try {
-      final dateTime = DateTime.parse(isoString.toString()).toLocal();
-      return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+      final dt = DateTime.parse(
+        isoString.toString(),
+      ).toLocal();
+
+      return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
     } catch (_) {
       return '';
     }
