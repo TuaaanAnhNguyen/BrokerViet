@@ -25,12 +25,7 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
   int _currentPage = 1;
   bool _hasMore = true;
 
-  final List<String> _filters = [
-    'All',
-    'Pending',
-    'Completed',
-    'Cancelled'
-  ];
+  final List<String> _filters = ['All', 'Pending', 'Completed', 'Cancelled'];
   String _activeFilter = 'All';
 
   // Design Tokens
@@ -123,7 +118,10 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
     }
   }
 
-  Future<void> _updateBookingStatus(String bookingId, BookingStatus newStatus) async {
+  Future<void> _updateBookingStatus(
+    String bookingId,
+    BookingStatus newStatus,
+  ) async {
     final int index = _bookings.indexWhere((b) => b.bookingId == bookingId);
     if (index == -1) return;
 
@@ -179,29 +177,43 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
 
   String _getFilterLabel(String filter) {
     switch (filter) {
-      case 'All': return 'Tất cả';
-      case 'Pending': return 'Chờ duyệt';
-      case 'Completed': return 'Đã hoàn thành';
-      case 'Cancelled': return 'Đã hủy';
-      default: return filter;
+      case 'All':
+        return 'Tất cả';
+      case 'Pending':
+        return BookingStatus.dangThucHien.uiLabel; // 'Đang thực hiện'
+      case 'Completed':
+        return BookingStatus.daHoanThanh.uiLabel; // 'Đã hoàn thành'
+      case 'Cancelled':
+        return BookingStatus.daHuy.uiLabel; // 'Đã hủy'
+      default:
+        return filter;
     }
   }
 
   String _getEmptyMessage() {
     switch (_activeFilter) {
-      case 'Pending': return 'Không có yêu cầu chờ xử lý';
-      case 'Completed': return 'Chưa có công việc nào hoàn thành';
-      case 'Cancelled': return 'Không có lịch hẹn bị hủy';
-      default: return 'Chưa có lịch hẹn nào';
+      case 'Pending':
+        return 'Không có yêu cầu nào đang thực hiện';
+      case 'Completed':
+        return 'Chưa có công việc nào hoàn thành';
+      case 'Cancelled':
+        return 'Không có lịch hẹn bị hủy';
+      default:
+        return 'Chưa có lịch hẹn nào';
     }
   }
 
   BookingStatus? _filterToStatus(String filter) {
     switch (filter) {
-      case 'Pending': return BookingStatus.choDuyet;
-      case 'Completed': return BookingStatus.daHoanThanh;
-      case 'Cancelled': return BookingStatus.daHuy;
-      default: return null;
+      case 'Pending':
+        return BookingStatus
+            .dangThucHien; // Mapped perfectly to 'PENDING' / 'Đang thực hiện'
+      case 'Completed':
+        return BookingStatus.daHoanThanh;
+      case 'Cancelled':
+        return BookingStatus.daHuy;
+      default:
+        return null; // For 'All'
     }
   }
 
@@ -265,10 +277,12 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
           Color activeTextColor = Colors.white;
 
           if (status != null && isSelected) {
-            activeBgColor = BookingStatusUtils.getBackgroundColorForStatus(status);
+            activeBgColor = BookingStatusUtils.getBackgroundColorForStatus(
+              status,
+            );
             activeTextColor = BookingStatusUtils.getTextColorForStatus(status);
             // Ensure contrast if the background is too light
-            if (status == BookingStatus.choDuyet) {
+            if (status == BookingStatus.dangThucHien) {
               activeBgColor = Colors.orange.shade600;
               activeTextColor = Colors.white;
             } else if (status == BookingStatus.daHoanThanh) {
@@ -282,7 +296,7 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
             if (filter == 'All') return true;
             return b.status == _filterToStatus(filter);
           }).length;
-          
+
           if (_activeFilter != filter && filter != 'All') {
             count = 0; // Hide count for inactive if not loaded
           }
@@ -297,7 +311,9 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected ? activeBgColor : const Color(0xFFDCE9FF).withValues(alpha: 0.5),
+                color: isSelected
+                    ? activeBgColor
+                    : const Color(0xFFDCE9FF).withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -313,7 +329,10 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
                   if (count > 0 && isSelected) ...[
                     const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
@@ -327,7 +346,7 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
                         ),
                       ),
                     ),
-                  ]
+                  ],
                 ],
               ),
             ),
@@ -350,10 +369,7 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
             const Icon(Icons.error_outline, size: 48, color: Colors.grey),
             const SizedBox(height: 16),
             Text(_errorMessage!, style: const TextStyle(color: Colors.grey)),
-            TextButton(
-              onPressed: _loadBookings,
-              child: const Text('Thử lại'),
-            ),
+            TextButton(onPressed: _loadBookings, child: const Text('Thử lại')),
           ],
         ),
       );
@@ -405,14 +421,17 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
                 ),
               ),
             ),
-            ...group.bookings.map((booking) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: ProviderBookingCard(
-                    booking: booking,
-                    onTap: () => _showBookingDetail(booking),
-                    onStatusUpdate: (newStatus) => _updateBookingStatus(booking.bookingId, newStatus),
-                  ),
-                )),
+            ...group.bookings.map(
+              (booking) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: ProviderBookingCard(
+                  booking: booking,
+                  onTap: () => _showBookingDetail(booking),
+                  onStatusUpdate: (newStatus) =>
+                      _updateBookingStatus(booking.bookingId, newStatus),
+                ),
+              ),
+            ),
           ],
         );
       },
@@ -428,7 +447,7 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
 
     for (var b in bookings) {
       if (b.date == null) continue;
-      
+
       final date = DateTime(b.date!.year, b.date!.month, b.date!.day);
       String key;
 

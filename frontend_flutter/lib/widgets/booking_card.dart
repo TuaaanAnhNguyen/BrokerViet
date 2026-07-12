@@ -43,7 +43,7 @@ class BookingCard extends StatelessWidget {
       case BookingStatus.daHoanThanh:
         statusColor = const Color(0xFF2E7D32);
         break;
-      case BookingStatus.choDuyet:
+      case BookingStatus.dangThucHien:
         statusColor = const Color(0xFFE65100);
         break;
       case BookingStatus.daHuy:
@@ -105,7 +105,7 @@ class BookingCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  order.status.value,
+                  order.status.uiLabel,
                   style: TextStyle(
                     color: statusColor,
                     fontSize: 11,
@@ -245,7 +245,7 @@ class BookingCard extends StatelessWidget {
             ),
           ),
         ];
-      case BookingStatus.choDuyet:
+      case BookingStatus.dangThucHien:
         return [
           OutlinedButton(
             onPressed: onCancel,
