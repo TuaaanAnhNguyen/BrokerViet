@@ -3,6 +3,7 @@
 import 'package:broker_viet/features/chat/conversation_screen.dart';
 import 'package:broker_viet/models/review_model.dart';
 import 'package:broker_viet/services/chat/chat_service.dart';
+import 'package:broker_viet/services/map/map_service.dart';
 import 'package:broker_viet/widgets/avatar_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -755,79 +756,56 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
 
               InkWell(
                 onTap: () async {
-                  final providerId = _service?.providerId ?? '';
-                  final providerName =
-                      _service?.providerUsername ?? 'Nhà cung cấp';
+                  if (_service == null) return;
 
                   showDialog(
                     context: context,
                     barrierDismissible: false,
-                    builder: (context) => const Center(
+                    builder: (_) => const Center(
                       child: CircularProgressIndicator(color: primaryColor),
                     ),
                   );
 
                   try {
-                    final profileData = await supabase
-                        .from('profiles')
-                        .select('location_latitude, location_longitude')
-                        .eq('user_id', providerId)
-                        .maybeSingle();
+                    final mapService = MapService();
 
-                    if (context.mounted) Navigator.pop(context);
+                    final providerLocation = await mapService
+                        .getProviderLocation(providerId: _service!.providerId);
 
-                    double? targetLat;
-                    double? targetLng;
+                    if (!context.mounted) return;
 
-                    if (profileData != null) {
-                      targetLat = (profileData['location_latitude'] as num?)
-                          ?.toDouble();
-                      targetLng = (profileData['location_longitude'] as num?)
-                          ?.toDouble();
-                    }
+                    Navigator.pop(context);
 
-                    if (targetLat == null || targetLng == null) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Đối tác chưa cập nhật cấu hình vị trí.',
-                            ),
-                          ),
-                        );
-                      }
-                      return;
-                    }
-
-                    if (targetLat != null &&
-                        targetLng != null &&
-                        context.mounted) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MapScreen(
-                            initialTargetLat: targetLat,
-                            initialTargetLng: targetLng,
-                            initialProviderName: providerName,
-                          ),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => MapScreen(
+                          serviceId: _service!.id,
+                          initialTargetLat: providerLocation.latitude,
+                          initialTargetLng: providerLocation.longitude,
+                          initialProviderName:
+                              _service!.providerUsername ?? 'Provider',
                         ),
-                      );
-                    } else if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Tọa độ vị trí đối tác không hợp lệ.'),
-                        ),
-                      );
-                    }
+                      ),
+                    );
+                  } on MapServiceException catch (e) {
+                    if (!context.mounted) return;
+
+                    Navigator.pop(context);
+
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(e.message)));
                   } catch (e) {
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Lỗi khi truy vấn bản đồ đối tác: $e'),
-                        ),
-                      );
-                    }
+                    if (!context.mounted) return;
+
+                    Navigator.pop(context);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Unable to load provider location.\n$e'),
+                      ),
+                    );
                   }
                 },
                 borderRadius: BorderRadius.circular(12),

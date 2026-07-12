@@ -3,6 +3,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:broker_viet/models/route_result_model.dart';
+import '../../models/provider_service_info_model.dart';
+import '../../models/provider_location_model.dart';
 
 class MapServiceException implements Exception {
   final String message;
@@ -199,6 +201,120 @@ class MapService {
       print(stack);
 
       throw MapServiceException('Unexpected routing error: $e');
+    }
+  }
+
+  Future<ProviderLocation> getMyLocation() async {
+    try {
+      print('\n========== GET MY LOCATION ==========');
+
+      final response = await _supabaseClient.functions.invoke(
+        'get-my-location',
+      );
+
+      print('Status: ${response.status}');
+      print('Response: ${response.data}');
+
+      if (response.status != 200) {
+        throw MapServiceException('Unable to load current location.');
+      }
+
+      final json = Map<String, dynamic>.from(response.data);
+
+      if (json['success'] != true) {
+        throw MapServiceException(json['error'] ?? 'Unknown error.');
+      }
+
+      final location = Map<String, dynamic>.from(json['location']);
+
+      return ProviderLocation(
+        userId: '',
+        username: '',
+        latitude: (location['latitude'] as num).toDouble(),
+        longitude: (location['longitude'] as num).toDouble(),
+        distanceMeters: 0,
+        address: location['address'],
+      );
+    } on FunctionException catch (e) {
+      throw MapServiceException(e.details ?? e.toString());
+    } catch (e) {
+      throw MapServiceException(e.toString());
+    }
+  }
+
+  Future<ProviderServiceInfo> getProviderServiceInfo({
+    required String serviceId,
+  }) async {
+    try {
+      print('\n========== GET PROVIDER SERVICE ==========');
+
+      final response = await _supabaseClient.functions.invoke(
+        'get-provider-service-info-on-map',
+        body: {'serviceId': serviceId},
+      );
+
+      print('Status: ${response.status}');
+      print('Response: ${response.data}');
+
+      if (response.status != 200) {
+        throw MapServiceException('Unable to load provider service.');
+      }
+
+      final json = Map<String, dynamic>.from(response.data);
+
+      if (json['success'] != true) {
+        throw MapServiceException(json['error'] ?? 'Unknown error.');
+      }
+
+      return ProviderServiceInfo.fromJson(
+        Map<String, dynamic>.from(json['service']),
+      );
+    } on FunctionException catch (e) {
+      throw MapServiceException(e.details ?? e.toString());
+    } catch (e) {
+      throw MapServiceException(e.toString());
+    }
+  }
+
+  Future<ProviderLocation> getProviderLocation({
+    required String providerId,
+  }) async {
+    try {
+      print('\n========== GET PROVIDER LOCATION ==========');
+
+      final response = await _supabaseClient.functions.invoke(
+        'get-provider-location',
+        method: HttpMethod.post,
+        body: {'providerId': providerId},
+      );
+
+      print('Status: ${response.status}');
+      print('Response: ${response.data}');
+
+      if (response.status != 200) {
+        throw MapServiceException('Unable to load provider location.');
+      }
+
+      final json = Map<String, dynamic>.from(response.data);
+
+      if (json['success'] != true) {
+        throw MapServiceException(json['error'] ?? 'Unknown error.');
+      }
+
+      final location = Map<String, dynamic>.from(json['location']);
+
+      return ProviderLocation(
+        userId: providerId,
+        username: '',
+        latitude: (location['latitude'] as num).toDouble(),
+        longitude: (location['longitude'] as num).toDouble(),
+        distanceMeters: 0,
+        address: location['address'],
+      );
+    } on FunctionException catch (e) {
+      throw MapServiceException(e.details ?? e.toString());
+    } catch (e) {
+      throw MapServiceException(e.toString());
     }
   }
 }

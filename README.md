@@ -76,12 +76,28 @@ BrokerViet
 │  │  │  ├─ file-system.probe
 │  │  │  ├─ kotlin
 │  │  │  │  └─ errors
+│  │  │  │     ├─ errors-1783826450204.log
+│  │  │  │     ├─ errors-1783826450223.log
+│  │  │  │     ├─ errors-1783826450234.log
+│  │  │  │     ├─ errors-1783826450283.log
+│  │  │  │     ├─ errors-1783826648114.log
+│  │  │  │     ├─ errors-1783826648145.log
+│  │  │  │     ├─ errors-1783826648154.log
+│  │  │  │     └─ errors-1783826648165.log
 │  │  │  ├─ noVersion
 │  │  │  │  └─ buildLogic.lock
 │  │  │  └─ vcs-1
 │  │  │     └─ gc.properties
 │  │  ├─ .kotlin
 │  │  │  ├─ errors
+│  │  │  │  ├─ errors-1783826450204.log
+│  │  │  │  ├─ errors-1783826450223.log
+│  │  │  │  ├─ errors-1783826450234.log
+│  │  │  │  ├─ errors-1783826450283.log
+│  │  │  │  ├─ errors-1783826648114.log
+│  │  │  │  ├─ errors-1783826648145.log
+│  │  │  │  ├─ errors-1783826648154.log
+│  │  │  │  └─ errors-1783826648165.log
 │  │  │  └─ sessions
 │  │  ├─ app
 │  │  │  ├─ build.gradle.kts
@@ -234,6 +250,8 @@ BrokerViet
 │  │  │  ├─ payment_model.dart
 │  │  │  ├─ profile_model.dart
 │  │  │  ├─ provider_booking_model.dart
+│  │  │  ├─ provider_location_model.dart
+│  │  │  ├─ provider_service_info_model.dart
 │  │  │  ├─ review_model.dart
 │  │  │  ├─ route_result_model.dart
 │  │  │  ├─ service_category_model.dart
@@ -280,7 +298,19 @@ BrokerViet
 │  │     ├─ avatar_builder.dart
 │  │     ├─ booking_card.dart
 │  │     ├─ button.dart
+│  │     ├─ chat
+│  │     │  └─ chat_bubble.dart
 │  │     ├─ custom_text_field.dart
+│  │     ├─ map
+│  │     │  ├─ destination_marker.dart
+│  │     │  ├─ error_banner.dart
+│  │     │  ├─ loading_overlay.dart
+│  │     │  ├─ map_tile_layer.dart
+│  │     │  ├─ my_location_button.dart
+│  │     │  ├─ provider_service_info_card.dart
+│  │     │  ├─ route_info_card.dart
+│  │     │  ├─ route_polyline_layer.dart
+│  │     │  └─ user_location_marker.dart
 │  │     ├─ network_image_fallback.dart
 │  │     ├─ notification_tile.dart
 │  │     ├─ payment
