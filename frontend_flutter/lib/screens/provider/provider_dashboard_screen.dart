@@ -7,6 +7,7 @@ import '../../models/booking_model.dart';
 import '../../services/provider/provider_dashboard_service.dart';
 import '../../services/provider/provider_bookings_service.dart';
 import '../../widgets/provider/provider_booking_card.dart';
+import 'provider_bookings_screen.dart';
 import 'provider_services_list_screen.dart';
 import 'provider_service_form_screen.dart';
 
@@ -15,10 +16,10 @@ class ProviderDashboardScreen extends StatefulWidget {
 
   @override
   State<ProviderDashboardScreen> createState() =>
-      _ProviderDashboardScreenState();
+      ProviderDashboardScreenState();
 }
 
-class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
+class ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   final ProviderDashboardService _dashboardService = ProviderDashboardService();
   final ProviderBookingsService _bookingsService = ProviderBookingsService();
 
@@ -26,10 +27,6 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   String? _errorMessage;
   DashboardSummaryModel? _summary;
   List<ProviderBookingModel> _upcomingBookings = [];
-  int _currentTabIndex = 0;
-
-  final GlobalKey<ProviderServicesListScreenState> _servicesListKey =
-      GlobalKey();
 
   // Design Tokens (reused from marketplace & detail screens)
   static const Color primaryColor = Color(0xFF004AC6);
@@ -46,6 +43,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   }
 
   Future<void> _loadDashboardData() async {
+    if (!mounted) return;
     try {
       setState(() {
         _isLoading = true;
@@ -73,6 +71,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       }
     }
   }
+
+  Future<void> refresh() => _loadDashboardData();
 
   Future<void> _updateBookingStatus(
     String bookingId,
@@ -120,12 +120,6 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     }
   }
 
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentTabIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     // Stays exactly as a modular tab view component
@@ -137,24 +131,6 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           color: primaryColor,
           child: _buildBodyContent(),
         ),
-      ),
-      // Keep the floating action button pinned strictly to the dashboard layout view
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ProviderServiceFormScreen(),
-            ),
-          ).then((result) {
-            if (result == true) {
-              _servicesListKey.currentState?.loadServices();
-              _loadDashboardData();
-            }
-          });
-        },
-        backgroundColor: primaryColor,
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -407,7 +383,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               ),
               TextButton(
                 onPressed: () {
-                  _onTabTapped(1); // Navigate to Bookings tab
+                  // Navigation is now handled by MainNavigationShell
+                  // If you need to switch tabs from here, you'd typically use a callback or provider
                 },
                 child: const Text(
                   'Xem tất cả',

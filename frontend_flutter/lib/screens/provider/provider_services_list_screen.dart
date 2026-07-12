@@ -22,9 +22,9 @@ class ProviderServicesListScreenState extends State<ProviderServicesListScreen> 
     loadServices();
   }
 
-  Future<void> loadServices() async {
+  Future<void> loadServices({bool silent = false}) async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    if (!silent) setState(() => _isLoading = true);
     try {
       final services = await _servicesService.fetchMyServices();
       if (mounted) {
