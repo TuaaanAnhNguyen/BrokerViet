@@ -81,8 +81,7 @@ class FcmHandler {
             android: AndroidNotificationDetails(
               "high_importance_channel",
               "High Importance Notifications",
-              channelDescription:
-                  "This channel is used for chat updates.",
+              channelDescription: "This channel is used for chat updates.",
               importance: Importance.max,
               priority: Priority.high,
               icon: "@mipmap/ic_launcher",
@@ -94,7 +93,13 @@ class FcmHandler {
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((message) async {
-      print("Notification clicked.");
+      print("========== NOTIFICATION CLICK ==========");
+      print("Notification:");
+      print(message.notification?.title);
+      print(message.notification?.body);
+
+      print("Data:");
+      print(message.data.toString());
 
       await NavigationService.handleNotification(message.data);
     });
@@ -102,7 +107,8 @@ class FcmHandler {
     final initialMessage = await _fcm.getInitialMessage();
 
     if (initialMessage != null) {
-      print("Opened from terminated state.");
+      print("========== TERMINATED CLICK ==========");
+      print(initialMessage.data.toString());
 
       await NavigationService.handleNotification(initialMessage.data);
     }

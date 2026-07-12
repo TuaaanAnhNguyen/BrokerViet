@@ -12,6 +12,9 @@ class NavigationService {
       GlobalKey<NavigatorState>();
 
   static Future<void> handleNotification(Map<String, dynamic> data) async {
+    debugPrint("handleNotification()");
+    debugPrint(data.toString());
+
     final navigator = navigatorKey.currentState;
 
     if (navigator == null) return;
@@ -19,8 +22,12 @@ class NavigationService {
     final type = data["type"]?.toString() ?? "";
     final referenceId = data["reference_id"]?.toString() ?? "";
 
+    debugPrint("type = $type");
+    debugPrint("reference = $referenceId");
+
     switch (type) {
       case "CHAT":
+        debugPrint("\n===Opening chat...");
         if (referenceId.isEmpty) return;
 
         try {
@@ -43,6 +50,7 @@ class NavigationService {
         break;
 
       default:
+        debugPrint("\n===Opening notification...");
         navigator.push(
           MaterialPageRoute(builder: (_) => const NotificationScreen()),
         );
