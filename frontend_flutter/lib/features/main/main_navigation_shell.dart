@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 // import '../../screens/provider/provider_bookings_screen.dart';
 import '../../screens/provider/provider_dashboard_screen.dart';
 import '../../screens/provider/provider_services_list_screen.dart';
+import '../../screens/provider/voucher/voucher_list_screen.dart';
 import '../../services/auth/auth_service.dart';
 import '../../services/notification/notification_service.dart';
 import '../../models/notification_model.dart';
@@ -42,6 +43,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     const ProviderDashboardScreen(),
     // const ProviderBookingsScreen(),
     const ProviderServicesListScreen(),
+    const VoucherListScreen(),
     const ChatListScreen(),
   ];
 
@@ -99,6 +101,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         icon: Icon(Icons.construction_outlined),
         activeIcon: Icon(Icons.construction),
         label: 'Dịch vụ',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.confirmation_number_outlined),
+        activeIcon: Icon(Icons.confirmation_number),
+        label: 'Mã giảm giá',
       ),
       BottomNavigationBarItem(
         icon: Icon(Icons.chat_bubble_outline_rounded),

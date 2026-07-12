@@ -406,3 +406,69 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+[functions.create-provider-voucher]
+enabled = true
+verify_jwt = false
+import_map = "./functions/create-provider-voucher/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/create-provider-voucher/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/create-provider-voucher/*.html" ]
+
+[functions.get-provider-vouchers]
+enabled = true
+verify_jwt = false
+import_map = "./functions/get-provider-vouchers/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/get-provider-vouchers/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/get-provider-vouchers/*.html" ]
+
+[functions.update-voucher-status]
+enabled = true
+verify_jwt = false
+import_map = "./functions/update-voucher-status/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/update-voucher-status/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/update-voucher-status/*.html" ]
+
+[functions.get-active-vouchers-for-service]
+enabled = true
+verify_jwt = false
+import_map = "./functions/get-active-vouchers-for-service/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/get-active-vouchers-for-service/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/get-active-vouchers-for-service/*.html" ]
+
+[functions.validate-voucher]
+enabled = true
+verify_jwt = false
+import_map = "./functions/validate-voucher/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/validate-voucher/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/validate-voucher/*.html" ]
+
+[functions.create-booking-with-voucher]
+enabled = true
+verify_jwt = false
+import_map = "./functions/create-booking-with-voucher/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/create-booking-with-voucher/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/create-booking-with-voucher/*.html" ]

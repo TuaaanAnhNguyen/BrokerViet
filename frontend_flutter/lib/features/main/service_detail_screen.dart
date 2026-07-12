@@ -12,6 +12,7 @@ import '../../models/service_model.dart';
 import 'package:broker_viet/screens/provider/view_provider_screen.dart';
 import '../../services/marketplace/service_marketplace_service.dart';
 import '../booking/booking_service_screen.dart';
+import '../../widgets/voucher/voucher_badge.dart';
 import './map_screen.dart';
 
 class ServiceDetailScreen extends StatefulWidget {
@@ -436,6 +437,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        VoucherBadge(serviceId: widget.serviceId),
       ],
     );
   }

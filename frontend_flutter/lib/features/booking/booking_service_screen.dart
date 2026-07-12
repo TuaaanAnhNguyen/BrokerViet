@@ -5,7 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/booking/booking_service.dart';
 import '../../services/payment/vnpay_service.dart';
+import '../../services/voucher_service.dart';
 import '../../widgets/payment/vietqr_payment.dart';
+import '../../widgets/voucher/voucher_input_field.dart';
 
 class BookingScreen extends StatefulWidget {
   final String serviceId;
@@ -40,19 +42,36 @@ class BookingScreen extends StatefulWidget {
 class _BookingScreenState extends State<BookingScreen> {
   final _formKey = GlobalKey<FormState>();
   final BookingService _bookingService = BookingService();
+  final VoucherService _voucherService = VoucherService();
   final VNPayService _vnPayService = VNPayService();
   late TextEditingController _addressController;
   final _notesController = TextEditingController();
 
   int _selectedPaymentMethod = 0; // 0: VietQR, 1: Thẻ, 2: Tiền mặt
   bool _isSubmitting = false;
+  String? _appliedVoucherCode;
+  double _discountAmount = 0;
+  late double _finalPrice;
 
   @override
   void initState() {
     super.initState();
+    _finalPrice = widget.totalPrice.toDouble();
     _addressController = TextEditingController(
       text: "Landmark 81, Vinhomes Central Park, Phường 22, Quận Bình Thạnh",
     );
+  }
+
+  void _onVoucherApplied(
+    String? voucherCode,
+    double discountAmount,
+    double finalPrice,
+  ) {
+    setState(() {
+      _appliedVoucherCode = voucherCode;
+      _discountAmount = discountAmount;
+      _finalPrice = finalPrice;
+    });
   }
 
   @override
@@ -84,9 +103,11 @@ class _BookingScreenState extends State<BookingScreen> {
     debugPrint('Payment method selected: $paymentLabel');
 
     // Calculate final billing amount matching UI breakdown
-    final int finalCalculatedPrice = widget.totalPrice;
+    final int finalCalculatedPrice = _finalPrice.round();
 
     try {
+      String? confirmedBookingId;
+
       final bookingResult = await _bookingService.createBooking(
         serviceId: widget.serviceId,
         customerId: widget.customerId,
@@ -94,22 +115,24 @@ class _BookingScreenState extends State<BookingScreen> {
         totalPrice: finalCalculatedPrice,
         scheduledAt: widget.scheduledAt,
         serviceType: widget.serviceType,
+        voucherCode: _appliedVoucherCode,
       );
 
-      // ASYNC FETCH: Ensure we have the actual persistent Booking ID from the database
-      final String? confirmedBookingId = (bookingResult != null && bookingResult['booking_id'] != null)
+      confirmedBookingId = (bookingResult['booking_id'] != null)
           ? bookingResult['booking_id'].toString()
           : await _bookingService.getLatestBookingId(widget.customerId);
 
       if (!mounted) return;
       setState(() => _isSubmitting = false);
 
-      if (confirmedBookingId == null) {
+      if (confirmedBookingId == null || confirmedBookingId.isEmpty) {
         throw Exception("Could not retrieve booking ID after creation.");
       }
 
       // Extract generated data for execution tracking
-      final String trackingMemo = confirmedBookingId.substring(0, 8).toUpperCase();
+      final String trackingMemo = confirmedBookingId
+          .substring(0, 8)
+          .toUpperCase();
 
       final rootNavigator = Navigator.of(context);
 
@@ -179,7 +202,9 @@ class _BookingScreenState extends State<BookingScreen> {
           ),
         );
       } else if (_selectedPaymentMethod == 3) {
-        debugPrint('Sending to VNPay: bookingId=$confirmedBookingId, amount=$finalCalculatedPrice');
+        debugPrint(
+          'Sending to VNPay: bookingId=$confirmedBookingId, amount=$finalCalculatedPrice',
+        );
         final paymentUrl = await _vnPayService.createPaymentUrl(
           bookingId: confirmedBookingId,
           amount: finalCalculatedPrice,
@@ -191,7 +216,9 @@ class _BookingScreenState extends State<BookingScreen> {
         } else {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Không thể khởi tạo thanh toán VNPAY.')),
+              const SnackBar(
+                content: Text('Không thể khởi tạo thanh toán VNPAY.'),
+              ),
             );
           }
         }
@@ -243,11 +270,12 @@ class _BookingScreenState extends State<BookingScreen> {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
       debugPrint("Booking Execution Error: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Không thể lưu đơn đặt lịch. Vui lòng thử lại sau.'),
-        ),
-      );
+      final message = e is VoucherException
+          ? e.message
+          : 'Không thể lưu đơn đặt lịch. Vui lòng thử lại sau.';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -260,7 +288,7 @@ class _BookingScreenState extends State<BookingScreen> {
     const Color outlineVariant = Color(0xFFC3C6D7);
 
     final double serviceFee = widget.totalPrice.toDouble();
-    final double totalAmount = serviceFee;
+    final double totalAmount = _finalPrice;
 
     String formatCurrency(double amount) {
       return "${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')} VND";
@@ -541,11 +569,23 @@ class _BookingScreenState extends State<BookingScreen> {
                       outlineVariant,
                     ),
                     const SizedBox(height: 8),
-                    _buildPaymentRow(1, Icons.credit_card, 'Thẻ Tín dụng / Ghi nợ',
-                        'Visa, Mastercard, JCB', primaryColor, outlineVariant),
+                    _buildPaymentRow(
+                      1,
+                      Icons.credit_card,
+                      'Thẻ Tín dụng / Ghi nợ',
+                      'Visa, Mastercard, JCB',
+                      primaryColor,
+                      outlineVariant,
+                    ),
                     const SizedBox(height: 8),
-                    _buildPaymentRow(3, Icons.account_balance_wallet_outlined, 'VNPAY Gateway',
-                        'Thanh toán qua ứng dụng VNPAY hoặc Ngân hàng', primaryColor, outlineVariant),
+                    _buildPaymentRow(
+                      3,
+                      Icons.account_balance_wallet_outlined,
+                      'VNPAY Gateway',
+                      'Thanh toán qua ứng dụng VNPAY hoặc Ngân hàng',
+                      primaryColor,
+                      outlineVariant,
+                    ),
                     const SizedBox(height: 8),
                     _buildPaymentRow(
                       2,
@@ -557,6 +597,16 @@ class _BookingScreenState extends State<BookingScreen> {
                     ),
                     const SizedBox(height: 20),
 
+                    VoucherInputField(
+                      providerId: widget.providerId,
+                      customerId: widget.customerId,
+                      serviceId: widget.serviceId,
+                      orderValue: widget.totalPrice.toDouble(),
+                      onVoucherApplied: _onVoucherApplied,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // 6. Cost Breakdown Invoice Detail Card
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -583,6 +633,14 @@ class _BookingScreenState extends State<BookingScreen> {
                             formatCurrency(serviceFee),
                             bodyText,
                           ),
+                          if (_appliedVoucherCode != null) ...[
+                            const SizedBox(height: 6),
+                            _buildBillRow(
+                              'Giảm giá voucher',
+                              '-${formatCurrency(_discountAmount)}',
+                              Colors.green.shade700,
+                            ),
+                          ],
                           const SizedBox(height: 6),
                           const Divider(
                             height: 24,
