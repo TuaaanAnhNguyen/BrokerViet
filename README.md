@@ -235,6 +235,7 @@ BrokerViet
 │  │  │  ├─ profile_model.dart
 │  │  │  ├─ provider_booking_model.dart
 │  │  │  ├─ review_model.dart
+│  │  │  ├─ route_result_model.dart
 │  │  │  ├─ service_category_model.dart
 │  │  │  └─ service_model.dart
 │  │  ├─ screens
@@ -257,6 +258,7 @@ BrokerViet
 │  │  │  │  └─ map_service.dart
 │  │  │  ├─ marketplace
 │  │  │  │  └─ service_marketplace_service.dart
+│  │  │  ├─ navigation_service.dart
 │  │  │  ├─ notification
 │  │  │  │  ├─ firebase_cloud_messaging_handler.dart
 │  │  │  │  └─ notification_service.dart

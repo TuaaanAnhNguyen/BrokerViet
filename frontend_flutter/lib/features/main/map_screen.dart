@@ -33,11 +33,23 @@ class _MapScreenState extends State<MapScreen> {
   String? _errorMessage;
 
   List<Polyline> _routeLines = [];
+  double? _routeDistanceMeters;
+  double? _routeDurationSeconds;
 
   @override
   void initState() {
     super.initState();
     _initializeMapFocus();
+  }
+
+  String get formattedDistance {
+    if (_routeDistanceMeters == null) return '';
+
+    if (_routeDistanceMeters! < 1000) {
+      return '${_routeDistanceMeters!.round()} m';
+    }
+
+    return '${(_routeDistanceMeters! / 1000).toStringAsFixed(1)} km';
   }
 
   Future<void> _initializeMapFocus() async {
@@ -87,9 +99,18 @@ class _MapScreenState extends State<MapScreen> {
 
           print('Route loaded with ${route.points.length} points.');
 
-          _routeLines = [
-            Polyline(points: route.points, strokeWidth: 5, color: Colors.blue),
-          ];
+          setState(() {
+            _routeLines = [
+              Polyline(
+                points: route.points,
+                strokeWidth: 5,
+                color: Colors.blue,
+              ),
+            ];
+
+            _routeDistanceMeters = route.distanceMeters;
+            _routeDurationSeconds = route.durationSeconds;
+          });
         } catch (e) {
           print('Route loading failed: $e');
 
@@ -97,17 +118,21 @@ class _MapScreenState extends State<MapScreen> {
             _errorMessage =
                 'Không thể tải tuyến đường. Hiển thị đường thẳng thay thế.';
           });
+          setState(() {
+            _routeLines = [
+              Polyline(
+                points: [
+                  _userHomeLocation!,
+                  LatLng(widget.initialTargetLat!, widget.initialTargetLng!),
+                ],
+                strokeWidth: 5,
+                color: Colors.blue,
+              ),
+            ];
 
-          _routeLines = [
-            Polyline(
-              points: [
-                _userHomeLocation!,
-                LatLng(widget.initialTargetLat!, widget.initialTargetLng!),
-              ],
-              strokeWidth: 5,
-              color: Colors.blue,
-            ),
-          ];
+            _routeDistanceMeters = null;
+            _routeDurationSeconds = null;
+          });
         }
       }
 
@@ -270,6 +295,49 @@ class _MapScreenState extends State<MapScreen> {
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
+          if (_routeDistanceMeters != null && _routeDurationSeconds != null)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 20,
+              child: Card(
+                elevation: 6,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.route, color: Color(0xFF004AC6)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Khoảng cách: $formattedDistance',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Thời gian dự kiến: ${(_routeDurationSeconds! / 60).round()} phút',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

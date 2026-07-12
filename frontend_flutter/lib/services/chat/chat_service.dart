@@ -164,6 +164,15 @@ class ChatService {
     }
   }
 
+  Future<Map<String, dynamic>> getChatroomDetail(String chatroomId) async {
+    final response = await Supabase.instance.client.functions.invoke(
+      'get-chatroom-detail',
+      body: {'chatroom_id': chatroomId},
+    );
+
+    return Map<String, dynamic>.from(response.data);
+  }
+
   String _parseTimestamp(dynamic isoString) {
     if (isoString == null) return '';
     try {
