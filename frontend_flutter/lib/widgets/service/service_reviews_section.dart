@@ -2,17 +2,22 @@
 
 import 'package:flutter/material.dart';
 import '../../models/review_model.dart';
-import '../avatar_builder.dart';
+import '../../widgets/avatar_builder.dart';
+import '../../features/main/all_reviews_screen.dart';
 
 class ServiceReviewsSection extends StatelessWidget {
   final List<ReviewModel> reviews;
+  final String serviceTitle; // <-- Add this line
   final bool hasPurchased;
+  final ReviewModel? existingReview;
   final VoidCallback onWriteReviewPressed;
 
   const ServiceReviewsSection({
     super.key,
     required this.reviews,
+    required this.serviceTitle, // <-- Add this line
     required this.hasPurchased,
+    required this.existingReview,
     required this.onWriteReviewPressed,
   });
 
@@ -39,8 +44,13 @@ class ServiceReviewsSection extends StatelessWidget {
             if (hasPurchased)
               TextButton.icon(
                 onPressed: onWriteReviewPressed,
-                icon: const Icon(Icons.rate_review, size: 18),
-                label: const Text('Viết đánh giá'),
+                icon: Icon(
+                  existingReview != null ? Icons.edit : Icons.rate_review,
+                  size: 18,
+                ),
+                label: Text(
+                  existingReview != null ? 'Sửa đánh giá' : 'Viết đánh giá',
+                ),
                 style: TextButton.styleFrom(foregroundColor: primaryColor),
               ),
           ],
@@ -109,7 +119,15 @@ class ServiceReviewsSection extends StatelessWidget {
           const SizedBox(height: 16),
           OutlinedButton(
             onPressed: () {
-              // TODO: Navigate to all reviews screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AllReviewsScreen(
+                    reviews: reviews,
+                    serviceTitle: serviceTitle, // <-- Pass it here!
+                  ),
+                ),
+              );
             },
             style: OutlinedButton.styleFrom(
               minimumSize: const Size.fromHeight(48),

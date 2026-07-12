@@ -27,9 +27,7 @@ class ServiceStickyActionDock extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: const BoxDecoration(
           color: Colors.white,
-          border: Border(
-            top: BorderSide(color: Color(0xFFC3C6D7), width: 0.5),
-          ),
+          border: Border(top: BorderSide(color: Color(0xFFC3C6D7), width: 0.5)),
         ),
         child: SafeArea(
           top: false,

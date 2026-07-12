@@ -76,12 +76,28 @@ BrokerViet
 │  │  │  ├─ file-system.probe
 │  │  │  ├─ kotlin
 │  │  │  │  └─ errors
+│  │  │  │     ├─ errors-1783826450204.log
+│  │  │  │     ├─ errors-1783826450223.log
+│  │  │  │     ├─ errors-1783826450234.log
+│  │  │  │     ├─ errors-1783826450283.log
+│  │  │  │     ├─ errors-1783826648114.log
+│  │  │  │     ├─ errors-1783826648145.log
+│  │  │  │     ├─ errors-1783826648154.log
+│  │  │  │     └─ errors-1783826648165.log
 │  │  │  ├─ noVersion
 │  │  │  │  └─ buildLogic.lock
 │  │  │  └─ vcs-1
 │  │  │     └─ gc.properties
 │  │  ├─ .kotlin
 │  │  │  ├─ errors
+│  │  │  │  ├─ errors-1783826450204.log
+│  │  │  │  ├─ errors-1783826450223.log
+│  │  │  │  ├─ errors-1783826450234.log
+│  │  │  │  ├─ errors-1783826450283.log
+│  │  │  │  ├─ errors-1783826648114.log
+│  │  │  │  ├─ errors-1783826648145.log
+│  │  │  │  ├─ errors-1783826648154.log
+│  │  │  │  └─ errors-1783826648165.log
 │  │  │  └─ sessions
 │  │  ├─ app
 │  │  │  ├─ build.gradle.kts
@@ -212,6 +228,7 @@ BrokerViet
 │  │  │  │  └─ conversation_screen.dart
 │  │  │  ├─ home.dart
 │  │  │  ├─ main
+│  │  │  │  ├─ all_reviews_screen.dart
 │  │  │  │  ├─ main_navigation_shell.dart
 │  │  │  │  ├─ map_screen.dart
 │  │  │  │  ├─ notification_screen.dart
@@ -278,8 +295,18 @@ BrokerViet
 │  │     │  ├─ login_form.dart
 │  │     │  └─ signup_form.dart
 │  │     ├─ avatar_builder.dart
+│  │     ├─ booking
+│  │     │  ├─ booking_address_input.dart
+│  │     │  ├─ booking_bill_details_section.dart
+│  │     │  ├─ booking_bottom_action_bar.dart
+│  │     │  ├─ booking_notes_input.dart
+│  │     │  ├─ booking_payment_selector.dart
+│  │     │  ├─ booking_schedule_tile.dart
+│  │     │  └─ booking_service_summary_card.dart
 │  │     ├─ booking_card.dart
 │  │     ├─ button.dart
+│  │     ├─ chat
+│  │     │  └─ chat_bubble.dart
 │  │     ├─ custom_text_field.dart
 │  │     ├─ network_image_fallback.dart
 │  │     ├─ notification_tile.dart
@@ -293,7 +320,15 @@ BrokerViet
 │  │     └─ service
 │  │        ├─ category_selector.dart
 │  │        ├─ nearby_provider_tile.dart
-│  │        └─ service_card.dart
+│  │        ├─ service_card.dart
+│  │        ├─ service_description_section.dart
+│  │        ├─ service_detail_app_bar.dart
+│  │        ├─ service_price_packages_section.dart
+│  │        ├─ service_provider_card.dart
+│  │        ├─ service_reviews_section.dart
+│  │        ├─ service_sticky_action_dock.dart
+│  │        ├─ service_tags_section.dart
+│  │        └─ service_title_section.dart
 │  ├─ pubspec.lock
 │  ├─ pubspec.yaml
 │  ├─ README.md

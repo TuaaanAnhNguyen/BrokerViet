@@ -30,6 +30,7 @@ class ServiceDetailScreen extends StatefulWidget {
 class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   final ServiceMarketplaceService _marketplaceService =
       ServiceMarketplaceService();
+
   final SupabaseClient supabase = Supabase.instance.client;
 
   ServiceModel? _service;
@@ -37,7 +38,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   bool _isLoading = true;
   bool _hasPurchased = false;
   String? _errorMessage;
+
   bool _isFavorited = false;
+  ReviewModel? _existingReview;
 
   static const Color primaryColor = Color(0xFF004AC6);
   static const Color surfaceColor = Color(0xFFF8F9FF);
@@ -66,11 +69,23 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         widget.serviceId,
       );
 
+      final currentUserId = supabase.auth.currentUser?.id;
+      ReviewModel? existingReview;
+      if (currentUserId != null) {
+        for (var r in reviews) {
+          if (r.userId == currentUserId) {
+            existingReview = r;
+            break;
+          }
+        }
+      }
+
       if (mounted) {
         setState(() {
           _service = service;
           _reviews = reviews;
           _hasPurchased = hasPurchased;
+          _existingReview = existingReview;
           _isLoading = false;
         });
       }
@@ -82,138 +97,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         });
       }
     }
-  }
-
-  void _handleChatNavigation() async {
-    final currentCustomerId = supabase.auth.currentUser?.id ?? '';
-    final providerId = _service?.providerId ?? '';
-    final providerName = _service?.providerUsername ?? 'Nhà cung cấp';
-
-    if (currentCustomerId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng đăng nhập để chat với nhà cung cấp'),
-        ),
-      );
-      return;
-    }
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) =>
-          const Center(child: CircularProgressIndicator(color: primaryColor)),
-    );
-
-    try {
-      final chatService = ChatService();
-      final chatroomId = await chatService.getOrCreateChatRoom(
-        providerId: providerId,
-        customerId: currentCustomerId,
-      );
-
-      if (context.mounted) {
-        Navigator.pop(context);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ConversationScreen(
-              chatroomId: chatroomId,
-              providerName: providerName,
-              providerRole: 'Nhà cung cấp dịch vụ',
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Không thể tạo phòng chat: $e')));
-      }
-    }
-  }
-
-  void _handleMapNavigation() async {
-    final providerId = _service?.providerId ?? '';
-    final providerName = _service?.providerUsername ?? 'Nhà cung cấp';
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) =>
-          const Center(child: CircularProgressIndicator(color: primaryColor)),
-    );
-
-    try {
-      final profileData = await supabase
-          .from('profiles')
-          .select('location_latitude, location_longitude')
-          .eq('user_id', providerId)
-          .maybeSingle();
-
-      if (context.mounted) Navigator.pop(context);
-
-      double? targetLat;
-      double? targetLng;
-
-      if (profileData != null) {
-        targetLat = (profileData['location_latitude'] as num?)?.toDouble();
-        targetLng = (profileData['location_longitude'] as num?)?.toDouble();
-      }
-
-      if (targetLat == null || targetLng == null) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Đối tác chưa cập nhật cấu hình vị trí.'),
-            ),
-          );
-        }
-        return;
-      }
-
-      if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MapScreen(
-              initialTargetLat: targetLat,
-              initialTargetLng: targetLng,
-              initialProviderName: providerName,
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi truy vấn bản đồ đối tác: $e')),
-        );
-      }
-    }
-  }
-
-  void _handleBookingNavigation() {
-    final currentCustomerId = supabase.auth.currentUser?.id ?? '';
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookingScreen(
-          serviceTitle: _service?.title ?? 'Chưa có tiêu đề',
-          providerName: _service?.providerUsername ?? 'Nhà cung cấp',
-          packageName: 'Dịch vụ tiêu chuẩn',
-          serviceId: _service?.id ?? '',
-          providerId: _service?.providerId ?? '',
-          customerId: currentCustomerId,
-          totalPrice: _service?.priceValue.toInt() ?? 0,
-          scheduledAt: DateTime.now(),
-        ),
-      ),
-    );
   }
 
   @override
@@ -242,6 +125,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _loadServiceDetail,
+                style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
                 child: const Text('Thử lại'),
               ),
             ],
@@ -259,8 +143,11 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               ServiceDetailAppBar(
                 imageUrl: _service?.imageUrl,
                 isFavorited: _isFavorited,
-                onFavoriteToggle: () =>
-                    setState(() => _isFavorited = !_isFavorited),
+                onFavoriteToggle: () {
+                  setState(() {
+                    _isFavorited = !_isFavorited;
+                  });
+                },
               ),
               SliverToBoxAdapter(
                 child: Transform.translate(
@@ -303,7 +190,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         const SizedBox(height: 24),
                         ServiceReviewsSection(
                           reviews: _reviews,
+                          serviceTitle: _service?.title ?? '',
                           hasPurchased: _hasPurchased,
+                          existingReview: _existingReview,
                           onWriteReviewPressed: _showReviewForm,
                         ),
                         const SizedBox(height: 100),
@@ -315,9 +204,142 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             ],
           ),
           ServiceStickyActionDock(
-            onChatPressed: _handleChatNavigation,
-            onMapPressed: _handleMapNavigation,
-            onBookingPressed: _handleBookingNavigation,
+            onChatPressed: () async {
+              final currentCustomerId = supabase.auth.currentUser?.id ?? '';
+              final providerId = _service?.providerId ?? '';
+              final providerName = _service?.providerUsername ?? 'Nhà cung cấp';
+
+              if (currentCustomerId.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Vui lòng đăng nhập để chat với nhà cung cấp',
+                    ),
+                  ),
+                );
+                return;
+              }
+
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(color: primaryColor),
+                ),
+              );
+
+              try {
+                final chatService = ChatService();
+                final chatroomId = await chatService.getOrCreateChatRoom(
+                  providerId: providerId,
+                  customerId: currentCustomerId,
+                );
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ConversationScreen(
+                        chatroomId: chatroomId,
+                        providerName: providerName,
+                        providerRole: 'Nhà cung cấp dịch vụ',
+                      ),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Không thể tạo phòng chat: $e')),
+                  );
+                }
+              }
+            },
+            onMapPressed: () async {
+              final providerId = _service?.providerId ?? '';
+              final providerName = _service?.providerUsername ?? 'Nhà cung cấp';
+
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(color: primaryColor),
+                ),
+              );
+
+              try {
+                final profileData = await supabase
+                    .from('profiles')
+                    .select('location_latitude, location_longitude')
+                    .eq('user_id', providerId)
+                    .maybeSingle();
+
+                if (context.mounted) Navigator.pop(context);
+
+                double? targetLat;
+                double? targetLng;
+
+                if (profileData != null) {
+                  targetLat = (profileData['location_latitude'] as num?)
+                      ?.toDouble();
+                  targetLng = (profileData['location_longitude'] as num?)
+                      ?.toDouble();
+                }
+
+                if (targetLat == null || targetLng == null) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Đối tác chưa cập nhật cấu hình vị trí.'),
+                      ),
+                    );
+                  }
+                  return;
+                }
+
+                if (context.mounted) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MapScreen(
+                        initialTargetLat: targetLat,
+                        initialTargetLng: targetLng,
+                        initialProviderName: providerName,
+                      ),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Lỗi khi truy vấn bản đồ đối tác: $e'),
+                    ),
+                  );
+                }
+              }
+            },
+            onBookingPressed: () {
+              final currentCustomerId = supabase.auth.currentUser?.id ?? '';
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BookingScreen(
+                    serviceTitle: _service?.title ?? 'Chưa có tiêu đề',
+                    providerName: _service?.providerUsername ?? 'Nhà cung cấp',
+                    packageName: 'Dịch vụ tiêu chuẩn',
+                    serviceId: _service?.id ?? '',
+                    providerId: _service?.providerId ?? '',
+                    customerId: currentCustomerId,
+                    totalPrice: _service?.priceValue.toInt() ?? 0,
+                    scheduledAt: DateTime.now(),
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -325,9 +347,13 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   }
 
   void _showReviewForm() {
-    int localRating = 0;
+    final existingReview = _existingReview;
+    int localRating = existingReview?.rating ?? 0;
     String? localError;
-    final commentController = TextEditingController();
+    bool isSubmitting = false;
+    final commentController = TextEditingController(
+      text: existingReview?.comment ?? '',
+    );
 
     showModalBottomSheet(
       context: context,
@@ -346,92 +372,182 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Đánh giá dịch vụ',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  return IconButton(
-                    onPressed: () => setModalState(() {
-                      localRating = index + 1;
-                      localError = null;
-                    }),
-                    icon: Icon(
-                      Icons.star,
-                      size: 40,
-                      color: index < localRating
-                          ? Colors.amber
-                          : Colors.grey[300],
-                    ),
-                  );
-                }),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: commentController,
-                maxLines: 3,
-                onChanged: (_) {
-                  if (localError != null)
-                    setModalState(() => localError = null);
-                },
-                decoration: InputDecoration(
-                  hintText: 'Hãy chia sẻ trải nghiệm của bạn (bắt buộc)...',
-                  errorText: localError,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              Text(
+                existingReview != null
+                    ? 'Sửa đánh giá dịch vụ'
+                    : 'Đánh giá dịch vụ',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () async {
-                  final comment = commentController.text.trim();
-                  if (localRating == 0) {
-                    setModalState(
-                      () => localError = 'Vui lòng chọn số sao đánh giá!',
+              const SizedBox(height: 20),
+              if (isSubmitting)
+                const Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: CircularProgressIndicator(color: primaryColor),
+                )
+              else ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(5, (index) {
+                    return IconButton(
+                      onPressed: () {
+                        setModalState(() {
+                          localRating = index + 1;
+                          localError = null;
+                        });
+                      },
+                      icon: Icon(
+                        Icons.star,
+                        size: 40,
+                        color: index < localRating
+                            ? Colors.amber
+                            : Colors.grey[300],
+                      ),
                     );
-                    return;
-                  }
-                  if (comment.isEmpty) {
-                    setModalState(
-                      () => localError = 'Vui lòng nhập nội dung đánh giá!',
-                    );
-                    return;
-                  }
-                  try {
-                    await _marketplaceService.submitReview(
-                      serviceId: widget.serviceId,
-                      rating: localRating,
-                      comment: comment,
-                    );
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Cảm ơn bạn đã đánh giá!'),
+                  }),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: commentController,
+                  maxLines: 3,
+                  onChanged: (_) {
+                    if (localError != null) {
+                      setModalState(() => localError = null);
+                    }
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Hãy chia sẻ trải nghiệm của bạn (bắt buộc)...',
+                    errorText: localError,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () async {
+                    final comment = commentController.text.trim();
+                    if (localRating == 0) {
+                      setModalState(
+                        () => localError = 'Vui lòng chọn số sao đánh giá!',
+                      );
+                      return;
+                    }
+                    if (comment.isEmpty) {
+                      setModalState(
+                        () => localError = 'Vui lòng nhập nội dung đánh giá!',
+                      );
+                      return;
+                    }
+
+                    setModalState(() => isSubmitting = true);
+
+                    try {
+                      if (existingReview != null) {
+                        await _marketplaceService.updateReview(
+                          reviewId: existingReview.id,
+                          rating: localRating,
+                          comment: comment,
+                        );
+                      } else {
+                        await _marketplaceService.submitReview(
+                          serviceId: widget.serviceId,
+                          rating: localRating,
+                          comment: comment,
+                        );
+                      }
+
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              existingReview != null
+                                  ? 'Cập nhật đánh giá thành công!'
+                                  : 'Cảm ơn bạn đã đánh giá!',
+                            ),
+                          ),
+                        );
+                        _loadServiceDetail();
+                      }
+                    } catch (e) {
+                      setModalState(() {
+                        localError = 'Lỗi hệ thống: $e';
+                        isSubmitting = false;
+                      });
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    existingReview != null
+                        ? 'Cập nhật đánh giá'
+                        : 'Gửi đánh giá',
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ),
+                if (existingReview != null) ...[
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Xóa đánh giá?'),
+                          content: const Text(
+                            'Bạn có chắc chắn muốn xóa vĩnh viễn đánh giá này không?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Hủy'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              child: const Text(
+                                'Xóa',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
                         ),
                       );
-                      _loadServiceDetail();
-                    }
-                  } catch (e) {
-                    setModalState(() => localError = 'Lỗi hệ thống: $e');
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  minimumSize: const Size.fromHeight(50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+
+                      if (confirm == true) {
+                        setModalState(() => isSubmitting = true);
+                        try {
+                          await _marketplaceService.deleteReview(
+                            existingReview.id,
+                          );
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Đã xóa đánh giá!')),
+                            );
+                            _loadServiceDetail();
+                          }
+                        } catch (e) {
+                          setModalState(() {
+                            localError = 'Lỗi khi xóa: $e';
+                            isSubmitting = false;
+                          });
+                        }
+                      }
+                    },
+                    child: const Text(
+                      'Xóa đánh giá',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ),
-                ),
-                child: const Text(
-                  'Gửi đánh giá',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              ),
+                ],
+              ],
               const SizedBox(height: 20),
             ],
           ),
