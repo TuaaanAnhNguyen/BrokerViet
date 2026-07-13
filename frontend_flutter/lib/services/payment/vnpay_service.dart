@@ -1,8 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../notification/notification_service.dart';
 
 class VNPayService {
   final _client = Supabase.instance.client;
+  final _notification = NotificationService();
 
   /// Step 2: Call create-vnpay-payment edge function
   Future<String?> createPaymentUrl({
@@ -62,9 +64,17 @@ class VNPayService {
 
       if (response.status == 200) {
         final data = response.data as Map<String, dynamic>;
-
+        final userId = _client.auth.currentUser!.id;
         final status =
         (data['status'] as String? ?? 'UNKNOWN').toUpperCase();
+        if(data['status'] == "COMPLETED"){
+          print("Notifying customers");
+          _notification.createNotification(
+            userId: userId,
+            title: 'Đặt lịch thành công',
+            content: 'Yêu cầu cho dịch vụ đã được gửi và thanh toán thành công, đang chờ xác nhận.',
+          );
+        }
 
         print("Parsed status: $status");
 

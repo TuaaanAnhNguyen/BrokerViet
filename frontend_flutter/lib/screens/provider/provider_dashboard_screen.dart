@@ -1,24 +1,25 @@
 // lib/screens/provider/provider_dashboard_screen.dart
 
+import 'package:broker_viet/services/auth/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/dashboard_summary_model.dart';
 import '../../models/provider_booking_model.dart';
 import '../../models/booking_model.dart';
 import '../../services/provider/provider_dashboard_service.dart';
 import '../../services/provider/provider_bookings_service.dart';
+import '../../services/profile/profile_service.dart';
 import '../../widgets/provider/provider_booking_card.dart';
-import 'provider_services_list_screen.dart';
-import 'provider_service_form_screen.dart';
 
 class ProviderDashboardScreen extends StatefulWidget {
   const ProviderDashboardScreen({super.key});
 
   @override
   State<ProviderDashboardScreen> createState() =>
-      _ProviderDashboardScreenState();
+      ProviderDashboardScreenState();
 }
 
-class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
+class ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   final ProviderDashboardService _dashboardService = ProviderDashboardService();
   final ProviderBookingsService _bookingsService = ProviderBookingsService();
 
@@ -26,10 +27,6 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   String? _errorMessage;
   DashboardSummaryModel? _summary;
   List<ProviderBookingModel> _upcomingBookings = [];
-  int _currentTabIndex = 0;
-
-  final GlobalKey<ProviderServicesListScreenState> _servicesListKey =
-      GlobalKey();
 
   // Design Tokens (reused from marketplace & detail screens)
   static const Color primaryColor = Color(0xFF004AC6);
@@ -42,10 +39,12 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    BlocProvider.of<ProfileService>(context).add(LoadProfileRequested());
     _loadDashboardData();
   }
 
   Future<void> _loadDashboardData() async {
+    if (!mounted) return;
     try {
       setState(() {
         _isLoading = true;
@@ -73,6 +72,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       }
     }
   }
+
+  Future<void> refresh() => _loadDashboardData();
 
   Future<void> _updateBookingStatus(
     String bookingId,
@@ -120,12 +121,6 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     }
   }
 
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentTabIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     // Stays exactly as a modular tab view component
@@ -137,24 +132,6 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           color: primaryColor,
           child: _buildBodyContent(),
         ),
-      ),
-      // Keep the floating action button pinned strictly to the dashboard layout view
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ProviderServiceFormScreen(),
-            ),
-          ).then((result) {
-            if (result == true) {
-              _servicesListKey.currentState?.loadServices();
-              _loadDashboardData();
-            }
-          });
-        },
-        backgroundColor: primaryColor,
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -214,6 +191,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   }
 
   Widget _buildHeaderBar() {
+    final authState = BlocProvider.of<AuthService>(context).state;
+
+    String username = 'Placeholder';
+
+    if (authState is AuthSuccess) {
+      username = authState.name;
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       child: Row(
@@ -231,17 +216,17 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Xin chào,',
                   style: TextStyle(color: bodyText, fontSize: 13),
                 ),
                 Text(
-                  'TechPro VN', // Business name
-                  style: TextStyle(
+                  username,
+                  style: const TextStyle(
                     color: darkText,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -249,30 +234,6 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 ),
               ],
             ),
-          ),
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_none, color: darkText),
-                onPressed: () {},
-              ),
-              Positioned(
-                right: 12,
-                top: 12,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          IconButton(
-            icon: const Icon(Icons.chat_bubble_outline, color: darkText),
-            onPressed: () {},
           ),
         ],
       ),
@@ -407,7 +368,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               ),
               TextButton(
                 onPressed: () {
-                  _onTabTapped(1); // Navigate to Bookings tab
+                  // Navigation is now handled by MainNavigationShell
+                  // If you need to switch tabs from here, you'd typically use a callback or provider
                 },
                 child: const Text(
                   'Xem tất cả',

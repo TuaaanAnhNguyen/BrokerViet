@@ -1,3 +1,5 @@
+// lib/models/provider_booking_model.dart
+
 import 'booking_model.dart';
 import 'package:intl/intl.dart';
 
@@ -46,9 +48,8 @@ class ProviderBookingModel {
           json['service_title']?.toString() ??
           'Dịch vụ',
       date: parsedDate,
-      status: BookingStatus.fromString(
-        _mapDbStatusToVietnamese(json['status']?.toString() ?? ''),
-      ),
+      // Fixed: Directly parsing standard DB string now
+      status: BookingStatus.fromDbString(json['status']?.toString() ?? ''),
       price: json['price'] != null ? double.tryParse(json['price'].toString()) : null,
       address: json['address']?.toString(),
       customerNotes: json['customer_notes']?.toString(),
@@ -61,27 +62,5 @@ class ProviderBookingModel {
   String get formattedDate {
     if (date == null) return 'Không xác định';
     return DateFormat('dd/MM/yyyy HH:mm').format(date!);
-  }
-
-  static String _mapDbStatusToVietnamese(String dbStatus) {
-    switch (dbStatus.toLowerCase()) {
-      case 'pending':
-      case 'cho_duyet':
-        return 'Chờ duyệt';
-      case 'confirmed':
-      case 'xac_nhan':
-        return 'Đã xác nhận';
-      case 'ongoing':
-      case 'dang_thuc_hien':
-        return 'Đang thực hiện';
-      case 'completed':
-      case 'da_hoan_thanh':
-        return 'Đã hoàn thành';
-      case 'cancelled':
-      case 'da_huy':
-        return 'Đã hủy';
-      default:
-        return dbStatus;
-    }
   }
 }

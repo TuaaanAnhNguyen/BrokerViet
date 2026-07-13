@@ -3,6 +3,7 @@
 import 'package:broker_viet/features/chat/conversation_screen.dart';
 import 'package:broker_viet/models/review_model.dart';
 import 'package:broker_viet/services/chat/chat_service.dart';
+import 'package:broker_viet/services/map-location/location_service.dart';
 import 'package:broker_viet/widgets/avatar_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -11,6 +12,7 @@ import '../../models/service_model.dart';
 import 'package:broker_viet/screens/provider/view_provider_screen.dart';
 import '../../services/marketplace/service_marketplace_service.dart';
 import '../booking/booking_service_screen.dart';
+import '../../widgets/voucher/voucher_badge.dart';
 import './map_screen.dart';
 
 class ServiceDetailScreen extends StatefulWidget {
@@ -435,6 +437,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        VoucherBadge(serviceId: widget.serviceId),
       ],
     );
   }
@@ -755,79 +759,56 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
 
               InkWell(
                 onTap: () async {
-                  final providerId = _service?.providerId ?? '';
-                  final providerName =
-                      _service?.providerUsername ?? 'Nhà cung cấp';
+                  if (_service == null) return;
 
                   showDialog(
                     context: context,
                     barrierDismissible: false,
-                    builder: (context) => const Center(
+                    builder: (_) => const Center(
                       child: CircularProgressIndicator(color: primaryColor),
                     ),
                   );
 
                   try {
-                    final profileData = await supabase
-                        .from('profiles')
-                        .select('location_latitude, location_longitude')
-                        .eq('user_id', providerId)
-                        .maybeSingle();
+                    final locationService = LocationService();
 
-                    if (context.mounted) Navigator.pop(context);
+                    final providerLocation = await locationService
+                        .getProviderLocation(providerId: _service!.providerId);
 
-                    double? targetLat;
-                    double? targetLng;
+                    if (!context.mounted) return;
 
-                    if (profileData != null) {
-                      targetLat = (profileData['location_latitude'] as num?)
-                          ?.toDouble();
-                      targetLng = (profileData['location_longitude'] as num?)
-                          ?.toDouble();
-                    }
+                    Navigator.pop(context);
 
-                    if (targetLat == null || targetLng == null) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Đối tác chưa cập nhật cấu hình vị trí.',
-                            ),
-                          ),
-                        );
-                      }
-                      return;
-                    }
-
-                    if (targetLat != null &&
-                        targetLng != null &&
-                        context.mounted) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MapScreen(
-                            initialTargetLat: targetLat,
-                            initialTargetLng: targetLng,
-                            initialProviderName: providerName,
-                          ),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => MapScreen(
+                          serviceId: _service!.id,
+                          initialTargetLat: providerLocation.latitude,
+                          initialTargetLng: providerLocation.longitude,
+                          initialProviderName:
+                              _service!.providerUsername ?? 'Provider',
                         ),
-                      );
-                    } else if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Tọa độ vị trí đối tác không hợp lệ.'),
-                        ),
-                      );
-                    }
+                      ),
+                    );
+                  } on LocationServiceException catch (e) {
+                    if (!context.mounted) return;
+
+                    Navigator.pop(context);
+
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(e.message)));
                   } catch (e) {
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Lỗi khi truy vấn bản đồ đối tác: $e'),
-                        ),
-                      );
-                    }
+                    if (!context.mounted) return;
+
+                    Navigator.pop(context);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Unable to load provider location.\n$e'),
+                      ),
+                    );
                   }
                 },
                 borderRadius: BorderRadius.circular(12),
@@ -883,7 +864,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Đặt Lịch Ngay',
+                        'Đặt Ngay',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
