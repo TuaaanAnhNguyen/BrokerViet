@@ -298,7 +298,7 @@ class _BookingScreenState extends State<BookingScreen> {
       backgroundColor: surfaceColor,
       appBar: AppBar(
         title: const Text(
-          'Xác nhận đặt lịch',
+          'Xác nhận đặt',
           style: TextStyle(
             color: darkText,
             fontWeight: FontWeight.bold,
@@ -755,7 +755,7 @@ class _BookingScreenState extends State<BookingScreen> {
                               ),
                             )
                           : const Text(
-                              'Xác nhận đặt lịch',
+                              'Xác nhận đặt',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -770,7 +770,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         children: [
                           TextSpan(
                             text:
-                                'Bằng việc nhấn nút "Xác nhận đặt lịch", bạn đồng ý với ',
+                                'Bằng việc nhấn nút "Xác nhận đặt", bạn đồng ý với ',
                           ),
                           TextSpan(
                             text: 'Điều khoản dịch vụ',

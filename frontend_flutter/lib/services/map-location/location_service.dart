@@ -112,7 +112,10 @@ class LocationService {
       );
 
       print('Status: ${response.status}');
-      print('Response: ${response.data}');
+
+      print("===== RESPONSE TYPE =====");
+      print(response.data.runtimeType);
+      print(response.data);
 
       if (response.status != 200) {
         throw LocationServiceException('Unable to geocode address.');
@@ -126,10 +129,30 @@ class LocationService {
         );
       }
 
-      return GeocodingResult.fromJson(json);
+      print(json);
+
+      print(json['formattedAddress']);
+      print(json['formattedAddress'].runtimeType);
+
+      return GeocodingResult(
+        latitude: (json['latitude'] as num).toDouble(),
+        longitude: (json['longitude'] as num).toDouble(),
+        displayName: json['formattedAddress'].toString(),
+      );
     } on FunctionException catch (e) {
-      throw LocationServiceException(e.details ?? e.toString());
-    } catch (e) {
+      final details = e.details;
+
+      if (details is Map) {
+        throw LocationServiceException(
+          details['error']?.toString() ?? details.toString(),
+        );
+      }
+
+      throw LocationServiceException(details?.toString() ?? e.toString());
+    } catch (e, stack) {
+      print("========== GEOCODE ERROR ==========");
+      print(e);
+      print(stack);
       throw LocationServiceException(e.toString());
     }
   }

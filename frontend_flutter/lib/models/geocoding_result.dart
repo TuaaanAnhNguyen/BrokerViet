@@ -15,7 +15,7 @@ class GeocodingResult {
     return GeocodingResult(
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
-      displayName: json['displayName']?.toString() ?? '',
+      displayName: json['formattedAddress']?.toString() ?? '',
     );
   }
 

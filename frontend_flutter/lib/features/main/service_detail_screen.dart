@@ -864,7 +864,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Đặt Lịch Ngay',
+                        'Đặt Ngay',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

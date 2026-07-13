@@ -109,7 +109,7 @@ class ProfileService extends Bloc<ProfileEvent, ProfileState> {
           );
 
           profileToSave = profileToSave.copyWith(
-            address: address,
+            address: geocoded.displayName,
             locationText: geocoded.displayName,
             locationLatitude: geocoded.latitude,
             locationLongitude: geocoded.longitude,
@@ -132,8 +132,12 @@ class ProfileService extends Bloc<ProfileEvent, ProfileState> {
         emit(ProfileActionSuccess('Cập nhật hồ sơ thành công!'));
 
         add(LoadProfileRequested());
-      } catch (e) {
-        emit(ProfileFailure('Lỗi cập nhật dữ liệu: ${e.toString()}'));
+      } catch (e, stack) {
+        print("========== PROFILE UPDATE ERROR ==========");
+        print(e);
+        print(stack);
+
+        emit(ProfileFailure(e.toString()));
       }
     });
 
@@ -151,13 +155,19 @@ class ProfileService extends Bloc<ProfileEvent, ProfileState> {
 
     on<UpdateEmailRequested>((event, emit) async {
       emit(ProfileActionLoading());
+
       try {
-        await _client.auth.updateUser(UserAttributes(email: event.newEmail));
+        await _client.auth.updateUser(
+          UserAttributes(email: event.newEmail.trim()),
+        );
+
         emit(
           ProfileActionSuccess(
-            'Liên kết xác thực đã được gửi tới hộp thư mới!',
+            "Đã gửi email xác thực. Vui lòng kiểm tra hộp thư.",
           ),
         );
+
+        add(LoadProfileRequested());
       } catch (e) {
         emit(ProfileFailure(e.toString()));
       }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../services/profile/profile_service.dart';
 import '../../models/profile_model.dart';
+import '../custom_text_field.dart';
 
 class EditProfileSheet extends StatefulWidget {
   final ProfileModel currentProfile;
@@ -17,31 +18,70 @@ class EditProfileSheet extends StatefulWidget {
 class _EditProfileSheetState extends State<EditProfileSheet> {
   final _formKey = GlobalKey<FormState>();
 
-  late String updatedName;
-  late String updatedBio;
-  late String updatedAddress;
-  late String updatedOpen;
-  late String updatedClose;
-  late String updatedLocText;
-  late String updatedBankCode;
-  late String updatedBankAcc;
+  late final TextEditingController _nameController;
+  late final TextEditingController _bioController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _locTextController;
+  late final TextEditingController _openController;
+  late final TextEditingController _closeController;
+
+  late final TextEditingController _bankCodeController;
+  late final TextEditingController _bankAccountController;
 
   @override
   void initState() {
     super.initState();
-    updatedName = widget.currentProfile.username;
-    updatedBio = widget.currentProfile.bio ?? '';
-    updatedAddress = widget.currentProfile.address ?? '';
-    updatedOpen = widget.currentProfile.openingHour ?? '';
-    updatedClose = widget.currentProfile.closingHour ?? '';
-    updatedLocText = widget.currentProfile.locationText ?? '';
-    updatedBankCode = widget.currentProfile.payoutBankCode ?? '';
-    updatedBankAcc = widget.currentProfile.payoutAccountNumber ?? '';
+
+    _nameController = TextEditingController(
+      text: widget.currentProfile.username,
+    );
+
+    _bioController = TextEditingController(
+      text: widget.currentProfile.bio ?? '',
+    );
+
+    _addressController = TextEditingController(
+      text: widget.currentProfile.address ?? '',
+    );
+    _locTextController = TextEditingController(
+      text: widget.currentProfile.locationText ?? '',
+    );
+
+    _openController = TextEditingController(
+      text: widget.currentProfile.openingHour ?? '',
+    );
+
+    _closeController = TextEditingController(
+      text: widget.currentProfile.closingHour ?? '',
+    );
+
+    _bankCodeController = TextEditingController(
+      text: widget.currentProfile.payoutBankCode ?? '',
+    );
+
+    _bankAccountController = TextEditingController(
+      text: widget.currentProfile.payoutAccountNumber ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _bioController.dispose();
+    _addressController.dispose();
+    _locTextController.dispose();
+    _openController.dispose();
+    _closeController.dispose();
+    _bankCodeController.dispose();
+    _bankAccountController.dispose();
+
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isProvider = widget.currentProfile.role?.toUpperCase() == 'PROVIDER';
+    final bool isProvider =
+        widget.currentProfile.role?.toUpperCase() == 'PROVIDER';
 
     return Padding(
       padding: EdgeInsets.only(
@@ -59,19 +99,53 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
             children: [
               const Text(
                 'Cập nhật hồ sơ thông tin',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30)),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0B1C30),
+                ),
               ),
               const SizedBox(height: 16),
               _buildFormLabel('Tên hiển thị'),
-              _buildField(hint: 'Nhập tên mới', initialValue: updatedName, onChanged: (val) => updatedName = val),
+              CustomTextField(
+                controller: _nameController,
+                labelText: 'Tên hiển thị',
+                prefixIcon: Icons.person_outline,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Tên hiển thị không được để trống';
+                  }
+                  return null;
+                },
+              ),
               _buildFormLabel('Giới thiệu ngắn (Tiểu sử)'),
-              _buildField(hint: 'Nhập giới thiệu kinh nghiệm...', initialValue: updatedBio, onChanged: (val) => updatedBio = val),
-              _buildFormLabel('Địa chỉ thường trú'),
-              _buildField(hint: 'Nhập địa chỉ nhà', initialValue: updatedAddress, onChanged: (val) => updatedAddress = val),
-              
+              CustomTextField(
+                controller: _bioController,
+                labelText: 'Giới thiệu ngắn',
+                prefixIcon: Icons.info_outline,
+                maxLines: 4,
+                textInputAction: TextInputAction.newline,
+                keyboardType: TextInputType.multiline,
+              ),
+              _buildFormLabel('Địa chỉ'),
+              CustomTextField(
+                controller: _addressController,
+                labelText: 'Địa chỉ',
+                prefixIcon: Icons.location_on_outlined,
+                maxLines: 3,
+                keyboardType: TextInputType.multiline,
+                textInputAction: TextInputAction.newline,
+              ),
+
               if (isProvider) ...[
                 const Divider(height: 32),
-                const Text('Cấu hình kinh doanh (Đối Tác)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF004AC6))),
+                const Text(
+                  'Cấu hình kinh doanh (Đối Tác)',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF004AC6),
+                  ),
+                ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -80,7 +154,11 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildFormLabel('Giờ mở cửa'),
-                          _buildField(hint: '08:00:00', initialValue: updatedOpen, onChanged: (val) => updatedOpen = val),
+                          CustomTextField(
+                            controller: _openController,
+                            labelText: 'Giờ mở cửa',
+                            prefixIcon: Icons.access_time_outlined,
+                          ),
                         ],
                       ),
                     ),
@@ -90,44 +168,83 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildFormLabel('Giờ đóng cửa'),
-                          _buildField(hint: '22:00:00', initialValue: updatedClose, onChanged: (val) => updatedClose = val),
+                          CustomTextField(
+                            controller: _closeController,
+                            labelText: 'Giờ đóng cửa',
+                            prefixIcon: Icons.access_time_outlined,
+                          ),
                         ],
                       ),
                     ),
                   ],
                 ),
                 _buildFormLabel('Tên hiển thị vị trí định vị'),
-                _buildField(hint: 'Tòa nhà, số tầng...', initialValue: updatedLocText, onChanged: (val) => updatedLocText = val),
+                CustomTextField(
+                  controller: _locTextController,
+                  labelText: 'Tên hiển thị vị trí định vị',
+                  prefixIcon: Icons.location_on_outlined,
+                ),
                 _buildFormLabel('Mã ngân hàng'),
-                _buildField(hint: 'VCB / TCB / MB', initialValue: updatedBankCode, onChanged: (val) => updatedBankCode = val),
+                CustomTextField(
+                  controller: _bankCodeController,
+                  labelText: 'Mã ngân hàng',
+                  prefixIcon: Icons.account_balance_outlined,
+                ),
                 _buildFormLabel('Số tài khoản nhận Payout'),
-                _buildField(hint: 'Nhập số tài khoản ngân hàng', initialValue: updatedBankAcc, onChanged: (val) => updatedBankAcc = val),
+                CustomTextField(
+                  controller: _bankAccountController,
+                  labelText: 'Số tài khoản nhận Payout',
+                  prefixIcon: Icons.account_balance_outlined,
+                  keyboardType: TextInputType.number,
+                ),
               ],
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Hủy'),
+                  ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004AC6)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF004AC6),
+                    ),
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
                         final updated = widget.currentProfile.copyWith(
-                          username: updatedName,
-                          bio: updatedBio,
-                          address: updatedAddress,
-                          openingHour: updatedOpen.isNotEmpty ? updatedOpen : null,
-                          closingHour: updatedClose.isNotEmpty ? updatedClose : null,
-                          locationText: updatedLocText.isNotEmpty ? updatedLocText : null,
-                          payoutBankCode: updatedBankCode.isNotEmpty ? updatedBankCode : null,
-                          payoutAccountNumber: updatedBankAcc.isNotEmpty ? updatedBankAcc : null,
+                          username: _nameController.text.trim(),
+                          bio: _bioController.text.trim(),
+                          address: _addressController.text.trim(),
+                          openingHour: _openController.text.trim().isEmpty
+                              ? null
+                              : _openController.text.trim(),
+                          closingHour: _closeController.text.trim().isEmpty
+                              ? null
+                              : _closeController.text.trim(),
+                          locationText: _locTextController.text.trim().isEmpty
+                              ? null
+                              : _locTextController.text.trim(),
+                          payoutBankCode:
+                              _bankCodeController.text.trim().isEmpty
+                              ? null
+                              : _bankCodeController.text.trim(),
+                          payoutAccountNumber:
+                              _bankAccountController.text.trim().isEmpty
+                              ? null
+                              : _bankAccountController.text.trim(),
                         );
-                        context.read<ProfileService>().add(UpdateProfileRequested(updated));
+                        context.read<ProfileService>().add(
+                          UpdateProfileRequested(updated),
+                        );
                         Navigator.pop(context);
                       }
                     },
-                    child: const Text('Lưu thay đổi', style: TextStyle(color: Colors.white)),
+                    child: const Text(
+                      'Lưu thay đổi',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ],
               ),
@@ -142,22 +259,13 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
   Widget _buildFormLabel(String label) {
     return Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 4),
-      child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF7E84A2))),
-    );
-  }
-
-  Widget _buildField({required String hint, required String initialValue, required ValueChanged<String> onChanged}) {
-    return TextFormField(
-      initialValue: initialValue,
-      onChanged: onChanged,
-      style: const TextStyle(fontSize: 14),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        filled: true,
-        fillColor: const Color(0xFFF1F3F6),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF7E84A2),
+        ),
       ),
     );
   }
