@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/provider_booking_model.dart';
 import '../../models/booking_model.dart';
@@ -11,38 +12,55 @@ class ProviderBookingsService {
     int pageSize = 20,
   }) async {
     try {
-      final response = await _supabase.rpc(
-        'get_provider_bookings',
-        params: {
+      final response = await _supabase.functions.invoke(
+        'get-provider-bookings',
+        body: {
           'status_filter': filter,
           'page_number': page,
           'page_size': pageSize,
         },
       );
-      
-      if (response != null && response is List) {
-        return response
-            .map((e) => ProviderBookingModel.fromJson(e as Map<String, dynamic>))
+
+      final data = response.data;
+      // Edge Function trả về object { items, total_count, page, page_size }
+      // chứ không phải array thẳng như khi gọi RPC trực tiếp
+      if (data is Map<String, dynamic> && data['items'] is List) {
+        final items = data['items'] as List;
+        return items
+            .map(
+              (e) => ProviderBookingModel.fromJson(e as Map<String, dynamic>),
+            )
             .toList();
       }
       return [];
     } catch (e) {
       print('>>> Error fetching bookings: $e');
       // Mock data to test UI
-      await Future.delayed(const Duration(milliseconds: 800)); // Simulate network
+      await Future.delayed(
+        const Duration(milliseconds: 800),
+      ); // Simulate network
       return _getMockBookings(filter);
     }
   }
 
-  Future<void> updateBookingStatus(String bookingId, BookingStatus newStatus) async {
+  Future<void> updateBookingStatus(
+    String bookingId,
+    BookingStatus newStatus,
+  ) async {
     try {
-      await _supabase.rpc(
-        'update_booking_status',
-        params: {
-          'p_booking_id': bookingId,
-          'p_new_status': newStatus.toDbString(),
-        },
+      final response = await _supabase.functions.invoke(
+        'update-booking-status',
+        body: {'booking_id': bookingId, 'new_status': newStatus.toDbString()},
       );
+
+      // functions.invoke không tự throw khi RPC trả lỗi qua status 400,
+      // nên kiểm tra status code thủ công
+      if (response.status != 200) {
+        final errorMsg = response.data is Map
+            ? (response.data['error'] ?? 'Unknown error')
+            : 'Unknown error';
+        throw Exception(errorMsg);
+      }
     } catch (e) {
       print('>>> Error updating booking status: $e');
       // Mock success for UI testing
@@ -103,7 +121,7 @@ class ProviderBookingsService {
     ];
 
     if (filter == 'All') return allMocks;
-    
+
     return allMocks.where((b) {
       if (filter == 'Pending') return b.status == BookingStatus.dangThucHien;
       if (filter == 'Completed') return b.status == BookingStatus.daHoanThanh;
