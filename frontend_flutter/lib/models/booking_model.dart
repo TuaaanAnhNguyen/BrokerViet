@@ -1,7 +1,7 @@
 // lib/models/booking_model.dart
 
 enum BookingStatus {
-  dangThucHien('PENDING', 'Đang thực hiện'),
+  dangChoDuyet('PENDING', 'Đang chờ duyệt'),
   daHoanThanh('COMPLETED', 'Đã hoàn thành'),
   daHuy('CANCELLED', 'Đã hủy');
 
@@ -13,7 +13,7 @@ enum BookingStatus {
   static BookingStatus fromDbString(String status) {
     return BookingStatus.values.firstWhere(
       (e) => e.dbValue.toLowerCase() == status.trim().toLowerCase(),
-      orElse: () => BookingStatus.dangThucHien, // Fallback default
+      orElse: () => BookingStatus.dangChoDuyet, // Fallback default
     );
   }
 

@@ -112,7 +112,7 @@ class _ProviderServiceFormScreenState extends State<ProviderServiceFormScreen> {
       }
 
       if (mounted) {
-        Navigator.pop(context, true);
+        Navigator.pop(context, true); // Trả về true để báo hiệu thành công
       }
     } catch (e) {
       if (mounted) {

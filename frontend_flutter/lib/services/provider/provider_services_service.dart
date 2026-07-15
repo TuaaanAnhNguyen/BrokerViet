@@ -50,43 +50,77 @@ class ProviderServicesService {
         imageUrl = await uploadServiceImage(imageFile);
       }
 
-      final data = {
-        ...serviceData,
-        'provider_id': userId,
-        if (imageUrl != null) 'image_url': imageUrl,
-      };
+      final response = await _supabase.functions.invoke(
+        'manage-service',
+        body: {
+          'action': 'create',
+          'provider_id': userId,
+          ...serviceData,
+          if (imageUrl != null) 'image_url': imageUrl,
+        },
+      );
 
-      await _supabase.from('services').insert(data);
+      if (response.status != 200) {
+        final err = (response.data as Map?)?['error'] ?? 'Unknown error';
+        throw Exception('Lỗi khi thêm dịch vụ: $err');
+      }
     } catch (e) {
-      print('>>> Lỗi khi thêm dịch vụ: $e');
+      print('>>> Lỗi khi thêm dịch vụ qua Edge Function: $e');
       rethrow;
     }
   }
 
   Future<void> updateService(String serviceId, Map<String, dynamic> serviceData, File? imageFile) async {
     try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('Vui lòng đăng nhập');
+
       String? imageUrl;
       if (imageFile != null) {
         imageUrl = await uploadServiceImage(imageFile);
       }
 
-      final data = {
-        ...serviceData,
-        if (imageUrl != null) 'image_url': imageUrl,
-      };
+      final response = await _supabase.functions.invoke(
+        'manage-service',
+        body: {
+          'action': 'update',
+          'service_id': serviceId,
+          'provider_id': userId,
+          ...serviceData,
+          if (imageUrl != null) 'image_url': imageUrl,
+        },
+      );
 
-      await _supabase.from('services').update(data).eq('service_id', serviceId);
+      if (response.status != 200) {
+        final err = (response.data as Map?)?['error'] ?? 'Unknown error';
+        throw Exception('Lỗi khi cập nhật dịch vụ: $err');
+      }
     } catch (e) {
-      print('>>> Lỗi khi cập nhật dịch vụ: $e');
+      print('>>> Lỗi khi cập nhật dịch vụ qua Edge Function: $e');
       rethrow;
     }
   }
 
   Future<void> deleteService(String serviceId) async {
     try {
-      await _supabase.from('services').delete().eq('service_id', serviceId);
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('Vui lòng đăng nhập');
+
+      final response = await _supabase.functions.invoke(
+        'manage-service',
+        body: {
+          'action': 'delete',
+          'service_id': serviceId,
+          'provider_id': userId,
+        },
+      );
+
+      if (response.status != 200) {
+        final err = (response.data as Map?)?['error'] ?? 'Unknown error';
+        throw Exception('Lỗi khi xóa dịch vụ: $err');
+      }
     } catch (e) {
-      print('>>> Lỗi khi xóa dịch vụ: $e');
+      print('>>> Lỗi khi xóa dịch vụ qua Edge Function: $e');
       rethrow;
     }
   }

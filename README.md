@@ -76,12 +76,28 @@ BrokerViet
 │  │  │  ├─ file-system.probe
 │  │  │  ├─ kotlin
 │  │  │  │  └─ errors
+│  │  │  │     ├─ errors-1783826450204.log
+│  │  │  │     ├─ errors-1783826450223.log
+│  │  │  │     ├─ errors-1783826450234.log
+│  │  │  │     ├─ errors-1783826450283.log
+│  │  │  │     ├─ errors-1783826648114.log
+│  │  │  │     ├─ errors-1783826648145.log
+│  │  │  │     ├─ errors-1783826648154.log
+│  │  │  │     └─ errors-1783826648165.log
 │  │  │  ├─ noVersion
 │  │  │  │  └─ buildLogic.lock
 │  │  │  └─ vcs-1
 │  │  │     └─ gc.properties
 │  │  ├─ .kotlin
 │  │  │  ├─ errors
+│  │  │  │  ├─ errors-1783826450204.log
+│  │  │  │  ├─ errors-1783826450223.log
+│  │  │  │  ├─ errors-1783826450234.log
+│  │  │  │  ├─ errors-1783826450283.log
+│  │  │  │  ├─ errors-1783826648114.log
+│  │  │  │  ├─ errors-1783826648145.log
+│  │  │  │  ├─ errors-1783826648154.log
+│  │  │  │  └─ errors-1783826648165.log
 │  │  │  └─ sessions
 │  │  ├─ app
 │  │  │  ├─ build.gradle.kts
@@ -230,14 +246,19 @@ BrokerViet
 │  │  │  ├─ bank_mapper.dart
 │  │  │  ├─ booking_model.dart
 │  │  │  ├─ dashboard_summary_model.dart
+│  │  │  ├─ geocoding_result.dart
 │  │  │  ├─ notification_model.dart
 │  │  │  ├─ payment_model.dart
 │  │  │  ├─ profile_model.dart
 │  │  │  ├─ provider_booking_model.dart
+│  │  │  ├─ provider_location_model.dart
+│  │  │  ├─ provider_service_info_model.dart
+│  │  │  ├─ reverse_geocoding_result.dart
 │  │  │  ├─ review_model.dart
 │  │  │  ├─ route_result_model.dart
 │  │  │  ├─ service_category_model.dart
-│  │  │  └─ service_model.dart
+│  │  │  ├─ service_model.dart
+│  │  │  └─ voucher_model.dart
 │  │  ├─ screens
 │  │  │  └─ provider
 │  │  │     ├─ provider_bookings_screen.dart
@@ -245,6 +266,9 @@ BrokerViet
 │  │  │     ├─ provider_services_list_screen.dart
 │  │  │     ├─ provider_service_form_screen.dart
 │  │  │     ├─ view_provider_screen.dart
+│  │  │     ├─ voucher
+│  │  │     │  ├─ voucher_form_screen.dart
+│  │  │     │  └─ voucher_list_screen.dart
 │  │  │     └─ widgets
 │  │  │        └─ booking_detail_sheet.dart
 │  │  ├─ services
@@ -254,8 +278,8 @@ BrokerViet
 │  │  │  │  └─ booking_service.dart
 │  │  │  ├─ chat
 │  │  │  │  └─ chat_service.dart
-│  │  │  ├─ map
-│  │  │  │  └─ map_service.dart
+│  │  │  ├─ map-location
+│  │  │  │  └─ location_service.dart
 │  │  │  ├─ marketplace
 │  │  │  │  └─ service_marketplace_service.dart
 │  │  │  ├─ navigation_service.dart
@@ -266,12 +290,14 @@ BrokerViet
 │  │  │  │  └─ vnpay_service.dart
 │  │  │  ├─ profile
 │  │  │  │  └─ profile_service.dart
-│  │  │  └─ provider
-│  │  │     ├─ provider_bookings_service.dart
-│  │  │     ├─ provider_dashboard_service.dart
-│  │  │     └─ provider_services_service.dart
+│  │  │  ├─ provider
+│  │  │  │  ├─ provider_bookings_service.dart
+│  │  │  │  ├─ provider_dashboard_service.dart
+│  │  │  │  └─ provider_services_service.dart
+│  │  │  └─ voucher_service.dart
 │  │  ├─ utils
-│  │  │  └─ booking_status_utils.dart
+│  │  │  ├─ booking_status_utils.dart
+│  │  │  └─ voucher_status_utils.dart
 │  │  └─ widgets
 │  │     ├─ auth
 │  │     │  ├─ auth_header.dart
@@ -280,20 +306,42 @@ BrokerViet
 │  │     ├─ avatar_builder.dart
 │  │     ├─ booking_card.dart
 │  │     ├─ button.dart
+│  │     ├─ chat
+│  │     │  └─ chat_bubble.dart
 │  │     ├─ custom_text_field.dart
+│  │     ├─ map
+│  │     │  ├─ destination_marker.dart
+│  │     │  ├─ error_banner.dart
+│  │     │  ├─ loading_overlay.dart
+│  │     │  ├─ map_tile_layer.dart
+│  │     │  ├─ my_location_button.dart
+│  │     │  ├─ provider_service_info_card.dart
+│  │     │  ├─ route_info_card.dart
+│  │     │  ├─ route_polyline_layer.dart
+│  │     │  └─ user_location_marker.dart
 │  │     ├─ network_image_fallback.dart
 │  │     ├─ notification_tile.dart
 │  │     ├─ payment
 │  │     │  └─ vietqr_payment.dart
 │  │     ├─ profile
 │  │     │  ├─ account_setting_tile.dart
-│  │     │  └─ edit_profile_sheet.dart
+│  │     │  ├─ change_email_sheet.dart
+│  │     │  ├─ change_password_sheet.dart
+│  │     │  ├─ edit_profile_sheet.dart
+│  │     │  ├─ profile_contact_section.dart
+│  │     │  ├─ profile_danger_section.dart
+│  │     │  ├─ profile_header.dart
+│  │     │  ├─ profile_provider_section.dart
+│  │     │  └─ profile_security_section.dart
 │  │     ├─ provider
 │  │     │  └─ provider_booking_card.dart
-│  │     └─ service
-│  │        ├─ category_selector.dart
-│  │        ├─ nearby_provider_tile.dart
-│  │        └─ service_card.dart
+│  │     ├─ service
+│  │     │  ├─ category_selector.dart
+│  │     │  ├─ nearby_provider_tile.dart
+│  │     │  └─ service_card.dart
+│  │     └─ voucher
+│  │        ├─ voucher_badge.dart
+│  │        └─ voucher_input_field.dart
 │  ├─ pubspec.lock
 │  ├─ pubspec.yaml
 │  ├─ README.md
@@ -311,6 +359,33 @@ BrokerViet
 │     └─ manifest.json
 ├─ README.md
 └─ supabase
-   └─ config.toml
+   ├─ config.toml
+   └─ functions
+      ├─ create-booking-with-voucher
+      │  ├─ .npmrc
+      │  ├─ deno.json
+      │  └─ index.ts
+      ├─ create-provider-voucher
+      │  ├─ .npmrc
+      │  ├─ deno.json
+      │  └─ index.ts
+      ├─ get-active-vouchers-for-service
+      │  ├─ .npmrc
+      │  ├─ deno.json
+      │  └─ index.ts
+      ├─ get-provider-vouchers
+      │  ├─ .npmrc
+      │  ├─ deno.json
+      │  └─ index.ts
+      ├─ update-voucher-status
+      │  ├─ .npmrc
+      │  ├─ deno.json
+      │  └─ index.ts
+      ├─ validate-voucher
+      │  ├─ .npmrc
+      │  ├─ deno.json
+      │  └─ index.ts
+      └─ _shared
+         └─ cors.ts
 
 ```

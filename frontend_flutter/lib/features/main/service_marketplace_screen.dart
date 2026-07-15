@@ -7,7 +7,7 @@ import '../../widgets/service/service_card.dart';
 import '../../widgets/service/category_selector.dart';
 import '../../widgets/service/nearby_provider_tile.dart';
 import '../../services/marketplace/service_marketplace_service.dart';
-import '../../services/map/map_service.dart';
+import '../../services/map-location/location_service.dart';
 import './service_detail_screen.dart';
 import './search_screen.dart';
 
@@ -22,7 +22,7 @@ class ServiceMarketplaceScreen extends StatefulWidget {
 class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
   final ServiceMarketplaceService _marketplaceService =
       ServiceMarketplaceService();
-  final MapService _mapService = MapService();
+  final LocationService _locationService = LocationService();
   final TextEditingController _searchController = TextEditingController();
 
   int _activeCategoryIndex = 0;
@@ -188,7 +188,7 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
         return;
       }
 
-      final nearbyData = await _mapService.findNearbyProviders(
+      final nearbyData = await _locationService.findNearbyProviders(
         latitude: userLat,
         longitude: userLng,
         radiusMeters: 15000, // Search up to 15km

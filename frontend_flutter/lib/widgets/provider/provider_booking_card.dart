@@ -24,7 +24,7 @@ class ProviderBookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isCancelled = booking.status == BookingStatus.daHuy;
-    final bool isPending = booking.status == BookingStatus.dangThucHien;
+    final bool isPending = booking.status == BookingStatus.dangChoDuyet;
 
     return Opacity(
       opacity: isCancelled ? 0.6 : 1.0,
@@ -146,7 +146,7 @@ class ProviderBookingCard extends StatelessWidget {
   }
 
   Widget _buildQuickActions(BookingStatus status) {
-    if (status == BookingStatus.dangThucHien) {
+    if (status == BookingStatus.dangChoDuyet) {
       return Row(
         children: [
           Expanded(

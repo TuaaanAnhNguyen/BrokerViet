@@ -67,7 +67,7 @@ class ServiceModel {
       categoryName: extractedCategoryName,
       price: formatPrice(json['price']),
       priceValue: double.tryParse(json['price']?.toString() ?? '0') ?? 0,
-      rating: (json['rating'] ?? 5.0).toDouble(),
+      rating: double.tryParse(json['rating']?.toString() ?? '0.0') ?? 0.0,
       tags: extractedCategoryName != null
           ? [extractedCategoryName]
           : (json['category_name'] != null ? [json['category_name'].toString()] : []),

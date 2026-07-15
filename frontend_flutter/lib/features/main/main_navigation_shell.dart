@@ -7,6 +7,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 // import '../../screens/provider/provider_bookings_screen.dart';
 import '../../screens/provider/provider_dashboard_screen.dart';
 import '../../screens/provider/provider_services_list_screen.dart';
+import '../../screens/provider/voucher/voucher_list_screen.dart';
+import '../../screens/provider/provider_service_form_screen.dart';
 import '../../services/auth/auth_service.dart';
 import '../../services/notification/notification_service.dart';
 import '../../models/notification_model.dart';
@@ -30,6 +32,10 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   StreamSubscription<List<NotificationModel>>? _notificationSubscription;
   List<NotificationModel>? _lastNotifications;
 
+  final GlobalKey<ProviderServicesListScreenState> _servicesListKey =
+      GlobalKey();
+  final GlobalKey<ProviderDashboardScreenState> _dashboardKey = GlobalKey();
+
   // 1. Define Customer Tabs
   final List<Widget> _customerTabs = [
     const ServiceMarketplaceScreen(),
@@ -38,10 +44,10 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   ];
 
   // 2. Define Provider Tabs
-  final List<Widget> _providerTabs = [
-    const ProviderDashboardScreen(),
-    // const ProviderBookingsScreen(),
-    const ProviderServicesListScreen(),
+  late final List<Widget> _providerTabs = [
+    ProviderDashboardScreen(key: _dashboardKey),
+    ProviderServicesListScreen(key: _servicesListKey),
+    const VoucherListScreen(),
     const ChatListScreen(),
   ];
 
@@ -99,6 +105,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         icon: Icon(Icons.construction_outlined),
         activeIcon: Icon(Icons.construction),
         label: 'Dịch vụ',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.confirmation_number_outlined),
+        activeIcon: Icon(Icons.confirmation_number),
+        label: 'Mã giảm giá',
       ),
       BottomNavigationBarItem(
         icon: Icon(Icons.chat_bubble_outline_rounded),
@@ -239,6 +250,26 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
         body: IndexedStack(index: _currentIndex, children: activeTabs),
 
+        floatingActionButton: isProvider && _currentIndex == 0
+            ? FloatingActionButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProviderServiceFormScreen(),
+                    ),
+                  ).then((result) {
+                    if (result == true) {
+                      _servicesListKey.currentState?.loadServices();
+                      _dashboardKey.currentState?.refresh();
+                    }
+                  });
+                },
+                backgroundColor: primaryColor,
+                child: const Icon(Icons.add, color: Colors.white),
+              )
+            : null,
+
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
             border: Border(
@@ -264,6 +295,14 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               setState(() {
                 _currentIndex = index;
               });
+
+              if (isProvider) {
+                if (index == 0) {
+                  _dashboardKey.currentState?.refresh();
+                } else if (index == 1) {
+                  _servicesListKey.currentState?.loadServices(silent: true);
+                }
+              }
             },
             items: isProvider
                 ? _buildProviderNavbarItems()

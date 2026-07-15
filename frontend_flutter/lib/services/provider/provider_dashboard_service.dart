@@ -8,13 +8,22 @@ class ProviderDashboardService {
 
   Future<DashboardSummaryModel> fetchDashboardSummary() async {
     try {
-      final response = await _supabase.rpc('get_provider_dashboard_summary');
+      final response = await _supabase.functions.invoke(
+        'get-provider-dashboard-summary',
+      );
 
-      if (response != null) {
-        print('DASHBOARD RESPONSE: $response');
-        return DashboardSummaryModel.fromJson(response as Map<String, dynamic>);
+      final data = response.data;
+      print('DASHBOARD RESPONSE: $data');
+
+      // Edge Function trả 401 kèm { error: ... } khi chưa đăng nhập,
+      // hoặc RPC báo lỗi qua status 400/500 -> đều không phải payload hợp lệ
+      if (response.status != 200 ||
+          data == null ||
+          data is! Map<String, dynamic>) {
+        throw Exception(data is Map ? data['error'] : 'Unknown error');
       }
-      return DashboardSummaryModel.empty();
+
+      return DashboardSummaryModel.fromJson(data);
     } catch (e) {
       print('>>> Error fetching dashboard summary: $e');
       // Mock data to test UI
@@ -31,10 +40,18 @@ class ProviderDashboardService {
 
   Future<List<ProviderBookingModel>> fetchUpcomingBookings() async {
     try {
-      final response = await _supabase.rpc('get_provider_upcoming_bookings');
+      final response = await _supabase.functions.invoke(
+        'get-provider-upcoming-bookings',
+      );
 
-      if (response != null && response is List) {
-        return response
+      final data = response.data;
+
+      // Edge Function trả về { items: [...] }, không phải List thẳng
+      if (response.status == 200 &&
+          data is Map<String, dynamic> &&
+          data['items'] is List) {
+        final items = data['items'] as List;
+        return items
             .map(
               (e) => ProviderBookingModel.fromJson(e as Map<String, dynamic>),
             )
@@ -51,7 +68,7 @@ class ProviderDashboardService {
           customerAvatar: null,
           serviceTitle: 'Sửa chữa máy lạnh',
           date: DateTime.now().add(const Duration(hours: 2)),
-          status: BookingStatus.dangThucHien,
+          status: BookingStatus.dangChoDuyet,
         ),
         ProviderBookingModel(
           bookingId: '2',
