@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import '../../models/review_model.dart';
-import '../../widgets/avatar_builder.dart';
+import '../../widgets/review/review_tile.dart';
 
 class AllReviewsScreen extends StatelessWidget {
   final List<ReviewModel> reviews;
@@ -24,7 +24,11 @@ class AllReviewsScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           'Đánh giá - $serviceTitle',
-          style: const TextStyle(color: darkText, fontWeight: FontWeight.bold, fontSize: 18),
+          style: const TextStyle(
+            color: darkText,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -41,7 +45,10 @@ class AllReviewsScreen extends StatelessWidget {
           ? const Center(
               child: Text(
                 'Chưa có đánh giá nào.',
-                style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             )
           : ListView.separated(
@@ -49,65 +56,13 @@ class AllReviewsScreen extends StatelessWidget {
               itemCount: reviews.length,
               separatorBuilder: (context, index) => const Divider(height: 32),
               itemBuilder: (context, index) {
-                final review = reviews[index];
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        buildAvatar(review.userAvatar, radius: 18),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                review.userName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: darkText,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Row(
-                                children: List.generate(
-                                  5,
-                                  (starIndex) => Icon(
-                                    Icons.star,
-                                    color: starIndex < review.rating
-                                        ? Colors.amber
-                                        : Colors.grey[300],
-                                    size: 14,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          _formatDate(review.createdAt),
-                          style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      review.comment,
-                      style: const TextStyle(
-                        color: bodyText,
-                        fontSize: 14,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
+                return ReviewTile(
+                  review: reviews[index],
+                  darkText: darkText,
+                  bodyText: bodyText,
                 );
               },
             ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
   }
 }

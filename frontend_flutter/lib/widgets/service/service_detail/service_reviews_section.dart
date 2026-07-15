@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import '../../../models/review_model.dart';
-import '../../../widgets/avatar_builder.dart';
 import '../../../features/main/all_reviews_screen.dart';
+import '../../review/review_tile.dart';
 
 class ServiceReviewsSection extends StatelessWidget {
   final List<ReviewModel> reviews;
@@ -79,52 +79,13 @@ class ServiceReviewsSection extends StatelessWidget {
               final isOwner =
                   currentUserId != null && review.userId == currentUserId;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      buildAvatar(review.userAvatar, radius: 16),
-                      const SizedBox(width: 8),
-                      Text(
-                        review.userName,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      if (isOwner) ...[
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () => onEditReviewPressed(review),
-                          child: const Icon(
-                            Icons.edit,
-                            size: 14,
-                            color: Colors.blue,
-                          ),
-                        ),
-                      ],
-                      const Spacer(),
-                      Row(
-                        children: List.generate(
-                          5,
-                          (starIndex) => Icon(
-                            Icons.star,
-                            color: starIndex < review.rating
-                                ? Colors.amber
-                                : Colors.grey[300],
-                            size: 16,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    review.comment,
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: bodyText,
-                    ),
-                  ),
-                ],
+              return ReviewTile(
+                review: review,
+                darkText: darkText,
+                bodyText: bodyText,
+                onEditPressed: isOwner
+                    ? () => onEditReviewPressed(review)
+                    : null,
               );
             },
           ),

@@ -14,7 +14,6 @@ class NotificationScreen extends StatefulWidget {
 
 class _NotificationScreenState extends State<NotificationScreen> {
   final NotificationService _notificationService = NotificationService();
-
   final List<String> _tabs = ['Tất cả', 'Chưa đọc'];
 
   @override
@@ -22,97 +21,116 @@ class _NotificationScreenState extends State<NotificationScreen> {
     const Color primaryColor = Color(0xFF004AC6);
     const Color darkText = Color(0xFF0B1C30);
 
-    return DefaultTabController(
-      length: _tabs.length,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FF),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new,
-              size: 18,
-              color: primaryColor,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: const Text(
-            'Thông báo',
-            style: TextStyle(
-              color: darkText,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          centerTitle: false,
-          actions: [
-            StreamBuilder<List<NotificationModel>>(
-              stream: _notificationService.streamNotifications(),
-              builder: (context, snapshot) {
-                final hasUnread = snapshot.data?.any((n) => !n.isRead) ?? false;
-                if (!hasUnread) return const SizedBox.shrink();
-                
-                return IconButton(
-                  icon: const Icon(Icons.done_all, color: primaryColor),
-                  tooltip: 'Đánh dấu tất cả là đã đọc',
-                  onPressed: () => _notificationService.markAllAsRead(),
-                );
-              },
-            ),
-          ],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(48),
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: const Color(0xFFC3C6D7).withValues(alpha: 0.5),
+    return StreamBuilder<List<NotificationModel>>(
+      stream: _notificationService.streamNotifications(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Color(0xFFF8F9FF),
+            body: _LoadingState(),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFF8F9FF),
+            body: Center(child: Text('Đã xảy ra lỗi: ${snapshot.error}')),
+          );
+        }
+
+        final allNotifications = snapshot.data ?? [];
+        final unreadNotifications = allNotifications
+            .where((n) => !n.isRead)
+            .toList();
+        final hasUnread = unreadNotifications.isNotEmpty;
+
+        return DefaultTabController(
+          length: _tabs.length,
+          child: Scaffold(
+            backgroundColor: const Color(0xFFF8F9FF),
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  size: 18,
+                  color: primaryColor,
+                ),
+                onPressed: () => Navigator.pop(context),
+              ),
+              title: const Text(
+                'Thông báo',
+                style: TextStyle(
+                  color: darkText,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              centerTitle: false,
+              actions: [
+                if (hasUnread)
+                  IconButton(
+                    icon: const Icon(Icons.done_all, color: primaryColor),
+                    tooltip: 'Đánh dấu tất cả là đã đọc',
+                    onPressed: () => _notificationService.markAllAsRead(),
+                  ),
+              ],
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(48),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: const Color(0xFFC3C6D7).withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                  child: TabBar(
+                    labelColor: primaryColor,
+                    unselectedLabelColor: const Color(0xFF434655),
+                    indicatorColor: primaryColor,
+                    indicatorSize: TabBarIndicatorSize.label,
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
                   ),
                 ),
               ),
-              child: TabBar(
-                labelColor: primaryColor,
-                unselectedLabelColor: const Color(0xFF434655),
-                indicatorColor: primaryColor,
-                indicatorSize: TabBarIndicatorSize.label,
-                labelStyle: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-                tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
-              ),
             ),
-          ),
-        ),
-        body: StreamBuilder<List<NotificationModel>>(
-          stream: _notificationService.streamNotifications(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const _LoadingState();
-            }
-
-            if (snapshot.hasError) {
-              return Center(child: Text('Đã xảy ra lỗi: ${snapshot.error}'));
-            }
-
-            final allNotifications = snapshot.data ?? [];
-
-            return TabBarView(
+            body: TabBarView(
               children: [
-                _buildNotificationList(allNotifications),
-                _buildNotificationList(
-                  allNotifications.where((n) => !n.isRead).toList(),
+                NotificationList(
+                  notifications: allNotifications,
+                  notificationService: _notificationService,
+                ),
+                NotificationList(
+                  notifications: unreadNotifications,
+                  notificationService: _notificationService,
                 ),
               ],
-            );
-          },
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
+}
 
-  Widget _buildNotificationList(List<NotificationModel> notifications) {
+class NotificationList extends StatelessWidget {
+  final List<NotificationModel> notifications;
+  final NotificationService notificationService;
+
+  const NotificationList({
+    super.key,
+    required this.notifications,
+    required this.notificationService,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     if (notifications.isEmpty) {
       return const _EmptyState();
     }
@@ -127,7 +145,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           notification: notification,
           onTap: () {
             if (!notification.isRead) {
-              _notificationService.markAsRead(notification.notificationId);
+              notificationService.markAsRead(notification.notificationId);
             }
           },
         );
