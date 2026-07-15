@@ -54,19 +54,19 @@ class SignUpRequested extends AuthEvent {
   SignUpRequested(this.username, this.phone, this.password, this.role);
 }
 
+// ==========================================
+// REWORKED FORGOT PASSWORD EVENTS
+// ==========================================
 class ForgotPasswordRequested extends AuthEvent {
-  final String identifier;
-  final String method; // 'phone' or 'email'
-
-  ForgotPasswordRequested({required this.identifier, required this.method});
+  final String phone;
+  ForgotPasswordRequested(this.phone);
 }
 
 class ForgotPasswordConfirmed extends AuthEvent {
-  final String identifier;
+  final String phone;
   final String otpCode;
   final String newPassword;
-
-  ForgotPasswordConfirmed(this.identifier, this.otpCode, this.newPassword);
+  ForgotPasswordConfirmed(this.phone, this.otpCode, this.newPassword);
 }
 
 class UpdateAvatarRequested extends AuthEvent {
@@ -77,7 +77,6 @@ class UpdateAvatarRequested extends AuthEvent {
 class LogoutRequested extends AuthEvent {}
 
 class AuthService extends Bloc<AuthEvent, AuthState> {
-  String? _resolvedPhoneFromEmail;
   final _supabase = Supabase.instance.client;
 
   String _formatPhoneNumber(String phone) {
@@ -295,75 +294,46 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
       }
     });
 
+    // ====================================================================
+    // HANDLING REWORKED FORGOT PASSWORD
+    // ====================================================================
     on<ForgotPasswordRequested>((event, emit) async {
       emit(AuthLoading());
       try {
-        _resolvedPhoneFromEmail = null;
+        final formattedPhone = _formatPhoneNumber(event.phone);
 
-        if (event.method == 'email') {
-          final cleanEmail = event.identifier.trim();
+        final targetProfile = await _supabase
+            .from('profiles')
+            .select('user_id')
+            .eq('phone', formattedPhone)
+            .maybeSingle();
 
-          final response = await _supabase.functions.invoke(
-            'request-email-otp',
-            body: {'email': cleanEmail},
+        if (targetProfile == null) {
+          emit(
+            AuthFailure('Số điện thoại này chưa được đăng ký trên hệ thống.'),
           );
-
-          if (response.status != 200) {
-            final errorData = response.data as Map<String, dynamic>?;
-            throw Exception(
-              errorData?['error'] ?? 'Gửi OTP qua Email thất bại.',
-            );
-          }
-
-          final responseData = response.data as Map<String, dynamic>;
-
-          _resolvedPhoneFromEmail = responseData['phone'];
-
-          emit(AuthPasswordResetOtpSent());
-        } else {
-          final formattedPhone = _formatPhoneNumber(event.identifier);
-
-          final targetProfile = await _supabase
-              .from('profiles')
-              .select('user_id')
-              .eq('phone', formattedPhone)
-              .maybeSingle();
-
-          if (targetProfile == null) {
-            emit(
-              AuthFailure('Số điện thoại này chưa được đăng ký trên hệ thống.'),
-            );
-            return;
-          }
-
-          await _supabase.auth.signInWithOtp(phone: formattedPhone);
-          emit(AuthPasswordResetOtpSent());
+          return;
         }
+
+        await _supabase.auth.signInWithOtp(phone: formattedPhone);
+        emit(AuthPasswordResetOtpSent());
       } on AuthException catch (e) {
         emit(AuthFailure(e.message));
-      } catch (e) {
-        emit(AuthFailure(e.toString().replaceAll('Exception: ', '')));
+      } catch (_) {
+        emit(AuthFailure('Không thể gửi mã xác thực. Vui lòng thử lại.'));
       }
     });
 
     on<ForgotPasswordConfirmed>((event, emit) async {
       emit(AuthLoading());
       try {
-        AuthResponse response;
-        if (_resolvedPhoneFromEmail != null) {
-          response = await _supabase.auth.verifyOTP(
-            email: event.identifier,
-            token: event.otpCode,
-            type: OtpType.email,
-          );
-        } else {
-          final formattedPhone = _formatPhoneNumber(event.identifier);
-          response = await _supabase.auth.verifyOTP(
-            phone: formattedPhone,
-            token: event.otpCode,
-            type: OtpType.sms,
-          );
-        }
+        final formattedPhone = _formatPhoneNumber(event.phone);
+
+        final response = await _supabase.auth.verifyOTP(
+          phone: formattedPhone,
+          token: event.otpCode,
+          type: OtpType.sms,
+        );
 
         if (response.user != null) {
           await _supabase.auth.updateUser(
@@ -371,14 +341,13 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
           );
 
           await _supabase.auth.signOut();
-          _resolvedPhoneFromEmail = null;
           emit(AuthPasswordResetSuccess());
         } else {
           emit(AuthFailure('Mã xác thực không chính xác hoặc đã hết hạn.'));
         }
       } on AuthException catch (e) {
         emit(AuthFailure(e.message));
-      } catch (e) {
+      } catch (_) {
         emit(AuthFailure('Đổi mật khẩu thất bại. Vui lòng thử lại.'));
       }
     });
