@@ -1,5 +1,6 @@
 class ReviewModel {
   final String id;
+  final String userId;
   final String userName;
   final String userAvatar;
   final int rating;
@@ -8,6 +9,7 @@ class ReviewModel {
 
   ReviewModel({
     required this.id,
+    required this.userId,
     required this.userName,
     required this.userAvatar,
     required this.rating,
@@ -20,6 +22,7 @@ class ReviewModel {
     final profile = map['profiles'] as Map<String, dynamic>?;
     return ReviewModel(
       id: map['id'],
+      userId: map['user_id'] ?? '',
       userName: profile?['username'] ?? 'Người dùng',
       userAvatar: profile?['avatar_url'] ?? '',
       rating: map['rating'] ?? 0,
