@@ -40,15 +40,6 @@ class PaymentMethodSelector extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         _buildPaymentRow(
-          index: 1,
-          icon: Icons.credit_card,
-          title: 'Thẻ Tín dụng / Ghi nợ',
-          subtitle: 'Visa, Mastercard, JCB',
-          primaryColor: primaryColor,
-          outlineVariant: outlineVariant,
-        ),
-        const SizedBox(height: 8),
-        _buildPaymentRow(
           index: 3,
           icon: Icons.account_balance_wallet_outlined,
           title: 'VNPAY Gateway',

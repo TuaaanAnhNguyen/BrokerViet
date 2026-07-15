@@ -1,3 +1,5 @@
+// lib/widgets/provider/provider_booking_card.dart
+
 import 'package:flutter/material.dart';
 import '../../models/provider_booking_model.dart';
 import '../../models/booking_model.dart';
@@ -15,7 +17,6 @@ class ProviderBookingCard extends StatelessWidget {
     this.onStatusUpdate,
   });
 
-  // Design Tokens
   static const Color primaryColor = Color(0xFF004AC6);
   static const Color darkText = Color(0xFF0B1C30);
   static const Color bodyText = Color(0xFF434655);
@@ -88,6 +89,7 @@ class ProviderBookingCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 6),
+                        // Date Row
                         Row(
                           children: [
                             const Icon(
@@ -105,6 +107,35 @@ class ProviderBookingCard extends StatelessWidget {
                             ),
                           ],
                         ),
+                        if (booking.address != null &&
+                            booking.address!.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(top: 2.0),
+                                child: Icon(
+                                  Icons.location_on_outlined,
+                                  size: 14,
+                                  color: bodyText,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  booking.address!,
+                                  style: const TextStyle(
+                                    color: bodyText,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -151,9 +182,7 @@ class ProviderBookingCard extends StatelessWidget {
         children: [
           Expanded(
             child: OutlinedButton(
-              onPressed: () {
-                onStatusUpdate?.call(BookingStatus.daHuy);
-              },
+              onPressed: () => onStatusUpdate?.call(BookingStatus.daHuy),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.red.shade700,
                 side: BorderSide(color: Colors.red.shade200),
@@ -167,9 +196,7 @@ class ProviderBookingCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton(
-              onPressed: () {
-                onStatusUpdate?.call(BookingStatus.daHoanThanh);
-              },
+              onPressed: () => onStatusUpdate?.call(BookingStatus.daHoanThanh),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
                 foregroundColor: Colors.white,
@@ -184,7 +211,6 @@ class ProviderBookingCard extends StatelessWidget {
         ],
       );
     }
-
     return const SizedBox.shrink();
   }
 }

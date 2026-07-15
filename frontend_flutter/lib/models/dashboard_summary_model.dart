@@ -1,4 +1,4 @@
-import 'package:intl/intl.dart';
+// lib/models/dashboard_summary_model.dart
 
 class DashboardSummaryModel {
   final int todaysBookings;
@@ -18,36 +18,31 @@ class DashboardSummaryModel {
   });
 
   factory DashboardSummaryModel.fromJson(Map<String, dynamic> json) {
-    final currencyFormatter = NumberFormat.currency(
-      locale: 'vi_VN',
-      symbol: 'đ',
-    );
-
-    double revToday = 0;
-    if (json['revenue_today'] != null) {
-      revToday = double.tryParse(json['revenue_today'].toString()) ?? 0;
-    }
-
-    double revMonth = 0;
-    if (json['revenue_month'] != null) {
-      revMonth = double.tryParse(json['revenue_month'].toString()) ?? 0;
+    // 1. Safe parsing for averageRating (converts int or double safely into double)
+    double parsedRating = 0.0;
+    if (json['averageRating'] != null) {
+      parsedRating =
+          num.tryParse(json['averageRating'].toString())?.toDouble() ?? 0.0;
     }
 
     return DashboardSummaryModel(
+      // 2. Map exactly to the camelCase keys returned by your PostgreSQL jsonb_build_object
       todaysBookings:
-          int.tryParse(json['today_bookings_count']?.toString() ?? '0') ?? 0,
+          int.tryParse(json['todaysBookings']?.toString() ?? '0') ?? 0,
       pendingRequests:
-          int.tryParse(json['pending_requests_count']?.toString() ?? '0') ?? 0,
-      revenueToday: currencyFormatter.format(revToday),
-      monthlyRevenue: currencyFormatter.format(revMonth),
-      averageRating:
-          double.tryParse(json['average_rating']?.toString() ?? '0') ?? 0.0,
+          int.tryParse(json['pendingRequests']?.toString() ?? '0') ?? 0,
+
+      // 3. The database function already returns formatted strings like "90,000 đ" or "0 đ"
+      revenueToday: json['revenueToday']?.toString() ?? '0 đ',
+      monthlyRevenue: json['monthlyRevenue']?.toString() ?? '0 đ',
+
+      averageRating: parsedRating,
       totalCompletedJobs:
-          int.tryParse(json['total_completed_jobs']?.toString() ?? '0') ?? 0,
+          int.tryParse(json['totalCompletedJobs']?.toString() ?? '0') ?? 0,
     );
   }
 
-  // Factory for an empty/default state when there is no data
+  // Factory for an empty/default state when there is no data or an exception occurs
   factory DashboardSummaryModel.empty() {
     return const DashboardSummaryModel(
       todaysBookings: 0,

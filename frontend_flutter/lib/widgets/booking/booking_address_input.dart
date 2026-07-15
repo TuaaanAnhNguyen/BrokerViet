@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 
 class BookingAddressInput extends StatelessWidget {
   final TextEditingController controller;
+  final VoidCallback onFetchCurrentLocation;
+  final bool isLoading;
 
   const BookingAddressInput({
     super.key,
     required this.controller,
+    required this.onFetchCurrentLocation,
+    this.isLoading = false,
   });
 
   @override
@@ -30,35 +34,46 @@ class BookingAddressInput extends StatelessWidget {
         const SizedBox(height: 10),
         TextFormField(
           controller: controller,
-          validator: (value) => value!.isEmpty ? 'Vui lòng nhập địa chỉ cụ thể' : null,
+          validator: (value) =>
+              value!.isEmpty ? 'Vui lòng nhập địa chỉ cụ thể' : null,
           style: const TextStyle(fontSize: 14, color: darkText),
           decoration: InputDecoration(
-            prefixIcon: const Icon(
-              Icons.location_on,
-              color: primaryColor,
-            ),
+            prefixIcon: const Icon(Icons.location_on, color: primaryColor),
             suffixIcon: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 6.0,
+              ),
               child: ElevatedButton(
-                onPressed: () {
-                  controller.text = "Landmark 81, Vinhomes Central Park, Phường 22, Quận Bình Thạnh";
-                },
+                onPressed: isLoading ? null : onFetchCurrentLocation,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF39B8FD),
                   foregroundColor: const Color(0xFF004666),
+                  disabledBackgroundColor: Colors.grey.shade300,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
-                  'Hiện tại',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFF004666),
+                          ),
+                        ),
+                      )
+                    : const Text(
+                        'Hiện tại',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
             filled: true,
