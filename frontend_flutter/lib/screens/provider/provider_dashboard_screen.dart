@@ -53,13 +53,14 @@ class ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 
       final results = await Future.wait([
         _dashboardService.fetchDashboardSummary(),
-        _dashboardService.fetchUpcomingBookings(),
+        _dashboardService.fetchUpcomingBookings(limit: 6),
       ]);
 
       if (mounted) {
         setState(() {
           _summary = results[0] as DashboardSummaryModel;
-          _upcomingBookings = results[1] as List<ProviderBookingModel>;
+
+          _upcomingBookings = (results[1] as UpcomingBookingsPage).items;
           _isLoading = false;
         });
       }

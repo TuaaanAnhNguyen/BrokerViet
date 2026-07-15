@@ -40,7 +40,10 @@ class ProviderServicesService {
     }
   }
 
-  Future<void> addService(Map<String, dynamic> serviceData, File? imageFile) async {
+  Future<void> addService(
+    Map<String, dynamic> serviceData,
+    File? imageFile,
+  ) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) throw Exception('Vui lòng đăng nhập');
@@ -70,7 +73,11 @@ class ProviderServicesService {
     }
   }
 
-  Future<void> updateService(String serviceId, Map<String, dynamic> serviceData, File? imageFile) async {
+  Future<void> updateService(
+    String serviceId,
+    Map<String, dynamic> serviceData,
+    File? imageFile,
+  ) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) throw Exception('Vui lòng đăng nhập');
@@ -121,6 +128,26 @@ class ProviderServicesService {
       }
     } catch (e) {
       print('>>> Lỗi khi xóa dịch vụ qua Edge Function: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchProviderProfileDetails(
+    String providerId,
+  ) async {
+    try {
+      final response = await _supabase.functions.invoke(
+        'get-provider-profile-details',
+        body: {'provider_id': providerId},
+      );
+
+      if (response.status != 200) {
+        throw Exception(response.data?['error'] ?? 'Lỗi không xác định');
+      }
+
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      print('>>> Lỗi khi fetch provider profile details: $e');
       rethrow;
     }
   }

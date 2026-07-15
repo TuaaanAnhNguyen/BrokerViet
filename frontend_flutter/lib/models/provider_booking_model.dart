@@ -34,7 +34,9 @@ class ProviderBookingModel {
 
   factory ProviderBookingModel.fromJson(Map<String, dynamic> json) {
     DateTime? parsedDate;
-    if (json['scheduled_at'] != null) {
+    if (json['date'] != null) {
+      parsedDate = DateTime.tryParse(json['date'].toString());
+    } else if (json['scheduled_at'] != null) {
       parsedDate = DateTime.tryParse(json['scheduled_at'].toString());
     } else if (json['booked_at'] != null) {
       parsedDate = DateTime.tryParse(json['booked_at'].toString());
@@ -44,18 +46,27 @@ class ProviderBookingModel {
       bookingId: json['booking_id']?.toString() ?? '',
       customerName: json['customer_name']?.toString() ?? 'Khách hàng',
       customerAvatar: json['customer_avatar']?.toString(),
-      serviceTitle: json['service_type']?.toString() ??
+      serviceTitle:
+          json['service_type']?.toString() ??
           json['service_title']?.toString() ??
           'Dịch vụ',
       date: parsedDate,
       // Fixed: Directly parsing standard DB string now
       status: BookingStatus.fromDbString(json['status']?.toString() ?? ''),
-      price: json['price'] != null ? double.tryParse(json['price'].toString()) : null,
+      price: json['price'] != null
+          ? double.tryParse(json['price'].toString())
+          : null,
       address: json['address']?.toString(),
       customerNotes: json['customer_notes']?.toString(),
-      requestedAt: json['requested_at'] != null ? DateTime.tryParse(json['requested_at'].toString()) : null,
-      confirmedAt: json['confirmed_at'] != null ? DateTime.tryParse(json['confirmed_at'].toString()) : null,
-      completedAt: json['completed_at'] != null ? DateTime.tryParse(json['completed_at'].toString()) : null,
+      requestedAt: json['requested_at'] != null
+          ? DateTime.tryParse(json['requested_at'].toString())
+          : null,
+      confirmedAt: json['confirmed_at'] != null
+          ? DateTime.tryParse(json['confirmed_at'].toString())
+          : null,
+      completedAt: json['completed_at'] != null
+          ? DateTime.tryParse(json['completed_at'].toString())
+          : null,
     );
   }
 

@@ -8,6 +8,7 @@ import 'package:broker_viet/widgets/network_image_fallback.dart';
 import 'package:broker_viet/features/chat/conversation_screen.dart';
 import 'package:broker_viet/services/chat/chat_service.dart';
 import 'package:broker_viet/features/main/service_detail_screen.dart';
+import 'package:broker_viet/services/provider/provider_profile_service.dart';
 
 class ViewProviderScreen extends StatefulWidget {
   final String providerId;
@@ -29,7 +30,8 @@ class ViewProviderScreen extends StatefulWidget {
 
 class _ViewProviderScreenState extends State<ViewProviderScreen> {
   final SupabaseClient _supabase = Supabase.instance.client;
-  
+  final ProviderProfileService _providerProfileService =
+      ProviderProfileService();
   bool _isLoading = true;
   String? _errorMessage;
   String? _bio;
@@ -57,56 +59,25 @@ class _ViewProviderScreenState extends State<ViewProviderScreen> {
         });
       }
 
-      // 1. Fetch provider profile (bio)
-      final profileResponse = await _supabase
-          .from('profiles')
-          .select('bio')
-          .eq('user_id', widget.providerId)
-          .maybeSingle();
+      final data = await _providerProfileService.fetchProviderProfileDetails(
+        widget.providerId,
+      );
 
-      final bio = profileResponse?['bio'] as String?;
+      final bio = data['bio'] as String?;
 
-      // 2. Fetch provider's services
-      final servicesResponse = await _supabase
-          .from('services')
-          .select('*, service_categories(name)')
-          .eq('provider_id', widget.providerId);
-
-      final List<ServiceModel> loadedServices = (servicesResponse as List)
-          .map((item) => ServiceModel.fromJson(item))
+      final servicesJson = (data['services'] as List<dynamic>? ?? []);
+      final loadedServices = servicesJson
+          .map((item) => ServiceModel.fromJson(item as Map<String, dynamic>))
           .toList();
 
-      // 3. Fetch reviews for all services of this provider to get rating & count
-      double ratingSum = 0;
-      int reviewsCount = 0;
-      if (loadedServices.isNotEmpty) {
-        final serviceIds = loadedServices.map((s) => s.id).toList();
-        final reviewsResponse = await _supabase
-            .from('reviews')
-            .select('rating')
-            .inFilter('service_id', serviceIds);
-
-        final reviewsList = reviewsResponse as List;
-        reviewsCount = reviewsList.length;
-        if (reviewsCount > 0) {
-          final sum = reviewsList
-              .map((r) => (r['rating'] as num).toDouble())
-              .reduce((a, b) => a + b);
-          ratingSum = sum / reviewsCount;
-        } else {
-          // Fallback to average of service ratings
-          final serviceRatings = loadedServices.map((s) => s.rating).toList();
-          ratingSum = serviceRatings.reduce((a, b) => a + b) / loadedServices.length;
-        }
-      } else {
-        ratingSum = 5.0;
-      }
+      final averageRating = (data['average_rating'] as num).toDouble();
+      final reviewsCount = (data['reviews_count'] as num).toInt();
 
       if (mounted) {
         setState(() {
           _bio = bio;
           _services = loadedServices;
-          _averageRating = ratingSum;
+          _averageRating = averageRating;
           _reviewsCount = reviewsCount;
           _isLoading = false;
         });
@@ -126,7 +97,9 @@ class _ViewProviderScreenState extends State<ViewProviderScreen> {
     final currentCustomerId = _supabase.auth.currentUser?.id ?? '';
     if (currentCustomerId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng đăng nhập để chat với nhà cung cấp')),
+        const SnackBar(
+          content: Text('Vui lòng đăng nhập để chat với nhà cung cấp'),
+        ),
       );
       return;
     }
@@ -141,9 +114,8 @@ class _ViewProviderScreenState extends State<ViewProviderScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: primaryColor),
-      ),
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: primaryColor)),
     );
 
     try {
@@ -170,9 +142,9 @@ class _ViewProviderScreenState extends State<ViewProviderScreen> {
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context); // Close loading dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không thể tạo phòng chat: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Không thể tạo phòng chat: $e')));
       }
     }
   }
@@ -256,7 +228,10 @@ class _ViewProviderScreenState extends State<ViewProviderScreen> {
 
     return Container(
       color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 20),
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: 20,
+      ),
       child: Column(
         children: [
           // Circular avatar
@@ -285,7 +260,10 @@ class _ViewProviderScreenState extends State<ViewProviderScreen> {
               if (widget.isPro) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE5EEFF),
                     borderRadius: BorderRadius.circular(12),
@@ -320,10 +298,7 @@ class _ViewProviderScreenState extends State<ViewProviderScreen> {
               ),
               Text(
                 ' · $_reviewsCount đánh giá',
-                style: const TextStyle(
-                  color: bodyText,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: bodyText, fontSize: 14),
               ),
             ],
           ),
@@ -336,10 +311,7 @@ class _ViewProviderScreenState extends State<ViewProviderScreen> {
               SizedBox(width: 6),
               Text(
                 'Phản hồi ~15 phút',
-                style: TextStyle(
-                  color: bodyText,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: bodyText, fontSize: 13),
               ),
             ],
           ),
@@ -368,10 +340,7 @@ class _ViewProviderScreenState extends State<ViewProviderScreen> {
               icon: const Icon(Icons.chat_bubble_outline, size: 18),
               label: const Text(
                 'Nhắn tin',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: primaryColor,
@@ -438,9 +407,7 @@ class _ViewProviderScreenState extends State<ViewProviderScreen> {
       color: Colors.white,
       elevation: 1.5,
       shadowColor: Colors.black.withOpacity(0.1),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -485,10 +452,7 @@ class _ViewProviderScreenState extends State<ViewProviderScreen> {
                     const SizedBox(height: 4),
                     Text(
                       service.subtitle,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey,
-                      ),
+                      style: const TextStyle(fontSize: 13, color: Colors.grey),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
