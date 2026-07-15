@@ -3,8 +3,10 @@
 import 'package:flutter/material.dart';
 import '../../models/service_model.dart';
 import '../../services/marketplace/service_marketplace_service.dart';
-import '../../widgets/service/service_card.dart';
-import './service_detail_screen.dart';
+import '../../widgets/service/search/search_empty_state.dart';
+import '../../widgets/service/search/search_price_filter.dart';
+import '../../widgets/service/search/search_no_results_state.dart';
+import '../../widgets/service/search/search_results_list.dart';
 
 class ServiceSearchScreen extends StatefulWidget {
   final String? initialQuery;
@@ -19,7 +21,6 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
   final ServiceMarketplaceService _marketplaceService =
       ServiceMarketplaceService();
   final TextEditingController _searchController = TextEditingController();
-  // Controllers for price range filters
   final TextEditingController _minPriceController = TextEditingController();
   final TextEditingController _maxPriceController = TextEditingController();
 
@@ -54,19 +55,20 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
     });
 
     try {
-      // Direct integration into your classmate's .NET routing endpoint handler
       final results = await _marketplaceService.searchServices(
         search: query,
-        minPrice: double.tryParse(_minPriceController.text), // ← THÊM
-        maxPrice: double.tryParse(_maxPriceController.text), // ← THÊM
+        minPrice: double.tryParse(_minPriceController.text),
+        maxPrice: double.tryParse(_maxPriceController.text),
       );
 
-      setState(() {
-        _searchResults = results;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _searchResults = results;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Lỗi tìm kiếm: $e')));
@@ -130,157 +132,40 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
               style: const TextStyle(fontSize: 14, color: Color(0xFF0B1C30)),
-              onChanged: (val) {
-                setState(() {});
-              },
+              onChanged: (val) => setState(() {}),
             ),
           ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _minPriceController,
-                    keyboardType: TextInputType.number,
-                    onSubmitted: (_) => _performSearch(),
-                    decoration: InputDecoration(
-                      hintText: 'Giá tối thiểu',
-                      hintStyle: const TextStyle(
-                        color: Color(0xFF737686),
-                        fontSize: 13,
-                      ),
-                      filled: true,
-                      fillColor: const Color(0xFFE5EEFF),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                    ),
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _maxPriceController,
-                    keyboardType: TextInputType.number,
-                    onSubmitted: (_) => _performSearch(),
-                    decoration: InputDecoration(
-                      hintText: 'Giá tối đa',
-                      hintStyle: const TextStyle(
-                        color: Color(0xFF737686),
-                        fontSize: 13,
-                      ),
-                      filled: true,
-                      fillColor: const Color(0xFFE5EEFF),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                    ),
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ),
-              ],
-            ),
+          child: SearchPriceFilter(
+            minPriceController: _minPriceController,
+            maxPriceController: _maxPriceController,
+            onSubmitted: _performSearch,
           ),
         ),
       ),
-
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF004AC6)),
-              ),
-            )
-          : !_hasSearched
-          ? _buildEmptySearchState()
-          : _searchResults.isEmpty
-          ? _buildNoResultsState()
-          : _buildResultsList(),
+      body: _buildBody(),
     );
   }
 
-  Widget _buildEmptySearchState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.search_rounded, size: 64, color: Color(0xFFDCE9FF)),
-          SizedBox(height: 12),
-          Text(
-            'Nhập từ khóa để tìm kiếm dịch vụ nhanh chóng',
-            style: TextStyle(color: Color(0xFF737686), fontSize: 14),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNoResultsState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.find_in_page_rounded,
-              size: 64,
-              color: Color(0xFFEF4444),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Không tìm thấy kết quả nào khớp với "${_searchController.text}"',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF0B1C30),
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Vui lòng kiểm tra lại chính tả hoặc thử một danh mục từ khóa khác.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF737686), fontSize: 13),
-            ),
-          ],
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF004AC6)),
         ),
-      ),
-    );
-  }
+      );
+    }
 
-  Widget _buildResultsList() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _searchResults.length,
-      itemBuilder: (context, index) {
-        return ServiceCard(
-          service: _searchResults[index],
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    ServiceDetailScreen(serviceId: _searchResults[index].id),
-              ),
-            );
-          },
-        );
-      },
-    );
+    if (!_hasSearched) {
+      return const SearchEmptyState();
+    }
+
+    if (_searchResults.isEmpty) {
+      return SearchNoResultsState(searchText: _searchController.text);
+    }
+
+    return SearchResultsList(searchResults: _searchResults);
   }
 }

@@ -8,11 +8,7 @@ class ServiceCard extends StatelessWidget {
   final ServiceModel service;
   final VoidCallback onTap;
 
-  const ServiceCard({
-    super.key,
-    required this.service,
-    required this.onTap,
-  });
+  const ServiceCard({super.key, required this.service, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +44,7 @@ class ServiceCard extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Text Meta Layout Details
             Expanded(
               child: Padding(
@@ -91,7 +87,11 @@ class ServiceCard extends StatelessWidget {
                         ),
                         Row(
                           children: [
-                            const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
+                            const Icon(
+                              Icons.star_rounded,
+                              color: Color(0xFFF59E0B),
+                              size: 16,
+                            ),
                             const SizedBox(width: 2),
                             Text(
                               service.rating.toString(),

@@ -205,7 +205,7 @@ class ProfileScreen extends StatelessWidget {
                     _buildProfileDataRow('Số điện thoại', phone),
                     _buildProfileDataRow('Địa chỉ Email', email),
                     _buildProfileDataRow(
-                      'Địa chỉ thường trú',
+                      'Địa chỉ',
                       profile?.address ?? 'Chưa cung cấp địa chỉ',
                     ),
 
