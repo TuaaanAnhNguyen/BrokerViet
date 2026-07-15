@@ -180,7 +180,7 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
       case 'All':
         return 'Tất cả';
       case 'Pending':
-        return BookingStatus.dangThucHien.uiLabel; // 'Đang thực hiện'
+        return BookingStatus.dangChoDuyet.uiLabel; // 'Đang chờ duyệt'
       case 'Completed':
         return BookingStatus.daHoanThanh.uiLabel; // 'Đã hoàn thành'
       case 'Cancelled':
@@ -193,7 +193,7 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
   String _getEmptyMessage() {
     switch (_activeFilter) {
       case 'Pending':
-        return 'Không có yêu cầu nào đang thực hiện';
+        return 'Không có yêu cầu nào Đang chờ duyệt';
       case 'Completed':
         return 'Chưa có công việc nào hoàn thành';
       case 'Cancelled':
@@ -207,7 +207,7 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
     switch (filter) {
       case 'Pending':
         return BookingStatus
-            .dangThucHien; // Mapped perfectly to 'PENDING' / 'Đang thực hiện'
+            .dangChoDuyet; // Mapped perfectly to 'PENDING' / 'Đang chờ duyệt'
       case 'Completed':
         return BookingStatus.daHoanThanh;
       case 'Cancelled':
@@ -282,7 +282,7 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
             );
             activeTextColor = BookingStatusUtils.getTextColorForStatus(status);
             // Ensure contrast if the background is too light
-            if (status == BookingStatus.dangThucHien) {
+            if (status == BookingStatus.dangChoDuyet) {
               activeBgColor = Colors.orange.shade600;
               activeTextColor = Colors.white;
             } else if (status == BookingStatus.daHoanThanh) {

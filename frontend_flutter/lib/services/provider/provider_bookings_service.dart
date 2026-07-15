@@ -77,7 +77,7 @@ class ProviderBookingsService {
         customerAvatar: null,
         serviceTitle: 'Sửa chữa máy lạnh',
         date: now.add(const Duration(hours: 2)),
-        status: BookingStatus.dangThucHien,
+        status: BookingStatus.dangChoDuyet,
         price: 350000,
         address: '123 Nguyễn Thị Minh Khai, Quận 1, TP.HCM',
         customerNotes: 'Máy lạnh không lạnh, kêu to',
@@ -113,7 +113,7 @@ class ProviderBookingsService {
         customerAvatar: null,
         serviceTitle: 'Sửa lò vi sóng',
         date: now.add(const Duration(hours: 5)),
-        status: BookingStatus.dangThucHien,
+        status: BookingStatus.dangChoDuyet,
         price: 100000,
         address: '99 Điện Biên Phủ, Bình Thạnh, TP.HCM',
         requestedAt: now.subtract(const Duration(hours: 2)),
@@ -123,7 +123,7 @@ class ProviderBookingsService {
     if (filter == 'All') return allMocks;
 
     return allMocks.where((b) {
-      if (filter == 'Pending') return b.status == BookingStatus.dangThucHien;
+      if (filter == 'Pending') return b.status == BookingStatus.dangChoDuyet;
       if (filter == 'Completed') return b.status == BookingStatus.daHoanThanh;
       if (filter == 'Cancelled') return b.status == BookingStatus.daHuy;
       return true;

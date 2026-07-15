@@ -21,7 +21,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
   // These now perfectly map to BookingStatus.uiLabel values
   final List<String> _statuses = [
     'Tất cả',
-    'Đang thực hiện',
+    'Đang chờ duyệt',
     'Đã hoàn thành',
     'Đã hủy',
   ];

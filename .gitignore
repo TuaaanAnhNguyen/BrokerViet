@@ -33,3 +33,4 @@ frontend_flutter/DerivedData/
 Thumbs.db
 .env
 google-services.json
+firebase-messaging-sw.js

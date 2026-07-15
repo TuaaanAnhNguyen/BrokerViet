@@ -68,7 +68,7 @@ class ProviderDashboardService {
           customerAvatar: null,
           serviceTitle: 'Sửa chữa máy lạnh',
           date: DateTime.now().add(const Duration(hours: 2)),
-          status: BookingStatus.dangThucHien,
+          status: BookingStatus.dangChoDuyet,
         ),
         ProviderBookingModel(
           bookingId: '2',
