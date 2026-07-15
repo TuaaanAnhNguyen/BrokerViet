@@ -18,32 +18,19 @@ class DashboardSummaryModel {
   });
 
   factory DashboardSummaryModel.fromJson(Map<String, dynamic> json) {
-    final currencyFormatter = NumberFormat.currency(
-      locale: 'vi_VN',
-      symbol: 'đ',
-    );
-
-    double revToday = 0;
-    if (json['revenue_today'] != null) {
-      revToday = double.tryParse(json['revenue_today'].toString()) ?? 0;
-    }
-
-    double revMonth = 0;
-    if (json['revenue_month'] != null) {
-      revMonth = double.tryParse(json['revenue_month'].toString()) ?? 0;
-    }
-
     return DashboardSummaryModel(
       todaysBookings:
-          int.tryParse(json['today_bookings_count']?.toString() ?? '0') ?? 0,
+          int.tryParse(json['todaysBookings']?.toString() ?? '0') ?? 0,
       pendingRequests:
-          int.tryParse(json['pending_requests_count']?.toString() ?? '0') ?? 0,
-      revenueToday: currencyFormatter.format(revToday),
-      monthlyRevenue: currencyFormatter.format(revMonth),
+          int.tryParse(json['pendingRequests']?.toString() ?? '0') ?? 0,
+      // revenueToday / monthlyRevenue đã được RPC format sẵn thành chuỗi
+      // (vd: "1,250,000 đ") qua to_char(), dùng thẳng không cần NumberFormat nữa.
+      revenueToday: json['revenueToday']?.toString() ?? '0 đ',
+      monthlyRevenue: json['monthlyRevenue']?.toString() ?? '0 đ',
       averageRating:
-          double.tryParse(json['average_rating']?.toString() ?? '0') ?? 0.0,
+          double.tryParse(json['averageRating']?.toString() ?? '0') ?? 0.0,
       totalCompletedJobs:
-          int.tryParse(json['total_completed_jobs']?.toString() ?? '0') ?? 0,
+          int.tryParse(json['totalCompletedJobs']?.toString() ?? '0') ?? 0,
     );
   }
 
