@@ -1,3 +1,5 @@
+// lib/widgets/service/search/search_price_filter.dart
+
 import 'package:flutter/material.dart';
 
 class SearchPriceFilter extends StatelessWidget {

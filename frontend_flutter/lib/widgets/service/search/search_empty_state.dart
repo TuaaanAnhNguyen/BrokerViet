@@ -1,3 +1,5 @@
+// lib/widgets/service/search/search_empty_state.dart
+
 import 'package:flutter/material.dart';
 
 class SearchEmptyState extends StatelessWidget {

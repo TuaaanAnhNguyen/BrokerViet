@@ -1,3 +1,5 @@
+// lib/features/main/service_marketplace_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/service_model.dart';
@@ -109,7 +111,6 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
     }
   }
 
-  // LƯU Ý: Đoạn xử lý Supabase này nên tách hẳn sang một Repository/Service tương tự tài liệu quy định[cite: 1]
   Future<void> _loadNearbyProviders() async {
     if (!mounted) return;
     setState(() {

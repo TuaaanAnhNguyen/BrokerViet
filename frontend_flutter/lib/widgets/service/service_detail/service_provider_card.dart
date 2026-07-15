@@ -1,3 +1,5 @@
+// lib/widgets/service/service_detail/service_provider_card.dart
+
 import 'package:flutter/material.dart';
 import '../../../widgets/avatar_builder.dart';
 import '../../../screens/provider/view_provider_screen.dart';

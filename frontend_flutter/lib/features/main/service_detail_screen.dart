@@ -1,3 +1,5 @@
+// lib/features/main/service_detail_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,7 +12,6 @@ import '../../../services/marketplace/service_marketplace_service.dart';
 import '../booking/booking_service_screen.dart';
 import './map_screen.dart';
 
-// Import các widget mới được tách ra
 import '../../widgets/service/service_detail/service_detail_app_bar.dart';
 import '../../widgets/service/service_detail/service_tags_section.dart';
 import '../../widgets/service/service_detail/service_title_section.dart';

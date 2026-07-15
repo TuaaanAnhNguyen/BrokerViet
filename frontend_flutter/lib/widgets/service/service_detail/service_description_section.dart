@@ -1,3 +1,5 @@
+// lib/widgets/service/service_detail/service_description_section.dart
+
 import 'package:flutter/material.dart';
 
 class ServiceDescriptionSection extends StatelessWidget {

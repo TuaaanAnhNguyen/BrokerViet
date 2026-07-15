@@ -1,3 +1,5 @@
+// lib/features/main/search_screen.dart
+
 import 'package:flutter/material.dart';
 import '../../models/service_model.dart';
 import '../../services/marketplace/service_marketplace_service.dart';
