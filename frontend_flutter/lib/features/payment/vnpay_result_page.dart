@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/payment/vnpay_service.dart';
 
-
 class VNPayResultPage extends StatefulWidget {
   final String bookingId;
 

@@ -26,15 +26,7 @@ class ProviderDashboardService {
       return DashboardSummaryModel.fromJson(data);
     } catch (e) {
       print('>>> Error fetching dashboard summary: $e');
-      // Mock data to test UI
-      return const DashboardSummaryModel(
-        todaysBookings: 5,
-        pendingRequests: 3,
-        revenueToday: '1.250.000 đ',
-        monthlyRevenue: '15.400.000 đ',
-        averageRating: 4.8,
-        totalCompletedJobs: 124,
-      );
+      return DashboardSummaryModel.empty();
     }
   }
 
@@ -45,8 +37,8 @@ class ProviderDashboardService {
       );
 
       final data = response.data;
+      print('>>> FETCHING BOOKINGS: $data');
 
-      // Edge Function trả về { items: [...] }, không phải List thẳng
       if (response.status == 200 &&
           data is Map<String, dynamic> &&
           data['items'] is List) {
@@ -60,33 +52,7 @@ class ProviderDashboardService {
       return [];
     } catch (e) {
       print('>>> Error fetching upcoming bookings: $e');
-      // Mock data to test UI
-      return [
-        ProviderBookingModel(
-          bookingId: '1',
-          customerName: 'Nguyễn Văn A',
-          customerAvatar: null,
-          serviceTitle: 'Sửa chữa máy lạnh',
-          date: DateTime.now().add(const Duration(hours: 2)),
-          status: BookingStatus.dangChoDuyet,
-        ),
-        ProviderBookingModel(
-          bookingId: '2',
-          customerName: 'Trần Thị B',
-          customerAvatar: null,
-          serviceTitle: 'Bảo trì tủ lạnh',
-          date: DateTime.now().add(const Duration(days: 1)),
-          status: BookingStatus.daHoanThanh,
-        ),
-        ProviderBookingModel(
-          bookingId: '3',
-          customerName: 'Lê Văn C',
-          customerAvatar: null,
-          serviceTitle: 'Lắp đặt điều hòa',
-          date: DateTime.now().add(const Duration(days: 2)),
-          status: BookingStatus.daHuy,
-        ),
-      ];
+      return [];
     }
   }
 }
