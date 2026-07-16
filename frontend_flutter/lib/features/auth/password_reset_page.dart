@@ -22,6 +22,18 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+
+    final session = Supabase.instance.client.auth.currentSession;
+
+    debugPrint("SESSION:");
+    debugPrint(session.toString());
+
+    debugPrint("USER: ${Supabase.instance.client.auth.currentUser?.email}");
+  }
+
+  @override
   void dispose() {
     _otpController.dispose();
     _passwordController.dispose();

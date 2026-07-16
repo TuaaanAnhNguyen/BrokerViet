@@ -1,6 +1,9 @@
 // lib/services/auth/auth_service.dart
 
+import 'dart:async';
 import 'dart:io';
+import 'package:broker_viet/services/auth/firebase_phone_auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import '../notification/firebase_cloud_messaging_handler.dart';
@@ -314,28 +317,32 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
     add(AppStarted());
   }
 
+  final _phoneAuthService = FirebasePhoneAuthService.instance;
+
   Future<void> _handlePhoneResetRequest(
     ForgotPasswordByPhoneRequested event,
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
 
+    final formattedPhone = _formatPhoneNumber(event.phone);
+    final completer = Completer<void>();
+
+    await _phoneAuthService.sendOtp(
+      phoneNumber: formattedPhone,
+      onCodeSent: () {
+        completer.complete();
+      },
+      onVerificationFailed: (errorMessage) {
+        completer.completeError(errorMessage);
+      },
+    );
+
     try {
-      final formattedPhone = _formatPhoneNumber(event.phone);
-
-      print('>>> SENDING OTP');
-      await _supabase.auth.signInWithOtp(
-        phone: formattedPhone,
-        shouldCreateUser: false,
-      );
-
-      print('OTP SENT TO: $formattedPhone');
-
+      await completer.future;
       emit(AuthPasswordResetOtpSent());
-    } on AuthException catch (e) {
-      emit(AuthFailure(e.message));
-    } catch (_) {
-      emit(AuthFailure('Không thể gửi mã OTP. Vui lòng thử lại.'));
+    } catch (errorMessage) {
+      emit(AuthFailure(errorMessage.toString()));
     }
   }
 
@@ -346,30 +353,62 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
-      final formattedPhone = _formatPhoneNumber(event.phone);
-
-      final response = await _supabase.auth.verifyOTP(
-        phone: formattedPhone,
-        token: event.otpCode,
-        type: OtpType.recovery,
+      final isOtpValid = await _phoneAuthService.verifyOtp(
+        smsCode: event.otpCode,
       );
 
-      if (response.user == null) {
+      if (!isOtpValid) {
         emit(AuthFailure('Mã OTP không đúng hoặc đã hết hạn.'));
         return;
       }
 
-      await _supabase.auth.updateUser(
-        UserAttributes(password: event.newPassword),
+      final formattedPhone = _formatPhoneNumber(event.phone);
+
+      final functionResponse = await _supabase.functions.invoke(
+        'reset-password-from-phone',
+        body: {'phone': formattedPhone, 'new_password': event.newPassword},
       );
 
-      await _supabase.auth.signOut();
+      if (functionResponse.status != 200) {
+        final serverError =
+            functionResponse.data?['error']?.toString() ??
+            'Lỗi không xác định.';
+        emit(
+          AuthFailure(
+            'Không thể cập nhật mật khẩu trên hệ thống: $serverError',
+          ),
+        );
+        return;
+      }
+
+      await _phoneAuthService.clearSession();
 
       emit(AuthPasswordResetSuccess());
-    } on AuthException catch (e) {
-      emit(AuthFailure(e.message));
-    } catch (_) {
-      emit(AuthFailure('Không thể đổi mật khẩu.'));
+    } on fb.FirebaseAuthException catch (e) {
+      final tempErrorService = FirebasePhoneAuthService.instance;
+      emit(
+        AuthFailure(
+          tempErrorService.auth.currentUser == null
+              ? 'Mã OTP không hợp lệ.'
+              : e.toString(),
+        ),
+      );
+    } on FunctionException catch (e) {
+      String errorMessage = 'Lỗi kết nối máy chủ đặt lại mật khẩu.';
+      try {
+        final details = e.details;
+        if (details is Map && details.containsKey('error')) {
+          errorMessage = details['error'].toString();
+        } else if (e.toString().contains('Không tìm thấy')) {
+          errorMessage =
+              'Không tìm thấy tài khoản liên kết với số điện thoại này.';
+        } else {
+          errorMessage = e.details?.toString() ?? e.toString();
+        }
+      } catch (_) {}
+      emit(AuthFailure(errorMessage));
+    } catch (e) {
+      emit(AuthFailure(e.toString().replaceAll('Exception: ', '')));
     }
   }
 

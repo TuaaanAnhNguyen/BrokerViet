@@ -57,7 +57,6 @@ class ServiceMarketplaceService {
 
       return dataList.map((item) {
         try {
-          print('>>> Item raw: $item');
           return ServiceModel.fromJson(item as Map<String, dynamic>);
         } catch (e) {
           print('>>> Lỗi ép kiểu Model tại item: $item. Chi tiết: $e');
