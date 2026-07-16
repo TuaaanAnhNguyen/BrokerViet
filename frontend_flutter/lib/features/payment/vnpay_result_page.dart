@@ -1,3 +1,5 @@
+// lib/features/payment/vnpay_result_page.dart
+
 import 'package:flutter/material.dart';
 import '../../../services/payment/vnpay_service.dart';
 import '../../widgets/payment/payment_pending_widget.dart';
@@ -8,10 +10,7 @@ import '../../widgets/payment/payment_unknown_widget.dart';
 class VNPayResultPage extends StatefulWidget {
   final String bookingId;
 
-  const VNPayResultPage({
-    super.key,
-    required this.bookingId,
-  });
+  const VNPayResultPage({super.key, required this.bookingId});
 
   @override
   State<VNPayResultPage> createState() => _VNPayResultPageState();
@@ -58,7 +57,8 @@ class _VNPayResultPageState extends State<VNPayResultPage> {
         centerTitle: true,
       ),
       body: Center(
-        child: SingleChildScrollView( // Đảm bảo không bị lỗi tràn màn hình (Overflow) trên các máy nhỏ
+        child: SingleChildScrollView(
+          // Đảm bảo không bị lỗi tràn màn hình (Overflow) trên các máy nhỏ
           padding: const EdgeInsets.all(24.0),
           child: _buildStatusContent(primaryColor),
         ),
@@ -77,14 +77,9 @@ class _VNPayResultPageState extends State<VNPayResultPage> {
         );
       case 'FAILED':
       case 'EXPIRED':
-        return PaymentFailedWidget(
-          status: _status,
-          primaryColor: primaryColor,
-        );
+        return PaymentFailedWidget(status: _status, primaryColor: primaryColor);
       default:
-        return PaymentUnknownWidget(
-          primaryColor: primaryColor,
-        );
+        return PaymentUnknownWidget(primaryColor: primaryColor);
     }
   }
 }
