@@ -89,12 +89,15 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
           'Đang chờ giao dịch từ ngân hàng...',
           style: TextStyle(color: Colors.grey),
         ),
-        
+
         // --- STUDENT TEST TRIGGER BUTTON ---
         const SizedBox(height: 32),
         TextButton.icon(
           icon: const Icon(Icons.bug_report, color: Colors.orange),
-          label: const Text('Simulate Bank Callback (Testing Only)', style: TextStyle(color: Colors.orange)),
+          label: const Text(
+            'Simulate Bank Callback (Testing Only)',
+            style: TextStyle(color: Colors.orange),
+          ),
           onPressed: _mockBankNotificationCallback,
         ),
       ],
@@ -115,7 +118,8 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         Text('Đơn hàng #${widget.bookingId.substring(0, 8)} đã được xác nhận.'),
         const SizedBox(height: 24),
         ElevatedButton(
-          onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+          onPressed: () =>
+              Navigator.of(context).popUntil((route) => route.isFirst),
           child: const Text('Quay lại trang chủ'),
         ),
       ],
@@ -128,7 +132,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
           .from('payments')
           .update({'status': 'completed'})
           .eq('payment_memo', widget.paymentMemo);
-          
+
       // Fetch booking details to get customer and provider IDs
       final bookingRes = await _supabase
           .from('bookings')
@@ -145,24 +149,28 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         await _notificationService.createNotification(
           userId: customerId,
           title: 'Thanh toán thành công',
-          content: 'Đơn hàng "$serviceType" (#${widget.bookingId.substring(0, 8)}) đã được xác nhận thanh toán.',
+          content:
+              'Đơn hàng "$serviceType" (#${widget.bookingId.substring(0, 8)}) đã được xác nhận thanh toán.',
         );
 
         // Notify Provider
         await _notificationService.createNotification(
           userId: providerId,
           title: 'Đã nhận thanh toán',
-          content: 'Khách hàng đã thanh toán thành công cho dịch vụ "$serviceType".',
+          content:
+              'Khách hàng đã thanh toán thành công cho dịch vụ "$serviceType".',
         );
       }
-          
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Simulated successful bank transfer update!')),
+        const SnackBar(
+          content: Text('Simulated successful bank transfer update!'),
+        ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Simulation error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Simulation error: $e')));
     }
   }
 }

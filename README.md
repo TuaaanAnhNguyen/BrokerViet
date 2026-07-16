@@ -323,7 +323,10 @@ BrokerViet
 │  │     │  └─ payment_method_selector.dart
 │  │     ├─ booking_card.dart
 │  │     ├─ chat
-│  │     │  └─ chat_bubble.dart
+│  │     │  ├─ chatroom_tile.dart
+│  │     │  ├─ chat_app_bar.dart
+│  │     │  ├─ chat_bubble.dart
+│  │     │  └─ chat_input_bar.dart
 │  │     ├─ custom_text_field.dart
 │  │     ├─ map
 │  │     │  ├─ destination_marker.dart
@@ -338,6 +341,10 @@ BrokerViet
 │  │     ├─ network_image_fallback.dart
 │  │     ├─ notification_tile.dart
 │  │     ├─ payment
+│  │     │  ├─ payment_failed_widget.dart
+│  │     │  ├─ payment_pending_widget.dart
+│  │     │  ├─ payment_success_widget.dart
+│  │     │  ├─ payment_unknown_widget.dart
 │  │     │  └─ vietqr_payment.dart
 │  │     ├─ profile
 │  │     │  ├─ account_setting_tile.dart
@@ -353,10 +360,30 @@ BrokerViet
 │  │     │  └─ profile_security_section.dart
 │  │     ├─ provider
 │  │     │  └─ provider_booking_card.dart
+│  │     ├─ review
+│  │     │  └─ review_tile.dart
 │  │     ├─ service
 │  │     │  ├─ category_selector.dart
+│  │     │  ├─ marketplace
+│  │     │  │  ├─ market_search_bar.dart
+│  │     │  │  ├─ nearby_providers_section.dart
+│  │     │  │  └─ service_list_section.dart
 │  │     │  ├─ nearby_provider_tile.dart
-│  │     │  └─ service_card.dart
+│  │     │  ├─ search
+│  │     │  │  ├─ search_empty_state.dart
+│  │     │  │  ├─ search_no_results_state.dart
+│  │     │  │  ├─ search_price_filter.dart
+│  │     │  │  └─ search_results_list.dart
+│  │     │  ├─ service_card.dart
+│  │     │  └─ service_detail
+│  │     │     ├─ service_description_section.dart
+│  │     │     ├─ service_detail_app_bar.dart
+│  │     │     ├─ service_price_packages_section.dart
+│  │     │     ├─ service_provider_card.dart
+│  │     │     ├─ service_reviews_section.dart
+│  │     │     ├─ service_sticky_action_dock.dart
+│  │     │     ├─ service_tags_section.dart
+│  │     │     └─ service_title_section.dart
 │  │     └─ voucher
 │  │        ├─ voucher_badge.dart
 │  │        └─ voucher_input_field.dart

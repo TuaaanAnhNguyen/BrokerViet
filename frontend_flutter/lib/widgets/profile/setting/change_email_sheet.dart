@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../services/profile/profile_service.dart';
-import '../custom_text_field.dart';
+import '../../../services/profile/profile_service.dart';
+import '../../custom_text_field.dart';
 
 class ChangeEmailSheet extends StatefulWidget {
   final String currentEmail;

@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'package:app_links/app_links.dart';
 import 'features/auth/login_screen.dart';
+import 'features/auth/password_reset_page.dart';
 import 'services/auth/auth_service.dart';
 import 'services/profile/profile_service.dart';
 import 'features/main/main_navigation_shell.dart';
@@ -62,7 +63,6 @@ class BrokerVietApp extends StatefulWidget {
 
 class _BrokerVietAppState extends State<BrokerVietApp> {
   final _appLinks = AppLinks();
-  final _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
@@ -85,40 +85,21 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
     print("Deep Link Received");
     print(uri);
 
-    if (uri.host != "vnpay_result_page") {
-      print("Wrong host");
-      return;
+    switch (uri.host) {
+      case "vnpay_result_page":
+        _handleVNPay(uri);
+        break;
+
+      case "password_reset":
+        _handlePasswordReset(uri);
+        break;
+      case "email_confirmed":
+        _handleEmailConfirmed();
+        break;
+
+      default:
+        print("Unknown deep link");
     }
-
-    final bookingId = uri.queryParameters["booking_id"];
-
-    print("Booking ID: $bookingId");
-
-    if (bookingId == null) {
-      print("No booking id");
-      return;
-    }
-
-    Future.delayed(const Duration(milliseconds: 300), () {
-      final navigator = NavigationService.navigatorKey.currentState;
-
-      print("Navigator: $navigator");
-
-      if (navigator == null) {
-        print("Navigator not ready");
-        return;
-      }
-
-      print("Opening VNPayResultPage");
-
-      navigator.push(
-        MaterialPageRoute(
-          builder: (_) => VNPayResultPage(
-            bookingId: bookingId,
-          ),
-        ),
-      );
-    });
   }
 
   @override
@@ -163,4 +144,47 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
       ),
     );
   }
+}
+
+void _handleVNPay(Uri uri) {
+  final bookingId = uri.queryParameters["booking_id"];
+
+  if (bookingId == null) return;
+
+  Future.delayed(const Duration(milliseconds: 300), () {
+    final navigator = NavigationService.navigatorKey.currentState;
+
+    if (navigator == null) return;
+
+    navigator.push(
+      MaterialPageRoute(builder: (_) => VNPayResultPage(bookingId: bookingId)),
+    );
+  });
+}
+
+void _handlePasswordReset(Uri uri) {
+  Future.delayed(const Duration(milliseconds: 300), () {
+    final navigator = NavigationService.navigatorKey.currentState;
+
+    if (navigator == null) return;
+
+    navigator.push(
+      MaterialPageRoute(builder: (_) => const PasswordResetPage()),
+    );
+  });
+}
+
+void _handleEmailConfirmed() {
+  final navigator = NavigationService.navigatorKey.currentState;
+
+  if (navigator == null) return;
+
+  ScaffoldMessenger.of(
+    NavigationService.navigatorKey.currentContext!,
+  ).showSnackBar(
+    const SnackBar(
+      backgroundColor: Colors.green,
+      content: Text('Email đã được xác thực thành công.'),
+    ),
+  );
 }

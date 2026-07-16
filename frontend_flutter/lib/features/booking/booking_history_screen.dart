@@ -5,6 +5,7 @@ import '../../models/booking_model.dart';
 import '../../services/booking/booking_service.dart';
 import '../../widgets/booking_card.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'booking_service_screen.dart';
 
 class BookingHistoryScreen extends StatefulWidget {
   const BookingHistoryScreen({super.key});
@@ -68,7 +69,6 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       return null; // For 'Tất cả'
     }
   }
-
 
   void _handleCancelRequest(String bookingId) async {
     try {
@@ -155,7 +155,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                   final targetEnum = _getEnumFromTab(status);
                   final filtered = targetEnum == null
                       ? _bookings
-                      : _bookings.where((item) => item.status == targetEnum).toList();
+                      : _bookings
+                            .where((item) => item.status == targetEnum)
+                            .toList();
 
                   return RefreshIndicator(
                     color: primaryColor,
@@ -169,7 +171,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                                 child: Center(
                                   child: Text(
                                     'Không tìm thấy đơn hàng nào.',
-                                    style: const TextStyle(color: Color(0xFF434655)),
+                                    style: const TextStyle(
+                                      color: Color(0xFF434655),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -183,9 +187,30 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                               final item = filtered[index];
                               return BookingCard(
                                 order: item,
-                                onCancel: () => _handleCancelRequest(item.bookingId),
-                                onRebook: () {},
-                                TrackProgress: () {},
+                                onCancel: () =>
+                                    _handleCancelRequest(item.bookingId),
+                                onPayNow: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => BookingScreen(
+                                        serviceId: item.serviceId,
+                                        customerId: item.customerId,
+                                        providerId: item.providerId,
+
+                                        serviceTitle: item.serviceTitle,
+                                        packageName: item.variantDetails,
+                                        scheduledAt: DateTime.parse(item.date),
+                                        totalPrice: item.totalPrice,
+
+                                        serviceImageUrl: item.imageUrl,
+                                        serviceType: item.serviceType,
+                                        existingBookingId: item.bookingId,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                trackProgress: () {},
                               );
                             },
                           ),

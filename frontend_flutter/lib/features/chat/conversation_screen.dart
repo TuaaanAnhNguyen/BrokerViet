@@ -2,8 +2,9 @@
 
 import 'package:flutter/material.dart';
 import '../../services/chat/chat_service.dart';
-import '../../widgets/avatar_builder.dart';
 import '../../widgets/chat/chat_bubble.dart';
+import '../../widgets/chat/chat_app_bar.dart';
+import '../../widgets/chat/chat_input_bar.dart';
 
 class ConversationScreen extends StatefulWidget {
   final String chatroomId;
@@ -93,60 +94,18 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
     return Scaffold(
       backgroundColor: surfaceColor,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: primaryColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        titleSpacing: 0,
-        title: Row(
-          children: [
-            buildAvatar(
-              (widget.avatarUrl == null || widget.avatarUrl == 'null')
-                  ? ''
-                  : widget.avatarUrl!,
-              radius: 18,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.providerName,
-                    style: const TextStyle(
-                      color: darkText,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    widget.providerRole,
-                    style: const TextStyle(
-                      color: Colors.green,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions:
-            const [], // Cleaned up! Phone and action icons removed entirely
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: outlineVariant.withAlpha(127), height: 1),
-        ),
+      appBar: ChatAppBar(
+        providerName: widget.providerName,
+        providerRole: widget.providerRole,
+        avatarUrl: widget.avatarUrl,
+        onBackPressed: () => Navigator.pop(context),
+        primaryColor: primaryColor,
+        darkText: darkText,
+        outlineVariant: outlineVariant,
       ),
       body: Column(
         children: [
+          // Khu vực hiển thị tin nhắn
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
               stream: _messageStream,
@@ -164,6 +123,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
                 final messages = snapshot.data ?? [];
 
+                // Cuộn xuống cuối sau khi dữ liệu được vẽ xong
                 WidgetsBinding.instance.addPostFrameCallback(
                   (_) => _scrollToBottom(),
                 );
@@ -186,7 +146,6 @@ class _ConversationScreenState extends State<ConversationScreen> {
                     final bool isMe =
                         msg['sender_id'] == _chatService.currentUserId;
 
-                    // Rendering utilizing the newly decoupled widget
                     return ChatBubble(
                       text: msg['content'] ?? '',
                       time: _parseMessageTime(msg['sent_at']),
@@ -199,66 +158,13 @@ class _ConversationScreenState extends State<ConversationScreen> {
               },
             ),
           ),
-          Container(
-            padding: EdgeInsets.fromLTRB(
-              12,
-              8,
-              12,
-              MediaQuery.of(context).padding.bottom + 8,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                top: BorderSide(color: outlineVariant.withAlpha(127)),
-              ),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.add_circle_outline,
-                    color: primaryColor,
-                  ),
-                  onPressed: () {},
-                ),
-                IconButton(
-                  icon: const Icon(Icons.camera_alt_outlined, color: bodyText),
-                  onPressed: () {},
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: TextFormField(
-                    controller: _messageController,
-                    maxLines: null,
-                    textInputAction: TextInputAction.send,
-                    onFieldSubmitted: (_) => _sendMessage(),
-                    style: const TextStyle(fontSize: 14, color: darkText),
-                    decoration: InputDecoration(
-                      hintText: 'Nhập tin nhắn...',
-                      hintStyle: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 13,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      filled: true,
-                      fillColor: const Color(0xFFF1F3F6),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                IconButton(
-                  icon: const Icon(Icons.send_rounded, color: primaryColor),
-                  onPressed: _sendMessage,
-                ),
-              ],
-            ),
+
+          ChatInputBar(
+            controller: _messageController,
+            onSend: _sendMessage,
+            primaryColor: primaryColor,
+            darkText: darkText,
+            outlineVariant: outlineVariant,
           ),
         ],
       ),

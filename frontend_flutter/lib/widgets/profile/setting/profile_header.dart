@@ -1,7 +1,7 @@
 // lib/widgets/profile/profile_header.dart
 
 import 'package:flutter/material.dart';
-import '../avatar_builder.dart';
+import '../../avatar_builder.dart';
 
 class ProfileHeader extends StatelessWidget {
   final String avatarPath;

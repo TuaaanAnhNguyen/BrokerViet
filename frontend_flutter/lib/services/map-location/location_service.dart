@@ -118,15 +118,13 @@ class LocationService {
       print(response.data);
 
       if (response.status != 200) {
-        throw LocationServiceException('Unable to geocode address.');
+        throw LocationServiceException('Không thể mã hoá vị trí này.');
       }
 
       final json = Map<String, dynamic>.from(response.data);
 
       if (json['success'] != true) {
-        throw LocationServiceException(
-          json['error'] ?? 'Unknown geocoding error.',
-        );
+        throw LocationServiceException(json['error'] ?? 'Lỗi mã hoá không rõ.');
       }
 
       print(json);

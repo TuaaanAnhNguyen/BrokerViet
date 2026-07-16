@@ -200,6 +200,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           customerId: currentCustomerId,
           totalPrice: _service?.priceValue.toInt() ?? 0,
           scheduledAt: DateTime.now(),
+          serviceImageUrl: _service!.imageUrl,
         ),
       ),
     );

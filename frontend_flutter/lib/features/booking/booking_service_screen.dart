@@ -1,11 +1,10 @@
 // lib/features/booking/booking_service_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/booking/booking_service.dart';
+import '../../services/navigation_service.dart';
 import '../../services/payment/vnpay_service.dart';
-import '../../services/voucher_service.dart';
 import '../../services/map-location/location_service.dart';
 import '../../widgets/payment/vietqr_payment.dart';
 import '../../widgets/voucher/voucher_input_field.dart';
@@ -13,7 +12,6 @@ import '../../widgets/voucher/voucher_input_field.dart';
 import '../../widgets/booking/booking_header_card.dart';
 import '../../widgets/booking/booking_schedule_tile.dart';
 import '../../widgets/booking/booking_address_input.dart';
-import '../../widgets/booking/booking_notes_input.dart';
 import '../../widgets/booking/payment_method_selector.dart';
 import '../../widgets/booking/invoice_breakdown_card.dart';
 
@@ -28,6 +26,7 @@ class BookingScreen extends StatefulWidget {
   final DateTime scheduledAt;
   final int totalPrice;
   final String? serviceImageUrl;
+  final String? existingBookingId;
 
   const BookingScreen({
     super.key,
@@ -41,6 +40,7 @@ class BookingScreen extends StatefulWidget {
     required this.totalPrice,
     this.serviceType,
     this.serviceImageUrl,
+    this.existingBookingId,
   });
 
   @override
@@ -51,16 +51,17 @@ class _BookingScreenState extends State<BookingScreen> {
   final _formKey = GlobalKey<FormState>();
   final BookingService _bookingService = BookingService();
   final VNPayService _vnPayService = VNPayService();
-
-  // Khởi tạo LocationService
   final LocationService _locationService = LocationService();
 
   late TextEditingController _addressController;
-  final _notesController = TextEditingController();
 
-  int _selectedPaymentMethod = 0; // 0: VietQR, 2: Tiền mặt, 3: VNPAY
+  // Workflow State Tracking
+  String? _createdBookingId;
   bool _isSubmitting = false;
-  bool _isLoadingLocation = false; // Flag kiểm soát vòng quay Loading ở Button
+  bool _isLoadingLocation = false;
+
+  // Payment State Tracking
+  int _selectedPaymentMethod = 0; // 0: VietQR, 2: Tiền mặt, 3: VNPAY
   String? _appliedVoucherCode;
   double _discountAmount = 0;
   late double _finalPrice;
@@ -68,45 +69,44 @@ class _BookingScreenState extends State<BookingScreen> {
   @override
   void initState() {
     super.initState();
+
     _finalPrice = widget.totalPrice.toDouble();
-    // Bắt đầu bằng chuỗi rỗng thay vì mock data, hoặc tự động trigger load
+
     _addressController = TextEditingController(text: "");
 
-    // Tự động load vị trí mặc định ngay khi vào màn hình
+    // If opened from Booking History,
+    // immediately enter Payment State.
+    _createdBookingId = widget.existingBookingId;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _handleFetchCurrentLocation();
     });
   }
 
-  // Hàm xử lý lấy địa chỉ thực tế từ Edge Function hoặc profile
+  @override
+  void dispose() {
+    _addressController.dispose();
+    super.dispose();
+  }
+
   Future<void> _handleFetchCurrentLocation() async {
     if (_isLoadingLocation) return;
-
-    setState(() {
-      _isLoadingLocation = true;
-    });
+    setState(() => _isLoadingLocation = true);
 
     try {
-      print(">>> Fetching real-time PostGIS/GPS location...");
-      // Cách 1: Ưu tiên lấy vị trí GPS/IP hiện tại của thiết bị qua hàm bạn đã viết
       final currentLoc = await _locationService.getMyLocation();
       if (currentLoc.address != null && currentLoc.address!.isNotEmpty) {
         _addressController.text = currentLoc.address!;
         return;
       }
 
-      // Cách 2: Fallback tìm trong DB public.profiles nếu hàm trên không trả về text
       final client = Supabase.instance.client;
       final userId = client.auth.currentUser?.id;
       if (userId != null) {
-        print(
-          ">>> Fallback: Fetching saved address from public.profiles DB...",
-        );
         final response = await client.functions.invoke('fetch-profile');
         if (response.status == 200 && response.data != null) {
           final dataMap = response.data as Map<String, dynamic>;
           final profileData = dataMap['profile'] as Map<String, dynamic>?;
-
           final savedAddress =
               profileData?['address'] ?? profileData?['location_text'];
           if (savedAddress != null && savedAddress.toString().isNotEmpty) {
@@ -115,28 +115,98 @@ class _BookingScreenState extends State<BookingScreen> {
           }
         }
       }
+    } catch (e) {
+      debugPrint("Error fetching location: $e");
+    } finally {
+      if (mounted) setState(() => _isLoadingLocation = false);
+    }
+  }
+
+  void _createInitialBooking() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSubmitting = true);
+
+    try {
+      final bookingResult = await _bookingService.createBooking(
+        serviceId: widget.serviceId,
+        customerId: widget.customerId,
+        providerId: widget.providerId,
+        totalPrice: widget.totalPrice,
+        scheduledAt: widget.scheduledAt,
+        serviceType: widget.serviceType,
+        voucherCode: null,
+      );
+
+      final confirmedId = (bookingResult['booking_id'] != null)
+          ? bookingResult['booking_id'].toString()
+          : await _bookingService.getLatestBookingId(widget.customerId);
+
+      if (confirmedId == null || confirmedId.isEmpty) {
+        throw Exception("Could not retrieve booking ID.");
+      }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Không tìm thấy dữ liệu vị trí mặc định."),
-          ),
-        );
+        setState(() => _isSubmitting = false);
+
+        final navigatorState = NavigationService.navigatorKey.currentState;
+
+        if (navigatorState != null) {
+          // 2. Clear all details screens (Booking -> Detail) to reveal the shell
+          navigatorState.popUntil((route) => route.isFirst);
+
+          // 3. Extract the clean base layer BuildContext
+          final rootContext = navigatorState.context;
+
+          _showStep1SuccessDialog(rootContext, confirmedId);
+        }
       }
     } catch (e) {
-      print(">>> Error fetching location: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Lỗi khi tải vị trí: ${e.toString()}")),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingLocation = false;
-        });
-      }
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi tạo yêu cầu: ${e.toString()}')),
+      );
     }
+  }
+
+  void _showStep1SuccessDialog(BuildContext targetContext, String bookingId) {
+    final String displayId = bookingId.length > 8
+        ? bookingId.substring(0, 8).toUpperCase()
+        : bookingId.toUpperCase();
+
+    showDialog(
+      context: targetContext,
+      barrierDismissible: true,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Color(0xFF004AC6)),
+            SizedBox(width: 8),
+            Text(
+              'Đã tạo yêu cầu',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ],
+        ),
+        content: Text(
+          'Đơn đặt lịch ($displayId) đã được tạo thành công ở trạng thái chờ duyệt. Bạn có thể theo dõi tiến độ tại mục Đơn đã mua.',
+          style: const TextStyle(color: Color(0xFF434655)),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF004AC6),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Đồng ý'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _onVoucherApplied(
@@ -151,65 +221,24 @@ class _BookingScreenState extends State<BookingScreen> {
     });
   }
 
-  @override
-  void dispose() {
-    _addressController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  String _selectedPaymentLabel() {
-    switch (_selectedPaymentMethod) {
-      case 2:
-        return 'Tiền mặt sau dịch vụ';
-      case 3:
-        return 'Cổng thanh toán VNPAY';
-      default:
-        return 'Chuyển khoản Online (VietQR)';
-    }
-  }
-
-  void _processBookingAction() async {
-    if (!_formKey.currentState!.validate()) return;
-
+  void _executeFinalPayment() async {
     setState(() => _isSubmitting = true);
-
-    final paymentLabel = _selectedPaymentLabel();
-    debugPrint('Payment method selected: $paymentLabel');
-
     final int finalCalculatedPrice = _finalPrice.round();
+    final String trackingMemo = _createdBookingId!
+        .substring(0, 8)
+        .toUpperCase();
+    final rootNavigator = Navigator.of(context);
 
     try {
-      String? confirmedBookingId;
-
-      final bookingResult = await _bookingService.createBooking(
-        serviceId: widget.serviceId,
-        customerId: widget.customerId,
-        providerId: widget.providerId,
-        totalPrice: finalCalculatedPrice,
-        scheduledAt: widget.scheduledAt,
-        serviceType: widget.serviceType,
-        voucherCode: _appliedVoucherCode,
-      );
-
-      confirmedBookingId = (bookingResult['booking_id'] != null)
-          ? bookingResult['booking_id'].toString()
-          : await _bookingService.getLatestBookingId(widget.customerId);
-
-      if (!mounted) return;
-      setState(() => _isSubmitting = false);
-
-      if (confirmedBookingId == null || confirmedBookingId.isEmpty) {
-        throw Exception("Could not retrieve booking ID after creation.");
+      // Update booking table with voucher if used
+      if (_appliedVoucherCode != null) {
+        // Optional: add a patch method in your booking service if necessary
       }
 
-      final String trackingMemo = confirmedBookingId
-          .substring(0, 8)
-          .toUpperCase();
-      final rootNavigator = Navigator.of(context);
+      setState(() => _isSubmitting = false);
 
       if (_selectedPaymentMethod == 0) {
-        // VietQR Flow
+        // VietQR Setup
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => Scaffold(
@@ -222,50 +251,9 @@ class _BookingScreenState extends State<BookingScreen> {
                   providerBankAccount: '8821165401',
                   onSimulateSuccess: () {
                     Navigator.pop(context);
-
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (dialogContext) => AlertDialog(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        title: const Row(
-                          children: [
-                            SizedBox(width: 8),
-                            Text(
-                              'Giả lập thanh toán thành công',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
-                          ],
-                        ),
-                        content: Text(
-                          'Hệ thống ghi nhận thanh toán thành công cho dịch vụ ${widget.serviceTitle} theo hình thức mã định danh VietQR ($trackingMemo).',
-                          style: const TextStyle(color: Color(0xFF434655)),
-                        ),
-                        actions: [
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.pop(dialogContext);
-                              rootNavigator.popUntil((route) => route.isFirst);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF004AC6),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text(
-                              'Về Trang Chủ',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
+                    _showSuccessDialog(
+                      rootNavigator,
+                      'Thanh toán qua VietQR ($trackingMemo) thành công.',
                     );
                   },
                 ),
@@ -275,81 +263,60 @@ class _BookingScreenState extends State<BookingScreen> {
         );
       } else if (_selectedPaymentMethod == 3) {
         // VNPay Flow
-        debugPrint(
-          'Sending to VNPay: bookingId=$confirmedBookingId, amount=$finalCalculatedPrice',
-        );
         final paymentUrl = await _vnPayService.createPaymentUrl(
-          bookingId: confirmedBookingId,
+          bookingId: _createdBookingId!,
           amount: finalCalculatedPrice,
           orderInfo: 'Thanh toan don hang ${widget.serviceTitle}',
         );
         if (paymentUrl != null) {
           await _vnPayService.openVNPay(paymentUrl);
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Không thể khởi tạo thanh toán VNPAY.'),
-              ),
-            );
-          }
         }
       } else {
-        // Cash Flow (Tiền mặt sau dịch vụ)
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (dialogContext) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Color(0xFF004AC6)),
-                SizedBox(width: 8),
-                Text(
-                  'Đặt lịch thành công',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-              ],
-            ),
-            content: Text(
-              'Lịch hẹn dịch vụ ${widget.serviceTitle} vào ngày ${DateFormat('dd/MM/yyyy HH:mm').format(widget.scheduledAt)} đã được ghi nhận thành công theo hình thức $paymentLabel.',
-              style: const TextStyle(color: Color(0xFF434655)),
-            ),
-            actions: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                  rootNavigator.popUntil((route) => route.isFirst);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF004AC6),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'Về Trang Chủ',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
+        // Cash Flow
+        _showSuccessDialog(
+          rootNavigator,
+          'Lịch hẹn ghi nhận theo hình thức Tiền mặt sau dịch vụ.',
         );
       }
     } catch (e) {
-      if (!mounted) return;
       setState(() => _isSubmitting = false);
-      debugPrint("Booking Execution Error: $e");
-      final message = e is VoucherException
-          ? e.message
-          : 'Không thể lưu đơn đặt lịch. Vui lòng thử lại sau.';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không thể xử lý thanh toán.')),
+      );
     }
+  }
+
+  void _showSuccessDialog(NavigatorState rootNav, String dynamicMessage) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Color(0xFF004AC6)),
+            SizedBox(width: 8),
+            Text(
+              'Thành công',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ],
+        ),
+        content: Text(
+          dynamicMessage,
+          style: const TextStyle(color: Color(0xFF434655)),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              rootNav.popUntil((route) => route.isFirst);
+            },
+            child: const Text('Về Trang Chủ'),
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatCurrency(double amount) {
@@ -359,17 +326,18 @@ class _BookingScreenState extends State<BookingScreen> {
   @override
   Widget build(BuildContext context) {
     const Color primaryColor = Color(0xFF004AC6);
-    const Color surfaceColor = Color(0xFFF8F9FF);
     const Color darkText = Color(0xFF0B1C30);
-    const Color bodyText = Color(0xFF434655);
     const Color outlineVariant = Color(0xFFC3C6D7);
 
+    // Dynamic routing inside the scaffold depending on the step state
+    final bool isBookingCreated = _createdBookingId != null;
+
     return Scaffold(
-      backgroundColor: surfaceColor,
+      backgroundColor: const Color(0xFFF8F9FF),
       appBar: AppBar(
-        title: const Text(
-          'Xác nhận đặt',
-          style: TextStyle(
+        title: Text(
+          isBookingCreated ? 'Thanh toán lịch đặt' : 'Xác nhận đặt',
+          style: const TextStyle(
             color: darkText,
             fontWeight: FontWeight.bold,
             fontSize: 18,
@@ -377,13 +345,6 @@ class _BookingScreenState extends State<BookingScreen> {
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: outlineVariant.withValues(alpha: 0.5),
-            height: 1,
-          ),
-        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: primaryColor),
           onPressed: () => Navigator.pop(context),
@@ -391,173 +352,192 @@ class _BookingScreenState extends State<BookingScreen> {
       ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              Expanded(
+                child: isBookingCreated
+                    ? _buildPaymentView() // State 2: Accepted / Created View
+                    : _buildDraftView(), // State 1: New Draft View
+              ),
+              _buildBottomActionDock(isBookingCreated),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// View State 1: Top 3 Cards Only (Pre-booking generation)
+  Widget _buildDraftView() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        BookingHeaderCard(
+          serviceTitle: widget.serviceTitle,
+          packageName: widget.packageName,
+          serviceImageUrl: widget.serviceImageUrl,
+        ),
+        const SizedBox(height: 20),
+        BookingScheduleTile(scheduledAt: widget.scheduledAt),
+        const SizedBox(height: 20),
+        BookingAddressInput(
+          controller: _addressController,
+          isLoading: _isLoadingLocation,
+          onFetchCurrentLocation: _handleFetchCurrentLocation,
+        ),
+      ],
+    );
+  }
+
+  /// View State 2: Appends Payment Configurations Post-Creation
+  Widget _buildPaymentView() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Optional reminder alert notice
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8F0FE),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.info_outline, color: Color(0xFF004AC6), size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Đơn đặt lịch của bạn đã được ghi nhận. Vui lòng tiến hành thanh toán.',
+                  style: TextStyle(color: Color(0xFF004AC6), fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        PaymentMethodSelector(
+          selectedPaymentMethod: _selectedPaymentMethod,
+          onMethodChanged: (methodIndex) {
+            setState(() => _selectedPaymentMethod = methodIndex);
+          },
+        ),
+        const SizedBox(height: 20),
+        VoucherInputField(
+          providerId: widget.providerId,
+          customerId: widget.customerId,
+          serviceId: widget.serviceId,
+          orderValue: widget.totalPrice.toDouble(),
+          onVoucherApplied: _onVoucherApplied,
+        ),
+        const SizedBox(height: 20),
+        InvoiceBreakdownCard(
+          packageName: widget.packageName,
+          serviceFee: widget.totalPrice.toDouble(),
+          discountAmount: _discountAmount,
+          totalAmount: _finalPrice,
+          appliedVoucherCode: _appliedVoucherCode,
+        ),
+      ],
+    );
+  }
+
+  /// Shared context action dock that changes behavior based on execution states
+  Widget _buildBottomActionDock(bool isCreatedState) {
+    const Color primaryColor = Color(0xFF004AC6);
+    const Color bodyText = Color(0xFF434655);
+    const Color outlineVariant = Color(0xFFC3C6D7);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: outlineVariant.withValues(alpha: 0.5)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    BookingHeaderCard(
-                      serviceTitle: widget.serviceTitle,
-                      packageName: widget.packageName,
-                      serviceImageUrl: widget.serviceImageUrl,
-                    ),
-                    const SizedBox(height: 20),
-
-                    BookingScheduleTile(scheduledAt: widget.scheduledAt),
-                    const SizedBox(height: 20),
-
-                    BookingAddressInput(
-                      controller: _addressController,
-                      isLoading: _isLoadingLocation,
-                      onFetchCurrentLocation: _handleFetchCurrentLocation,
-                    ),
-                    const SizedBox(height: 20),
-
-                    BookingNotesInput(controller: _notesController),
-                    const SizedBox(height: 20),
-
-                    PaymentMethodSelector(
-                      selectedPaymentMethod: _selectedPaymentMethod,
-                      onMethodChanged: (methodIndex) {
-                        setState(() => _selectedPaymentMethod = methodIndex);
-                      },
-                    ),
-                    const SizedBox(height: 20),
-
-                    VoucherInputField(
-                      providerId: widget.providerId,
-                      customerId: widget.customerId,
-                      serviceId: widget.serviceId,
-                      orderValue: widget.totalPrice.toDouble(),
-                      onVoucherApplied: _onVoucherApplied,
-                    ),
-                    const SizedBox(height: 20),
-
-                    InvoiceBreakdownCard(
-                      packageName: widget.packageName,
-                      serviceFee: widget.totalPrice.toDouble(),
-                      discountAmount: _discountAmount,
-                      totalAmount: _finalPrice,
-                      appliedVoucherCode: _appliedVoucherCode,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  top: BorderSide(color: outlineVariant.withValues(alpha: 0.5)),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                top: false,
-                child: Column(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'Giá thanh toán cuối',
-                              style: TextStyle(fontSize: 12, color: bodyText),
-                            ),
-                            Text(
-                              _formatCurrency(_finalPrice),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: primaryColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Row(
-                          children: [
-                            Icon(
-                              Icons.verified_user,
-                              color: bodyText,
-                              size: 14,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Thanh toán bảo mật',
-                              style: TextStyle(fontSize: 12, color: bodyText),
-                            ),
-                          ],
-                        ),
-                      ],
+                    Text(
+                      isCreatedState ? 'Giá thanh toán cuối' : 'Giá tạm tính',
+                      style: const TextStyle(fontSize: 12, color: bodyText),
                     ),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      onPressed: _isSubmitting ? null : _processBookingAction,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
+                    Text(
+                      _formatCurrency(
+                        isCreatedState
+                            ? _finalPrice
+                            : widget.totalPrice.toDouble(),
                       ),
-                      child: _isSubmitting
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text(
-                              'Xác nhận đặt',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                    ),
-                    const SizedBox(height: 8),
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: const TextSpan(
-                        style: TextStyle(fontSize: 11, color: bodyText),
-                        children: [
-                          TextSpan(
-                            text:
-                                'Bằng việc nhấn nút "Xác nhận đặt", bạn đồng ý với ',
-                          ),
-                          TextSpan(
-                            text: 'Điều khoản dịch vụ',
-                            style: TextStyle(
-                              color: primaryColor,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                          TextSpan(text: ' của chúng tôi.'),
-                        ],
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
                       ),
                     ),
                   ],
                 ),
+                const Row(
+                  children: [
+                    Icon(Icons.verified_user, color: bodyText, size: 14),
+                    SizedBox(width: 4),
+                    Text(
+                      'Thanh toán bảo mật',
+                      style: TextStyle(fontSize: 12, color: bodyText),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: _isSubmitting
+                  ? null
+                  : (isCreatedState
+                        ? _executeFinalPayment
+                        : _createInitialBooking),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(52),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
               ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      isCreatedState ? 'Thanh toán ngay' : 'Đặt lịch ngay',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ],
         ),

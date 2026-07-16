@@ -7,17 +7,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/profile_model.dart';
 import '../../services/profile/profile_service.dart';
 
-import '../../widgets/profile/profile_header.dart';
-import '../../widgets/profile/profile_edit_button.dart';
-import '../../widgets/profile/profile_security_section.dart';
-import '../../widgets/profile/profile_contact_section.dart';
-import '../../widgets/profile/profile_address_section.dart';
-import '../../widgets/profile/profile_provider_section.dart';
-import '../../widgets/profile/profile_danger_section.dart';
+import '../../widgets/profile/setting/profile_header.dart';
+import '../../widgets/profile/setting/profile_edit_button.dart';
+import '../../widgets/profile/setting/profile_security_section.dart';
+import '../../widgets/profile/setting/profile_contact_section.dart';
+import '../../widgets/profile/setting/profile_address_section.dart';
+import '../../widgets/profile/setting/profile_provider_section.dart';
+import '../../widgets/profile/setting/profile_danger_section.dart';
 
-import '../../widgets/profile/edit_profile_sheet.dart';
-import '../../widgets/profile/change_email_sheet.dart';
-import '../../widgets/profile/change_password_sheet.dart';
+import '../../widgets/profile/setting/edit_profile_sheet.dart';
+import '../../widgets/profile/setting/change_email_sheet.dart';
+import '../../widgets/profile/setting/change_password_sheet.dart';
 
 class AccountSettingScreen extends StatelessWidget {
   const AccountSettingScreen({super.key});
@@ -117,10 +117,7 @@ class AccountSettingScreen extends StatelessWidget {
                   roleDisplay: role,
                 ),
 
-                if (profile != null)
-                  ProfileEditButton(
-                    onPressed: () => () ,
-                  ),
+                if (profile != null) ProfileEditButton(onPressed: () => ()),
 
                 if (profile != null)
                   ProfileSecuritySection(

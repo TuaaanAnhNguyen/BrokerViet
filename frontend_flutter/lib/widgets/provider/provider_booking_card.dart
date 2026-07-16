@@ -196,7 +196,7 @@ class ProviderBookingCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton(
-              onPressed: () => onStatusUpdate?.call(BookingStatus.daHoanThanh),
+              onPressed: () => onStatusUpdate?.call(BookingStatus.daChapNhan),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
                 foregroundColor: Colors.white,

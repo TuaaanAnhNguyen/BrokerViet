@@ -7,15 +7,15 @@ import '../models/booking_model.dart';
 class BookingCard extends StatelessWidget {
   final BookingModel order;
   final VoidCallback? onCancel;
-  final VoidCallback? onRebook;
-  final VoidCallback? TrackProgress;
+  final VoidCallback? onPayNow;
+  final VoidCallback? trackProgress;
 
   const BookingCard({
     super.key,
     required this.order,
     this.onCancel,
-    this.onRebook,
-    this.TrackProgress,
+    this.onPayNow,
+    this.trackProgress,
   });
 
   String _formatDate(String dateStr) {
@@ -45,6 +45,12 @@ class BookingCard extends StatelessWidget {
         break;
       case BookingStatus.dangChoDuyet:
         statusColor = const Color(0xFFE65100);
+        break;
+      case BookingStatus.daChapNhan:
+        statusColor = const Color.fromARGB(255, 7, 99, 219);
+        break;
+      case BookingStatus.daBiHuy:
+        statusColor = const Color.fromARGB(255, 247, 65, 247);
         break;
       case BookingStatus.daHuy:
         statusColor = Colors.red.shade700;
@@ -153,7 +159,7 @@ class BookingCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 6),
-                    // Price + Quantity + Date (all in one highly readable line)
+                    // Price + Quantity + Date
                     Text(
                       '${order.cost}  •  SL: 1  •  Ngày: ${_formatDate(order.date)}',
                       style: const TextStyle(
@@ -204,7 +210,6 @@ class BookingCard extends StatelessWidget {
   }
 
   List<Widget> _buildActionButtons() {
-    const Color primaryColor = Color(0xFF004AC6);
     const Color darkText = Color(0xFF0B1C30);
 
     final ButtonStyle secondaryStyle = OutlinedButton.styleFrom(
@@ -213,38 +218,19 @@ class BookingCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
     );
 
-    final ButtonStyle primaryStyle = OutlinedButton.styleFrom(
-      side: const BorderSide(color: primaryColor),
-      backgroundColor: const Color(0xFFEFF4FF),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-    );
-
     switch (order.status) {
-      case BookingStatus.daHoanThanh:
+      case BookingStatus.daChapNhan:
         return [
           OutlinedButton(
-            onPressed: () {},
+            onPressed: onPayNow,
             style: secondaryStyle,
             child: const Text(
-              'Xem đánh giá',
+              'Thanh toán ngay',
               style: TextStyle(color: darkText, fontSize: 13),
             ),
           ),
-          const SizedBox(width: 8),
-          OutlinedButton(
-            onPressed: onRebook,
-            style: primaryStyle,
-            child: const Text(
-              'Đặt lịch lại',
-              style: TextStyle(
-                color: primaryColor,
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
         ];
+        ;
       case BookingStatus.dangChoDuyet:
         return [
           OutlinedButton(
@@ -256,17 +242,8 @@ class BookingCard extends StatelessWidget {
             ),
           ),
         ];
-      case BookingStatus.daHuy:
-        return [
-          OutlinedButton(
-            onPressed: () {},
-            style: secondaryStyle,
-            child: const Text(
-              'Xem chi tiết',
-              style: TextStyle(color: darkText, fontSize: 13),
-            ),
-          ),
-        ];
+      default:
+        return [];
     }
   }
 }

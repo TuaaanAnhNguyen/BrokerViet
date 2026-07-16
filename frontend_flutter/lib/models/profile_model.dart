@@ -67,15 +67,15 @@ class ProfileModel {
       'bio': bio,
       'address': address,
       'avatar_url': avatarUrl,
+      'location_latitude': locationLatitude,
+      'location_longitude': locationLongitude,
+      'location_text': locationText,
     };
 
     if (role?.toUpperCase() == 'PROVIDER') {
       payload.addAll({
-        'location_latitude': locationLatitude,
-        'location_longitude': locationLongitude,
         'opening_hour': _normalizeTime(openingHour),
         'closing_hour': _normalizeTime(closingHour),
-        'location_text': locationText,
         'payout_bank_code': payoutBankCode,
         'payout_account_number': payoutAccountNumber,
       });
@@ -88,7 +88,7 @@ class ProfileModel {
     if (timeStr == null || timeStr.isEmpty) return null;
     if (RegExp(r'^\d{2}:\d{2}:\d{2}$').hasMatch(timeStr)) return timeStr;
     if (RegExp(r'^\d{2}:\d{2}$').hasMatch(timeStr)) return '$timeStr:00';
-    return timeStr; 
+    return timeStr;
   }
 
   ProfileModel copyWith({

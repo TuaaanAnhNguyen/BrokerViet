@@ -14,11 +14,13 @@ class ServiceMarketplaceScreen extends StatefulWidget {
   const ServiceMarketplaceScreen({super.key});
 
   @override
-  State<ServiceMarketplaceScreen> createState() => _ServiceMarketplaceScreenState();
+  State<ServiceMarketplaceScreen> createState() =>
+      _ServiceMarketplaceScreenState();
 }
 
 class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
-  final ServiceMarketplaceService _marketplaceService = ServiceMarketplaceService();
+  final ServiceMarketplaceService _marketplaceService =
+      ServiceMarketplaceService();
   final LocationService _locationService = LocationService();
 
   int _activeCategoryIndex = 0;
@@ -63,9 +65,11 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
           final String name = cat.name;
           IconData icon = Icons.work_outline;
 
-          if (name.toLowerCase().contains('sửa') || name.toLowerCase().contains('repair')) {
+          if (name.toLowerCase().contains('sửa') ||
+              name.toLowerCase().contains('repair')) {
             icon = Icons.computer_rounded;
-          } else if (name.toLowerCase().contains('thuê') || name.toLowerCase().contains('rental')) {
+          } else if (name.toLowerCase().contains('thuê') ||
+              name.toLowerCase().contains('rental')) {
             icon = Icons.precision_manufacturing_rounded;
           }
 
@@ -93,7 +97,9 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
           ? _categories[_activeCategoryIndex]
           : {'id': null};
 
-      final String? categoryId = _activeCategoryIndex == 0 ? null : activeCat['id']?.toString();
+      final String? categoryId = _activeCategoryIndex == 0
+          ? null
+          : activeCat['id']?.toString();
 
       final results = await _marketplaceService
           .searchServices(categoryId: categoryId)
@@ -128,9 +134,12 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
           .eq('user_id', user.id)
           .maybeSingle();
 
-      if (profileData == null || profileData['location_latitude'] == null || profileData['location_longitude'] == null) {
+      if (profileData == null ||
+          profileData['location_latitude'] == null ||
+          profileData['location_longitude'] == null) {
         setState(() {
-          _providerLocationError = "Vui lòng cập nhật địa chỉ để hiển thị đơn vị gần bạn.";
+          _providerLocationError =
+              "Vui lòng cập nhật địa chỉ để hiển thị đơn vị gần bạn.";
           _isLoadingProviders = false;
         });
         return;
@@ -154,20 +163,29 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
         limit: 10,
       );
 
-      if (mounted) {
-        setState(() {
-          _dynamicNearbyProviders = nearbyData;
-          _isLoadingProviders = false;
-        });
-      }
+      if (!mounted) return;
+
+      setState(() {
+        _dynamicNearbyProviders = nearbyData;
+
+        if (nearbyData.isEmpty) {
+          _providerLocationError =
+              "Không tìm thấy đơn vị cung cấp nào trong bán kính 15 km.";
+        } else {
+          _providerLocationError = null;
+        }
+
+        _isLoadingProviders = false;
+      });
     } catch (e) {
       debugPrint('>>> LỖI LOAD SPATIAL DATA: $e');
-      if (mounted) {
-        setState(() {
-          _providerLocationError = "Không thể tải danh sách đơn vị gần bạn.";
-          _isLoadingProviders = false;
-        });
-      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _providerLocationError = "Không thể tải danh sách đơn vị gần bạn.";
+        _isLoadingProviders = false;
+      });
     }
   }
 
@@ -216,13 +234,17 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
             ),
             const SizedBox(height: 24),
             ServicesListSection(
-              title: _activeCategoryIndex == 0 ? 'Dịch vụ phổ biến' : 'Dịch vụ $currentCategoryLabel',
+              title: _activeCategoryIndex == 0
+                  ? 'Dịch vụ phổ biến'
+                  : 'Dịch vụ $currentCategoryLabel',
               services: _getSortedServices(),
               isLoading: _isLoading,
               sortOrder: _sortOrder,
               onSortChanged: () {
                 setState(() {
-                  _sortOrder = (_sortOrder == 'none' || _sortOrder == 'desc') ? 'asc' : 'desc';
+                  _sortOrder = (_sortOrder == 'none' || _sortOrder == 'desc')
+                      ? 'asc'
+                      : 'desc';
                 });
               },
             ),

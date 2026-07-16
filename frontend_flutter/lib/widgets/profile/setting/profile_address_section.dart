@@ -1,7 +1,7 @@
 // lib/widgets/profile/profile_address_section.dart
 
 import 'package:flutter/material.dart';
-import '../../models/profile_model.dart';
+import '../../../models/profile_model.dart';
 import 'account_setting_tile.dart';
 
 class ProfileAddressSection extends StatelessWidget {

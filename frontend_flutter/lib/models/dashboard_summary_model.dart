@@ -18,7 +18,6 @@ class DashboardSummaryModel {
   });
 
   factory DashboardSummaryModel.fromJson(Map<String, dynamic> json) {
-    // 1. Safe parsing for averageRating (converts int or double safely into double)
     double parsedRating = 0.0;
     if (json['averageRating'] != null) {
       parsedRating =
@@ -26,13 +25,11 @@ class DashboardSummaryModel {
     }
 
     return DashboardSummaryModel(
-      // 2. Map exactly to the camelCase keys returned by your PostgreSQL jsonb_build_object
       todaysBookings:
           int.tryParse(json['todaysBookings']?.toString() ?? '0') ?? 0,
       pendingRequests:
           int.tryParse(json['pendingRequests']?.toString() ?? '0') ?? 0,
 
-      // 3. The database function already returns formatted strings like "90,000 đ" or "0 đ"
       revenueToday: json['revenueToday']?.toString() ?? '0 đ',
       monthlyRevenue: json['monthlyRevenue']?.toString() ?? '0 đ',
 
@@ -42,7 +39,6 @@ class DashboardSummaryModel {
     );
   }
 
-  // Factory for an empty/default state when there is no data or an exception occurs
   factory DashboardSummaryModel.empty() {
     return const DashboardSummaryModel(
       todaysBookings: 0,

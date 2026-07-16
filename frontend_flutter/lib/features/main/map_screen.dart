@@ -8,22 +8,14 @@ import '../../models/provider_service_info_model.dart';
 import '../../models/route_result_model.dart';
 import '../../services/map-location/location_service.dart';
 
-import '../../widgets/map/destination_marker.dart';
-import '../../widgets/map/error_banner.dart';
-import '../../widgets/map/loading_overlay.dart';
-import '../../widgets/map/map_tile_layer.dart';
+import '../../widgets/map/map_content_view.dart';
+import '../../widgets/map/map_floating_overlay.dart';
 import '../../widgets/map/my_location_button.dart';
-import '../../widgets/map/provider_service_info_card.dart';
-import '../../widgets/map/route_info_card.dart';
-import '../../widgets/map/route_polyline_layer.dart';
-import '../../widgets/map/user_location_marker.dart';
 
 class MapScreen extends StatefulWidget {
   final String serviceId;
-
   final double initialTargetLat;
   final double initialTargetLng;
-
   final String initialProviderName;
 
   const MapScreen({
@@ -40,8 +32,8 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final LocationService _locationService = LocationService();
-
   final MapController _mapController = MapController();
+
   LatLng? _userLocation;
   late final LatLng _destination;
   RouteResult? _route;
@@ -52,9 +44,7 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-
     _destination = LatLng(widget.initialTargetLat, widget.initialTargetLng);
-
     _initialize();
   }
 
@@ -66,7 +56,6 @@ class _MapScreenState extends State<MapScreen> {
 
     try {
       final myLocation = await _locationService.getMyLocation();
-
       _userLocation = LatLng(myLocation.latitude, myLocation.longitude);
 
       _providerInfo = await _locationService.getProviderServiceInfo(
@@ -80,7 +69,6 @@ class _MapScreenState extends State<MapScreen> {
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-
         _mapController.fitCamera(
           CameraFit.bounds(
             bounds: LatLngBounds.fromPoints([_userLocation!, _destination]),
@@ -103,12 +91,14 @@ class _MapScreenState extends State<MapScreen> {
 
   void _recenter() {
     if (_userLocation == null) return;
-
     _mapController.move(_userLocation!, 14.5);
   }
 
   @override
   Widget build(BuildContext context) {
+    final providerName =
+        _providerInfo?.providerName ?? widget.initialProviderName;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -124,57 +114,20 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: Stack(
         children: [
-          FlutterMap(
+          MapContentView(
             mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _destination,
-              initialZoom: 14,
-              minZoom: 6,
-              maxZoom: 18,
-            ),
-            children: [
-              const MapTileLayer(),
-              if (_route != null)
-                PolylineLayer(
-                  polylines: RoutePolylineBuilder.build(_route!.points),
-                ),
-
-              MarkerLayer(
-                markers: [
-                  if (_userLocation != null)
-                    UserLocationMarker.build(_userLocation!),
-
-                  DestinationMarker.build(
-                    location: _destination,
-                    providerName:
-                        _providerInfo?.providerName ??
-                        widget.initialProviderName,
-                  ),
-                ],
-              ),
-            ],
+            destination: _destination,
+            userLocation: _userLocation,
+            route: _route,
+            providerName: providerName,
           ),
-          if (_loading) const LoadingOverlay(),
-          if (_error != null) ErrorBanner(message: _error!),
 
-          if (_route != null)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: _providerInfo == null ? 20 : 190,
-              child: RouteInfoCard(
-                distanceMeters: _route!.distanceMeters,
-                durationSeconds: _route!.durationSeconds,
-              ),
-            ),
-
-          if (_providerInfo != null)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 20,
-              child: ProviderServiceInfoCard(service: _providerInfo!),
-            ),
+          MapFloatingOverlay(
+            loading: _loading,
+            error: _error,
+            route: _route,
+            providerInfo: _providerInfo,
+          ),
         ],
       ),
     );
