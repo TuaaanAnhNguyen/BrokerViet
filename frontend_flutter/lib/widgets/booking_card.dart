@@ -7,14 +7,14 @@ import '../models/booking_model.dart';
 class BookingCard extends StatelessWidget {
   final BookingModel order;
   final VoidCallback? onCancel;
-  final VoidCallback? onRebook;
+  final VoidCallback? onPayNow;
   final VoidCallback? trackProgress;
 
   const BookingCard({
     super.key,
     required this.order,
     this.onCancel,
-    this.onRebook,
+    this.onPayNow,
     this.trackProgress,
   });
 
@@ -222,7 +222,7 @@ class BookingCard extends StatelessWidget {
       case BookingStatus.daChapNhan:
         return [
           OutlinedButton(
-            onPressed: () {},
+            onPressed: onPayNow,
             style: secondaryStyle,
             child: const Text(
               'Thanh toán ngay',
@@ -230,6 +230,7 @@ class BookingCard extends StatelessWidget {
             ),
           ),
         ];
+        ;
       case BookingStatus.dangChoDuyet:
         return [
           OutlinedButton(

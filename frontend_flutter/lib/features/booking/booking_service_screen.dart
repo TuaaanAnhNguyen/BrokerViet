@@ -26,6 +26,7 @@ class BookingScreen extends StatefulWidget {
   final DateTime scheduledAt;
   final int totalPrice;
   final String? serviceImageUrl;
+  final String? existingBookingId;
 
   const BookingScreen({
     super.key,
@@ -39,6 +40,7 @@ class BookingScreen extends StatefulWidget {
     required this.totalPrice,
     this.serviceType,
     this.serviceImageUrl,
+    this.existingBookingId,
   });
 
   @override
@@ -67,8 +69,14 @@ class _BookingScreenState extends State<BookingScreen> {
   @override
   void initState() {
     super.initState();
+
     _finalPrice = widget.totalPrice.toDouble();
+
     _addressController = TextEditingController(text: "");
+
+    // If opened from Booking History,
+    // immediately enter Payment State.
+    _createdBookingId = widget.existingBookingId;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _handleFetchCurrentLocation();

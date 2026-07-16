@@ -5,6 +5,7 @@ import '../../models/booking_model.dart';
 import '../../services/booking/booking_service.dart';
 import '../../widgets/booking_card.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'booking_service_screen.dart';
 
 class BookingHistoryScreen extends StatefulWidget {
   const BookingHistoryScreen({super.key});
@@ -188,7 +189,27 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                                 order: item,
                                 onCancel: () =>
                                     _handleCancelRequest(item.bookingId),
-                                onRebook: () {},
+                                onPayNow: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => BookingScreen(
+                                        serviceId: item.serviceId,
+                                        customerId: item.customerId,
+                                        providerId: item.providerId,
+
+                                        serviceTitle: item.serviceTitle,
+                                        packageName: item.variantDetails,
+                                        scheduledAt: DateTime.parse(item.date),
+                                        totalPrice: item.totalPrice,
+
+                                        serviceImageUrl: item.imageUrl,
+                                        serviceType: item.serviceType,
+                                        existingBookingId: item.bookingId,
+                                      ),
+                                    ),
+                                  );
+                                },
                                 trackProgress: () {},
                               );
                             },
