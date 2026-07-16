@@ -2,6 +2,8 @@
 
 enum BookingStatus {
   dangChoDuyet('PENDING', 'Đang chờ duyệt'),
+  daChapNhan('ACCEPTED', 'Đã chấp nhận'),
+  daBiHuy('REJECTED', 'Đã bị huỷ'),
   daHoanThanh('COMPLETED', 'Đã hoàn thành'),
   daHuy('CANCELLED', 'Đã hủy');
 

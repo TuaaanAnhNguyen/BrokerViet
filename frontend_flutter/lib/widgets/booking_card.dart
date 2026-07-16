@@ -46,6 +46,12 @@ class BookingCard extends StatelessWidget {
       case BookingStatus.dangChoDuyet:
         statusColor = const Color(0xFFE65100);
         break;
+      case BookingStatus.daChapNhan:
+        statusColor = const Color.fromARGB(255, 7, 99, 219);
+        break;
+      case BookingStatus.daBiHuy:
+        statusColor = const Color.fromARGB(255, 247, 65, 247);
+        break;
       case BookingStatus.daHuy:
         statusColor = Colors.red.shade700;
         break;
@@ -213,13 +219,13 @@ class BookingCard extends StatelessWidget {
     );
 
     switch (order.status) {
-      case BookingStatus.daHoanThanh:
+      case BookingStatus.daChapNhan:
         return [
           OutlinedButton(
             onPressed: () {},
             style: secondaryStyle,
             child: const Text(
-              'Xem đánh giá',
+              'Thanh toán ngay',
               style: TextStyle(color: darkText, fontSize: 13),
             ),
           ),
@@ -235,7 +241,7 @@ class BookingCard extends StatelessWidget {
             ),
           ),
         ];
-      case BookingStatus.daHuy:
+      default:
         return [];
     }
   }

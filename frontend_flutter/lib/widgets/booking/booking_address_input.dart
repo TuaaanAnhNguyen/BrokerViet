@@ -24,7 +24,7 @@ class BookingAddressInput extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Địa điểm làm việc',
+          'Địa điểm',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -35,7 +35,7 @@ class BookingAddressInput extends StatelessWidget {
         TextFormField(
           controller: controller,
           validator: (value) =>
-              value!.isEmpty ? 'Vui lòng nhập địa chỉ cụ thể' : null,
+              value!.isEmpty ? 'Vui lòng nhập địa chỉ' : null,
           style: const TextStyle(fontSize: 14, color: darkText),
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.location_on, color: primaryColor),
