@@ -185,7 +185,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                                 order: item,
                                 onCancel: () => _handleCancelRequest(item.bookingId),
                                 onRebook: () {},
-                                TrackProgress: () {},
+                                trackProgress: () {},
                               );
                             },
                           ),

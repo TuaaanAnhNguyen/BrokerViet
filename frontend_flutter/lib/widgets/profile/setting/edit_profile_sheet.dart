@@ -2,9 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../services/profile/profile_service.dart';
-import '../../models/profile_model.dart';
-import '../custom_text_field.dart';
+import '../../../services/profile/profile_service.dart';
+import '../../../models/profile_model.dart';
+import '../../custom_text_field.dart';
 
 class EditProfileSheet extends StatefulWidget {
   final ProfileModel currentProfile;

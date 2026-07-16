@@ -33,7 +33,9 @@ class ProfileInitial extends ProfileState {}
 
 class ProfileLoading extends ProfileState {}
 
-class ProfileActionLoading extends ProfileState {}
+class ProfileActionLoading extends ProfileLoadSuccess {
+  ProfileActionLoading(super.profile);
+}
 
 class ProfileLoadSuccess extends ProfileState {
   final ProfileModel profile;
@@ -91,7 +93,9 @@ class ProfileService extends Bloc<ProfileEvent, ProfileState> {
     });
 
     on<UpdateProfileRequested>((event, emit) async {
-      emit(ProfileActionLoading());
+      if (state is ProfileLoadSuccess) {
+        emit(ProfileActionLoading((state as ProfileLoadSuccess).profile));
+      }
 
       try {
         if (currentUserId.isEmpty) {
@@ -142,7 +146,9 @@ class ProfileService extends Bloc<ProfileEvent, ProfileState> {
     });
 
     on<UpdatePasswordRequested>((event, emit) async {
-      emit(ProfileActionLoading());
+      if (state is ProfileLoadSuccess) {
+        emit(ProfileActionLoading((state as ProfileLoadSuccess).profile));
+      }
       try {
         await _client.auth.updateUser(
           UserAttributes(password: event.newPassword),
@@ -154,7 +160,9 @@ class ProfileService extends Bloc<ProfileEvent, ProfileState> {
     });
 
     on<UpdateEmailRequested>((event, emit) async {
-      emit(ProfileActionLoading());
+      if (state is ProfileLoadSuccess) {
+        emit(ProfileActionLoading((state as ProfileLoadSuccess).profile));
+      }
 
       try {
         await _client.auth.updateUser(
@@ -174,7 +182,9 @@ class ProfileService extends Bloc<ProfileEvent, ProfileState> {
     });
 
     on<DeleteAccountRequested>((event, emit) async {
-      emit(ProfileActionLoading());
+      if (state is ProfileLoadSuccess) {
+        emit(ProfileActionLoading((state as ProfileLoadSuccess).profile));
+      }
       try {
         if (currentUserId.isNotEmpty) {
           final response = await _client.functions.invoke('delete-profile');

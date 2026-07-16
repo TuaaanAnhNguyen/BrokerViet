@@ -8,14 +8,14 @@ class BookingCard extends StatelessWidget {
   final BookingModel order;
   final VoidCallback? onCancel;
   final VoidCallback? onRebook;
-  final VoidCallback? TrackProgress;
+  final VoidCallback? trackProgress;
 
   const BookingCard({
     super.key,
     required this.order,
     this.onCancel,
     this.onRebook,
-    this.TrackProgress,
+    this.trackProgress,
   });
 
   String _formatDate(String dateStr) {
@@ -153,7 +153,7 @@ class BookingCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 6),
-                    // Price + Quantity + Date (all in one highly readable line)
+                    // Price + Quantity + Date
                     Text(
                       '${order.cost}  •  SL: 1  •  Ngày: ${_formatDate(order.date)}',
                       style: const TextStyle(
@@ -204,18 +204,10 @@ class BookingCard extends StatelessWidget {
   }
 
   List<Widget> _buildActionButtons() {
-    const Color primaryColor = Color(0xFF004AC6);
     const Color darkText = Color(0xFF0B1C30);
 
     final ButtonStyle secondaryStyle = OutlinedButton.styleFrom(
       side: const BorderSide(color: Color(0xFFC3C6D7)),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-    );
-
-    final ButtonStyle primaryStyle = OutlinedButton.styleFrom(
-      side: const BorderSide(color: primaryColor),
-      backgroundColor: const Color(0xFFEFF4FF),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
     );
@@ -231,19 +223,6 @@ class BookingCard extends StatelessWidget {
               style: TextStyle(color: darkText, fontSize: 13),
             ),
           ),
-          const SizedBox(width: 8),
-          OutlinedButton(
-            onPressed: onRebook,
-            style: primaryStyle,
-            child: const Text(
-              'Đặt lịch lại',
-              style: TextStyle(
-                color: primaryColor,
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
         ];
       case BookingStatus.dangChoDuyet:
         return [
@@ -257,16 +236,7 @@ class BookingCard extends StatelessWidget {
           ),
         ];
       case BookingStatus.daHuy:
-        return [
-          OutlinedButton(
-            onPressed: () {},
-            style: secondaryStyle,
-            child: const Text(
-              'Xem chi tiết',
-              style: TextStyle(color: darkText, fontSize: 13),
-            ),
-          ),
-        ];
+        return [];
     }
   }
 }

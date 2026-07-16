@@ -37,6 +37,26 @@
                     android:scheme="brokerviet"
                     android:host="vnpay_result_page"/>
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:scheme="brokerviet"
+                    android:host="password_reset"/>
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+
+                <data
+                    android:scheme="brokerviet"
+                    android:host="email_confirmed"/>
+            </intent-filter>
         </activity>
         <meta-data
             android:name="flutterEmbedding"

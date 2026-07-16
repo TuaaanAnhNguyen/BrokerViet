@@ -15,6 +15,8 @@ class AuthPasswordResetOtpSent extends AuthState {}
 
 class AuthPasswordResetSuccess extends AuthState {}
 
+class AuthPasswordResetEmailSent extends AuthState {}
+
 class AuthSuccess extends AuthState {
   final String uid;
   final String name;
@@ -54,19 +56,28 @@ class SignUpRequested extends AuthEvent {
   SignUpRequested(this.username, this.phone, this.password, this.role);
 }
 
-// ==========================================
-// REWORKED FORGOT PASSWORD EVENTS
-// ==========================================
-class ForgotPasswordRequested extends AuthEvent {
+class ForgotPasswordByPhoneRequested extends AuthEvent {
   final String phone;
-  ForgotPasswordRequested(this.phone);
+
+  ForgotPasswordByPhoneRequested(this.phone);
 }
 
-class ForgotPasswordConfirmed extends AuthEvent {
+class ForgotPasswordPhoneConfirmed extends AuthEvent {
   final String phone;
   final String otpCode;
   final String newPassword;
-  ForgotPasswordConfirmed(this.phone, this.otpCode, this.newPassword);
+
+  ForgotPasswordPhoneConfirmed({
+    required this.phone,
+    required this.otpCode,
+    required this.newPassword,
+  });
+}
+
+class ForgotPasswordByEmailRequested extends AuthEvent {
+  final String email;
+
+  ForgotPasswordByEmailRequested(this.email);
 }
 
 class UpdateAvatarRequested extends AuthEvent {
@@ -294,64 +305,88 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
       }
     });
 
-    // ====================================================================
-    // HANDLING REWORKED FORGOT PASSWORD
-    // ====================================================================
-    on<ForgotPasswordRequested>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        final formattedPhone = _formatPhoneNumber(event.phone);
+    on<ForgotPasswordByPhoneRequested>(_handlePhoneResetRequest);
 
-        final targetProfile = await _supabase
-            .from('profiles')
-            .select('user_id')
-            .eq('phone', formattedPhone)
-            .maybeSingle();
+    on<ForgotPasswordPhoneConfirmed>(_handlePhoneResetConfirmation);
 
-        if (targetProfile == null) {
-          emit(
-            AuthFailure('Số điện thoại này chưa được đăng ký trên hệ thống.'),
-          );
-          return;
-        }
-
-        await _supabase.auth.signInWithOtp(phone: formattedPhone);
-        emit(AuthPasswordResetOtpSent());
-      } on AuthException catch (e) {
-        emit(AuthFailure(e.message));
-      } catch (_) {
-        emit(AuthFailure('Không thể gửi mã xác thực. Vui lòng thử lại.'));
-      }
-    });
-
-    on<ForgotPasswordConfirmed>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        final formattedPhone = _formatPhoneNumber(event.phone);
-
-        final response = await _supabase.auth.verifyOTP(
-          phone: formattedPhone,
-          token: event.otpCode,
-          type: OtpType.sms,
-        );
-
-        if (response.user != null) {
-          await _supabase.auth.updateUser(
-            UserAttributes(password: event.newPassword),
-          );
-
-          await _supabase.auth.signOut();
-          emit(AuthPasswordResetSuccess());
-        } else {
-          emit(AuthFailure('Mã xác thực không chính xác hoặc đã hết hạn.'));
-        }
-      } on AuthException catch (e) {
-        emit(AuthFailure(e.message));
-      } catch (_) {
-        emit(AuthFailure('Đổi mật khẩu thất bại. Vui lòng thử lại.'));
-      }
-    });
+    on<ForgotPasswordByEmailRequested>(_handleEmailResetRequest);
 
     add(AppStarted());
+  }
+
+  Future<void> _handlePhoneResetRequest(
+    ForgotPasswordByPhoneRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+
+    try {
+      final formattedPhone = _formatPhoneNumber(event.phone);
+
+      await _supabase.auth.signInWithOtp(
+        phone: formattedPhone,
+        shouldCreateUser: false,
+      );
+
+      emit(AuthPasswordResetOtpSent());
+    } on AuthException catch (e) {
+      emit(AuthFailure(e.message));
+    } catch (_) {
+      emit(AuthFailure('Không thể gửi mã OTP. Vui lòng thử lại.'));
+    }
+  }
+
+  Future<void> _handlePhoneResetConfirmation(
+    ForgotPasswordPhoneConfirmed event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+
+    try {
+      final formattedPhone = _formatPhoneNumber(event.phone);
+
+      final response = await _supabase.auth.verifyOTP(
+        phone: formattedPhone,
+        token: event.otpCode,
+        type: OtpType.recovery,
+      );
+
+      if (response.user == null) {
+        emit(AuthFailure('Mã OTP không đúng hoặc đã hết hạn.'));
+        return;
+      }
+
+      await _supabase.auth.updateUser(
+        UserAttributes(password: event.newPassword),
+      );
+
+      await _supabase.auth.signOut();
+
+      emit(AuthPasswordResetSuccess());
+    } on AuthException catch (e) {
+      emit(AuthFailure(e.message));
+    } catch (_) {
+      emit(AuthFailure('Không thể đổi mật khẩu.'));
+    }
+  }
+
+  Future<void> _handleEmailResetRequest(
+    ForgotPasswordByEmailRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+
+    try {
+      await _supabase.auth.resetPasswordForEmail(
+        event.email.trim(),
+        redirectTo: 'brokerviet://password_reset',
+      );
+
+      emit(AuthPasswordResetEmailSent());
+    } on AuthException catch (e) {
+      emit(AuthFailure(e.message));
+    } catch (_) {
+      emit(AuthFailure('Không thể gửi liên kết đặt lại mật khẩu.'));
+    }
   }
 }
