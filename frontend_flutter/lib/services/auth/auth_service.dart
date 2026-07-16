@@ -323,10 +323,13 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
     try {
       final formattedPhone = _formatPhoneNumber(event.phone);
 
+      print('>>> SENDING OTP');
       await _supabase.auth.signInWithOtp(
         phone: formattedPhone,
         shouldCreateUser: false,
       );
+
+      print('OTP SENT TO: $formattedPhone');
 
       emit(AuthPasswordResetOtpSent());
     } on AuthException catch (e) {

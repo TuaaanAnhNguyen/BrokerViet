@@ -53,8 +53,6 @@ class ProviderBookingsService {
         body: {'booking_id': bookingId, 'new_status': newStatus.toDbString()},
       );
 
-      // functions.invoke không tự throw khi RPC trả lỗi qua status 400,
-      // nên kiểm tra status code thủ công
       if (response.status != 200) {
         final errorMsg = response.data is Map
             ? (response.data['error'] ?? 'Unknown error')
@@ -63,8 +61,7 @@ class ProviderBookingsService {
       }
     } catch (e) {
       print('>>> Error updating booking status: $e');
-      // Mock success for UI testing
-      await Future.delayed(const Duration(milliseconds: 500));
+      throw Exception('Failed to update backend database status: $e');
     }
   }
 

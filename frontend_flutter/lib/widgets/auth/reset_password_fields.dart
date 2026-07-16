@@ -33,47 +33,50 @@ class ResetPasswordFields extends StatelessWidget {
               if (value == null || value.trim().isEmpty) {
                 return 'Vui lòng nhập mã OTP';
               }
-
               return null;
             },
           ),
 
           const SizedBox(height: 16),
-
-          CustomTextField(
-            controller: passwordController,
-            labelText: 'Mật khẩu mới',
-            prefixIcon: Icons.lock_outline,
-            isPasswordField: true,
-            validator: (value) {
-              if (value == null || value.length < 6) {
-                return 'Mật khẩu phải có ít nhất 6 ký tự';
-              }
-
-              return null;
-            },
-          ),
-
-          const SizedBox(height: 16),
-
-          CustomTextField(
-            controller: confirmPasswordController,
-            labelText: 'Xác nhận mật khẩu',
-            prefixIcon: Icons.lock_outline,
-            isPasswordField: true,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Vui lòng xác nhận mật khẩu';
-              }
-
-              if (value != passwordController.text) {
-                return 'Mật khẩu xác nhận không khớp';
-              }
-
-              return null;
-            },
-          ),
         ],
+
+        CustomTextField(
+          controller: passwordController,
+          labelText: 'Mật khẩu mới',
+          prefixIcon: Icons.lock_outline,
+          isPasswordField: true,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Vui lòng nhập mật khẩu';
+            }
+
+            if (value.length < 8) {
+              return 'Mật khẩu phải có ít nhất 8 ký tự';
+            }
+
+            return null;
+          },
+        ),
+
+        const SizedBox(height: 16),
+
+        CustomTextField(
+          controller: confirmPasswordController,
+          labelText: 'Xác nhận mật khẩu',
+          prefixIcon: Icons.lock_outline,
+          isPasswordField: true,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Vui lòng xác nhận mật khẩu';
+            }
+
+            if (value != passwordController.text) {
+              return 'Mật khẩu xác nhận không khớp';
+            }
+
+            return null;
+          },
+        ),
       ],
     );
   }

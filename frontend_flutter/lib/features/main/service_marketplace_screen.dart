@@ -163,20 +163,29 @@ class _ServiceMarketplaceScreenState extends State<ServiceMarketplaceScreen> {
         limit: 10,
       );
 
-      if (mounted) {
-        setState(() {
-          _dynamicNearbyProviders = nearbyData;
-          _isLoadingProviders = false;
-        });
-      }
+      if (!mounted) return;
+
+      setState(() {
+        _dynamicNearbyProviders = nearbyData;
+
+        if (nearbyData.isEmpty) {
+          _providerLocationError =
+              "Không tìm thấy đơn vị cung cấp nào trong bán kính 15 km.";
+        } else {
+          _providerLocationError = null;
+        }
+
+        _isLoadingProviders = false;
+      });
     } catch (e) {
       debugPrint('>>> LỖI LOAD SPATIAL DATA: $e');
-      if (mounted) {
-        setState(() {
-          _providerLocationError = "Không thể tải danh sách đơn vị gần bạn.";
-          _isLoadingProviders = false;
-        });
-      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _providerLocationError = "Không thể tải danh sách đơn vị gần bạn.";
+        _isLoadingProviders = false;
+      });
     }
   }
 
