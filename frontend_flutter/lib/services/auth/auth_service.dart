@@ -134,6 +134,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
 
   AuthService() : super(AuthInitial()) {
         on<AppStarted>((event, emit) async {
+          print("APP STARTED");
       final currentUser = _supabase.auth.currentUser;
       if (currentUser != null) {
         emit(AuthLoading());
@@ -166,6 +167,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
           final successState = await _fetchProfileAndBuildSuccessState(
             response.user!,
           );
+          print("LOGIN SUCCESS");
           if (successState != null) {
             await FcmHandler().registerCurrentDevice();
             emit(successState);
@@ -258,6 +260,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
       emit(AuthLoading());
       try {
         await _supabase.auth.signOut();
+        print("LOGOUT");
       } catch (_) {}
       emit(AuthInitial());
     });

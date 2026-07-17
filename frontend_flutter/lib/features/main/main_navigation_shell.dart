@@ -252,6 +252,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
         floatingActionButton: isProvider && _currentIndex == 0
             ? FloatingActionButton(
+                heroTag: 'provider_dashboard_fab',
                 onPressed: () {
                   Navigator.push(
                     context,

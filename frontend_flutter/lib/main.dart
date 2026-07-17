@@ -144,6 +144,7 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
                 if (state is AuthSuccess) {
                   return const MainNavigationShell();
                 }
+                print("CURRENT STATE: ${state.runtimeType}");
                 return const LoginScreen();
               },
             ),
@@ -156,9 +157,9 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
               return const MainNavigationShell();
             }
             return const LoginScreen();
-            },
-          ),
+          },
         ),
+      ),
     );
   }
 }
