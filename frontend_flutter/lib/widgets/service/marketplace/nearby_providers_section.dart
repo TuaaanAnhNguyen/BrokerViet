@@ -33,16 +33,6 @@ class NearbyProvidersSection extends StatelessWidget {
                   color: Color(0xFF0B1C30),
                 ),
               ),
-              TextButton(
-                onPressed: errorMessage == null ? () {} : null,
-                child: const Text(
-                  'Xem tất cả',
-                  style: TextStyle(
-                    color: Color(0xFF004AC6),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
             ],
           ),
         ),

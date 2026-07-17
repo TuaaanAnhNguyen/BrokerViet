@@ -7,7 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../navigation_service.dart';
 
 class FcmHandler {
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+    final FirebaseMessaging _fcm = FirebaseMessaging.instance;
 
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
@@ -15,7 +15,7 @@ class FcmHandler {
   final _supabase = Supabase.instance.client;
 
   Future<void> _sendTokenToBackend(String token) async {
-    try {
+        try {
       final response = await _supabase.functions.invoke(
         'update-fcm-token',
         body: {'token': token},
@@ -93,7 +93,7 @@ class FcmHandler {
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((message) async {
-      print("========== NOTIFICATION CLICK ==========");
+print("========== NOTIFICATION CLICK ==========");
       print("Notification:");
       print(message.notification?.title);
       print(message.notification?.body);
@@ -107,7 +107,7 @@ class FcmHandler {
     final initialMessage = await _fcm.getInitialMessage();
 
     if (initialMessage != null) {
-      print("========== TERMINATED CLICK ==========");
+print("========== TERMINATED CLICK ==========");
       print(initialMessage.data.toString());
 
       await NavigationService.handleNotification(initialMessage.data);

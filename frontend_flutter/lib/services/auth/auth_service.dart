@@ -92,7 +92,7 @@ class LogoutRequested extends AuthEvent {}
 
 class AuthService extends Bloc<AuthEvent, AuthState> {
   final _supabase = Supabase.instance.client;
-
+  
   String _formatPhoneNumber(String phone) {
     phone = phone.trim().replaceAll(RegExp(r'\s+'), '');
     if (phone.startsWith('0')) {
@@ -133,7 +133,7 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
   }
 
   AuthService() : super(AuthInitial()) {
-    on<AppStarted>((event, emit) async {
+        on<AppStarted>((event, emit) async {
       final currentUser = _supabase.auth.currentUser;
       if (currentUser != null) {
         emit(AuthLoading());
@@ -313,8 +313,6 @@ class AuthService extends Bloc<AuthEvent, AuthState> {
     on<ForgotPasswordPhoneConfirmed>(_handlePhoneResetConfirmation);
 
     on<ForgotPasswordByEmailRequested>(_handleEmailResetRequest);
-
-    add(AppStarted());
   }
 
   final _phoneAuthService = FirebasePhoneAuthService.instance;

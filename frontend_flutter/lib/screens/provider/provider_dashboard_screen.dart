@@ -366,19 +366,6 @@ class ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   color: darkText,
                 ),
               ),
-              TextButton(
-                onPressed: () {
-                  // Navigation is now handled by MainNavigationShell
-                  // If you need to switch tabs from here, you'd typically use a callback or provider
-                },
-                child: const Text(
-                  'Xem tất cả',
-                  style: TextStyle(
-                    color: primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
             ],
           ),
         ),

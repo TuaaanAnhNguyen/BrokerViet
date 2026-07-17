@@ -156,9 +156,9 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
               return const MainNavigationShell();
             }
             return const LoginScreen();
-          },
+            },
+          ),
         ),
-      ),
     );
   }
 }
