@@ -63,6 +63,7 @@ class BrokerVietApp extends StatefulWidget {
 
 class _BrokerVietAppState extends State<BrokerVietApp> {
   final _appLinks = AppLinks();
+  static String? _processedInitialLink;
 
   @override
   void initState() {
@@ -74,16 +75,32 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
     final initialUri = await _appLinks.getInitialLink();
 
     if (initialUri != null) {
-      _handleDeepLink(initialUri);
+      final uriString = initialUri.toString();
+      if (_processedInitialLink == uriString) {
+        debugPrint("Bỏ qua Initial Deep Link cũ đã xử lý: $uriString");
+      } else {
+        _processedInitialLink = uriString;
+        _handleDeepLink(initialUri);
+      }
     }
 
-    _appLinks.uriLinkStream.listen(_handleDeepLink);
+    _appLinks.uriLinkStream.listen((uri) {
+      _processedInitialLink = uri.toString();
+      _handleDeepLink(uri);
+    });
   }
 
   void _handleDeepLink(Uri uri) {
     print("======================");
     print("Deep Link Received");
-    print(uri);
+    debugPrint("FULL URI:");
+    debugPrint(uri.toString());
+
+    debugPrint("scheme=${uri.scheme}");
+    debugPrint("host=${uri.host}");
+    debugPrint("path=${uri.path}");
+    debugPrint("query=${uri.query}");
+    debugPrint("fragment=${uri.fragment}");
 
     switch (uri.host) {
       case "vnpay_result_page":
@@ -127,6 +144,7 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
                 if (state is AuthSuccess) {
                   return const MainNavigationShell();
                 }
+                print("CURRENT STATE: ${state.runtimeType}");
                 return const LoginScreen();
               },
             ),
@@ -135,9 +153,16 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
 
         home: BlocBuilder<AuthService, AuthState>(
           builder: (context, state) {
+            if (state is AuthLoading) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
             if (state is AuthSuccess) {
               return const MainNavigationShell();
             }
+
             return const LoginScreen();
           },
         ),
@@ -163,14 +188,28 @@ void _handleVNPay(Uri uri) {
 }
 
 void _handlePasswordReset(Uri uri) {
+  debugPrint("PASSWORD RESET LINK RECEIVED");
+  debugPrint(uri.toString());
+
   Future.delayed(const Duration(milliseconds: 300), () {
+    final context = NavigationService.navigatorKey.currentContext;
     final navigator = NavigationService.navigatorKey.currentState;
 
-    if (navigator == null) return;
+    if (context != null && navigator != null) {
+      final authService = BlocProvider.of<AuthService>(context);
+      final currentState = authService.state;
 
-    navigator.push(
-      MaterialPageRoute(builder: (_) => const PasswordResetPage()),
-    );
+      if (currentState is AuthSuccess) {
+        debugPrint(
+          "Bỏ qua Deep Link Password Reset cũ vì người dùng đã đăng nhập.",
+        );
+        return;
+      }
+
+      navigator.push(
+        MaterialPageRoute(builder: (_) => const PasswordResetPage()),
+      );
+    }
   });
 }
 

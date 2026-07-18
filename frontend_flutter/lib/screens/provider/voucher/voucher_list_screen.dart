@@ -146,6 +146,7 @@ class _VoucherListScreenState extends State<VoucherListScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'voucher_fab',
         onPressed: _openCreateForm,
         backgroundColor: primaryColor,
         child: const Icon(Icons.add, color: Colors.white),

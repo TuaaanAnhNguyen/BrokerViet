@@ -87,7 +87,19 @@ BrokerViet
 │  │  │  │     ├─ errors-1784096587824.log
 │  │  │  │     ├─ errors-1784096587868.log
 │  │  │  │     ├─ errors-1784096587891.log
-│  │  │  │     └─ errors-1784096587972.log
+│  │  │  │     ├─ errors-1784096587972.log
+│  │  │  │     ├─ errors-1784184093988.log
+│  │  │  │     ├─ errors-1784184094013.log
+│  │  │  │     ├─ errors-1784184094019.log
+│  │  │  │     ├─ errors-1784184094030.log
+│  │  │  │     ├─ errors-1784202505838.log
+│  │  │  │     ├─ errors-1784202505856.log
+│  │  │  │     ├─ errors-1784202505864.log
+│  │  │  │     ├─ errors-1784202505902.log
+│  │  │  │     ├─ errors-1784206219886.log
+│  │  │  │     ├─ errors-1784206219960.log
+│  │  │  │     ├─ errors-1784206219984.log
+│  │  │  │     └─ errors-1784206220020.log
 │  │  │  ├─ noVersion
 │  │  │  │  └─ buildLogic.lock
 │  │  │  └─ vcs-1
@@ -105,7 +117,19 @@ BrokerViet
 │  │  │  │  ├─ errors-1784096587824.log
 │  │  │  │  ├─ errors-1784096587867.log
 │  │  │  │  ├─ errors-1784096587891.log
-│  │  │  │  └─ errors-1784096587972.log
+│  │  │  │  ├─ errors-1784096587972.log
+│  │  │  │  ├─ errors-1784184093988.log
+│  │  │  │  ├─ errors-1784184094013.log
+│  │  │  │  ├─ errors-1784184094019.log
+│  │  │  │  ├─ errors-1784184094030.log
+│  │  │  │  ├─ errors-1784202505838.log
+│  │  │  │  ├─ errors-1784202505856.log
+│  │  │  │  ├─ errors-1784202505864.log
+│  │  │  │  ├─ errors-1784202505902.log
+│  │  │  │  ├─ errors-1784206219885.log
+│  │  │  │  ├─ errors-1784206219960.log
+│  │  │  │  ├─ errors-1784206219984.log
+│  │  │  │  └─ errors-1784206220020.log
 │  │  │  └─ sessions
 │  │  ├─ app
 │  │  │  ├─ build.gradle.kts
@@ -227,6 +251,7 @@ BrokerViet
 │  │  │  ├─ auth
 │  │  │  │  ├─ forgot_password_screen.dart
 │  │  │  │  ├─ login_screen.dart
+│  │  │  │  ├─ password_reset_page.dart
 │  │  │  │  └─ signup_screen.dart
 │  │  │  ├─ booking
 │  │  │  │  ├─ booking_history_screen.dart
@@ -282,7 +307,8 @@ BrokerViet
 │  │  │        └─ booking_detail_sheet.dart
 │  │  ├─ services
 │  │  │  ├─ auth
-│  │  │  │  └─ auth_service.dart
+│  │  │  │  ├─ auth_service.dart
+│  │  │  │  └─ firebase_phone_auth_service.dart
 │  │  │  ├─ booking
 │  │  │  │  └─ booking_service.dart
 │  │  │  ├─ chat
@@ -310,7 +336,11 @@ BrokerViet
 │  │  └─ widgets
 │  │     ├─ auth
 │  │     │  ├─ auth_header.dart
+│  │     │  ├─ email_input_field.dart
+│  │     │  ├─ forgot_password_form.dart
 │  │     │  ├─ login_form.dart
+│  │     │  ├─ phone_input_fields.dart
+│  │     │  ├─ reset_password_fields.dart
 │  │     │  └─ signup_form.dart
 │  │     ├─ avatar_builder.dart
 │  │     ├─ booking
@@ -332,6 +362,8 @@ BrokerViet
 │  │     │  ├─ destination_marker.dart
 │  │     │  ├─ error_banner.dart
 │  │     │  ├─ loading_overlay.dart
+│  │     │  ├─ map_content_view.dart
+│  │     │  ├─ map_floating_overlay.dart
 │  │     │  ├─ map_tile_layer.dart
 │  │     │  ├─ my_location_button.dart
 │  │     │  ├─ provider_service_info_card.dart
@@ -347,17 +379,24 @@ BrokerViet
 │  │     │  ├─ payment_unknown_widget.dart
 │  │     │  └─ vietqr_payment.dart
 │  │     ├─ profile
-│  │     │  ├─ account_setting_tile.dart
-│  │     │  ├─ change_email_sheet.dart
-│  │     │  ├─ change_password_sheet.dart
-│  │     │  ├─ edit_profile_sheet.dart
-│  │     │  ├─ profile_address_section.dart
-│  │     │  ├─ profile_contact_section.dart
-│  │     │  ├─ profile_danger_section.dart
-│  │     │  ├─ profile_edit_button.dart
-│  │     │  ├─ profile_header.dart
-│  │     │  ├─ profile_provider_section.dart
-│  │     │  └─ profile_security_section.dart
+│  │     │  ├─ profile_avatar_picker.dart
+│  │     │  ├─ profile_contact_card.dart
+│  │     │  ├─ profile_identity_card.dart
+│  │     │  ├─ profile_info_section.dart
+│  │     │  ├─ profile_provider_card.dart
+│  │     │  ├─ profile_summary_card.dart
+│  │     │  └─ setting
+│  │     │     ├─ account_setting_tile.dart
+│  │     │     ├─ change_email_sheet.dart
+│  │     │     ├─ change_password_sheet.dart
+│  │     │     ├─ edit_profile_sheet.dart
+│  │     │     ├─ profile_address_section.dart
+│  │     │     ├─ profile_contact_section.dart
+│  │     │     ├─ profile_danger_section.dart
+│  │     │     ├─ profile_edit_button.dart
+│  │     │     ├─ profile_header.dart
+│  │     │     ├─ profile_provider_section.dart
+│  │     │     └─ profile_security_section.dart
 │  │     ├─ provider
 │  │     │  └─ provider_booking_card.dart
 │  │     ├─ review
@@ -402,9 +441,7 @@ BrokerViet
 │     │  └─ Icon-maskable-512.png
 │     ├─ index.html
 │     └─ manifest.json
-├─ hs_err_pid8584.log
 ├─ README.md
-├─ replay_pid8584.log
 └─ supabase
    ├─ config.toml
    └─ functions

@@ -42,10 +42,10 @@ class LocationService {
         },
       );
 
-      print('====================\n');
-      print('Status: ${response.status}');
-      print('Raw response: ${response.data}');
-      print('====================\n');
+      // print('====================\n');
+      // print('Status: ${response.status}');
+      // print('Raw response: ${response.data}');
+      // print('====================\n');
 
       if (response.status != 200) {
         throw LocationServiceException(
@@ -61,7 +61,7 @@ class LocationService {
 
       final responseData = Map<String, dynamic>.from(response.data as Map);
 
-      print('Decoded response: $responseData');
+      // print('Decoded response: $responseData');
 
       if (responseData['success'] != true) {
         throw LocationServiceException(
@@ -80,7 +80,7 @@ class LocationService {
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
 
-      print('Nearby providers found: ${providers.length}');
+      // print('Nearby providers found: ${providers.length}');
 
       for (final provider in providers) {
         print(provider);
