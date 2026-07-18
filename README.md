@@ -2,7 +2,7 @@
 
 BrokerViet is a multi-tenant mobile marketplace concept built as a university course learning project to explore mobile application development with Flutter and cloud-native backends. 
 
-The application connects **Customers** looking for technical support with **Service Providers** offering hardware repairs, software setups, custom PC consultation, and tech equipment rentals (such as gaming rigs, VR headsets, and monitors).
+The application connects **Customers** looking for technical support with **Service Providers** offering hardware repairs, and tech equipment rentals (such as gaming rigs, VR headsets, and monitors).
 
 ---
 
