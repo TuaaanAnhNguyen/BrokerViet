@@ -30,11 +30,3 @@ The repository is organized into distinct environments focusing on frontend pres
 ## Important Disclaimer
 
 > **Note on Backend Availability:** This project is hosted entirely on the **Supabase Free Tier**. Due to standard provider policies on free-tier projects, the backend database and Edge Functions automatically enter a paused/hibernating state after periods of inactivity. If you are testing the live application or connecting to the instance and notice loading timeouts, the database project may need a manual restoration/wake-up trigger.
-
----
-
-## 👥 The Team
-*   **Nguyễn Tuấn Anh** (SE196689)
-*   **Hà Nguyễn Đắc Bình** (SE196669)
-*   **Lý Trung Quân** (SE193346)
-*   **Nguyễn Trần Phương Tuấn** (SE192824)
