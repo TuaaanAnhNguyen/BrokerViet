@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../services/auth/auth_service.dart';
 import '../../../../../widgets/custom_text_field.dart';
 import '../../features/auth/forgot_password_screen.dart';
+import '../../features/main/main_navigation_shell.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -113,6 +114,13 @@ class _LoginFormState extends State<LoginForm> {
                     content: Text('Chào mừng bạn quay trở lại, ${state.name}!'),
                     backgroundColor: Colors.green,
                   ),
+                );
+
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (_) => const MainNavigationShell(),
+                  ),
+                  (route) => false,
                 );
               }
               if (state is AuthFailure) {

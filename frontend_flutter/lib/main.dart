@@ -153,9 +153,16 @@ class _BrokerVietAppState extends State<BrokerVietApp> {
 
         home: BlocBuilder<AuthService, AuthState>(
           builder: (context, state) {
+            if (state is AuthLoading) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
             if (state is AuthSuccess) {
               return const MainNavigationShell();
             }
+
             return const LoginScreen();
           },
         ),
